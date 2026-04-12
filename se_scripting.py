@@ -7,11 +7,11 @@ from typing import Literal
 
 class Templates:
     position = """
-Select Sun
+Select Earth
 Goto
 {{
     Time    0.5
-    DistKm  {dist_km}
+    HeightKm  {dist_km}
     Lat     {lat_deg}
     Lon     {lon_deg}
 }}
@@ -42,6 +42,37 @@ Screenshot
 Wait    {duration}
     """
 
+    move = """
+Fly
+{{
+    Axis        (0, 0, 1)
+    SpeedKm     {speed_kms}
+}}
+Wait    {flight_duration}
+StopFly {{}}
+    """
+
+    satellite = """
+Asteroid	"ArtificialSatellite"
+{{
+	ParentBody     "Earth"
+	Radius          {radius_km}
+	Orbit
+	{{
+		RefPlane       "Equator"
+		SemiMajorAxis   {semi_major_axis_au}
+		Eccentricity    {eccentricity}
+		Inclination     {inclination_deg}
+		//MeanAnomaly     135.27
+		AscendingNode   {ascending_node_deg}
+		//ArgOfPericen    318.15
+		//AscNodePreces   18.6		// years
+		//ArgOfPeriPreces 5.997		// years
+	}}
+}}
+    """
+
+
 
 class Script:
     def __init__(self, name: str, content: str, run_duration: float, additional_information: any = None):
@@ -50,18 +81,44 @@ class Script:
         self.run_duration = run_duration
         self.additional_information = additional_information
 
-    def generate(self):
-        f = open(Params.scripts_dir + self.name + '.se', "w")
+    def generate(self, save_dir=Params.scripts_dir, file_ending=Params.script_ending):
+        f = open(save_dir + self.name + file_ending, "w")
         f.write(self.content)
         f.close()
         time.sleep(Params.sleep_normal)
 
     @classmethod
-    def set_position_script(cls, dist_au: float, lat_deg: float, lon_deg: float):
+    def create_artificial_satellite(cls, radius_km: float, semi_major_axis_km: float, eccentricity: float,
+                                    inclination_deg: float, ascending_node_deg: float):
+        return cls(
+            Params.artificial_satellite_file,
+            Templates.satellite.format(
+                radius_km=radius_km,
+                semi_major_axis_au=semi_major_axis_km * (1 / Params.astronomical_unit_km),
+                eccentricity=eccentricity,
+                inclination_deg=inclination_deg,
+                ascending_node_deg=ascending_node_deg
+            ),
+            Params.sleep_minimal
+        )
+
+    @classmethod
+    def move_forward_script(cls, move_speed_kms: float, move_time_s: float):
+        return cls(
+            Params.move_forward_script,
+            Templates.move.format(
+                speed_kms=move_speed_kms,
+                flight_duration=move_time_s
+            ),
+            Params.sleep_long*move_time_s
+        )
+
+    @classmethod
+    def set_position_script(cls, dist_km: float, lat_deg: float, lon_deg: float):
         return cls(
             Params.set_position,
             Templates.position.format(
-                dist_km=dist_au * Params.astronomical_unit_km,
+                dist_km=dist_km,
                 lat_deg=lat_deg,
                 lon_deg=lon_deg
             ),

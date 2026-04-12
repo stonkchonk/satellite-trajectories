@@ -9,6 +9,7 @@ import subprocess
 import cv2
 
 from common import Params, Code
+from geometry import Geometry
 from se_scripting import Script
 
 
@@ -79,6 +80,11 @@ class WindowController:
             if window_title in win_info:
                 return win_info.split()
         return None
+
+    @staticmethod
+    def _window_present(win_info: list[str] | None) -> bool:
+        print(win_info)
+        return win_info is None
 
 
     @staticmethod
@@ -160,6 +166,19 @@ class WindowController:
         time.sleep(script.run_duration)
 
 
+class SatelliteController:
+    @staticmethod
+    def spawn_satellite(radius_km: float, semi_major_axis_km: float, eccentricity: float, inclination_deg: float,
+                        ascending_node_deg: float):
+        """
+        Running this script requires a restart of SpaceEngine to take effect.
+        """
+        spawn_artificial_satellite_script = Script.create_artificial_satellite(radius_km, semi_major_axis_km,
+                                                                               eccentricity, inclination_deg,
+                                                                               ascending_node_deg)
+        spawn_artificial_satellite_script.generate(save_dir=Params.addon_planets_dir,
+                                                   file_ending=Params.celestial_ending)
+
 class FileController:
     @staticmethod
     def _read_image(path: str) -> cv2.typing.MatLike:
@@ -219,12 +238,18 @@ class VirtualCamera:
         self.star_magnitude_limit = star_magnitude_limit
         self._set_star_magnitude_limit()
 
-    def set_position(self, dist_au: float, right_ascension_deg: float, declination_deg: float, suppress_print: bool = False):
-        set_position_script = Script.set_position_script(dist_au, declination_deg, right_ascension_deg)
+    def set_position(self, altitude_km: float, right_ascension_deg: float, declination_deg: float,
+                     suppress_print: bool = False):
+        dist_from_center = Geometry.earth_radius_from_altitude(altitude_km, declination_deg)
+        set_position_script = Script.set_position_script(altitude_km, declination_deg, right_ascension_deg)
         set_position_script.generate()
         WindowController.run_script(set_position_script)
+
+        move_script = Script.move_forward_script(50, 1)
+        move_script.generate()
+        WindowController.run_script(move_script)
         if not suppress_print:
-            print(f"\"{self.name}\" positioned at RA: {right_ascension_deg}°, dec: {declination_deg}°, {dist_au} AU from Sol.")
+            print(f"\"{self.name}\" positioned at RA: {right_ascension_deg}°, dec: {declination_deg}°, {altitude_km} km above Earth.")
 
     def set_position_celestial_coordinates(self, dist_au: float, ra_h: int, ra_m: int, ra_s: float,
                                            de_sign: Literal['+', '-'], de_d: int, de_m: int, de_s: float):

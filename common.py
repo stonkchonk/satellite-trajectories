@@ -71,6 +71,7 @@ class Params:
     sun_detection_script = "detect_sun"
     turn_precisely_script = "turn_precisely"
     take_screenshot_script = "take_screenshot"
+    move_forward_script = "move_forward"
 
     # screenshot prefixes
     sun_detection_procedure = "sdp"
@@ -93,6 +94,11 @@ class Params:
     se_log_file = se_dir + "system/se.log"
     se_catalogs_pak_file = se_dir + "data/catalogs/Catalogs.pak"
     scripts_dir = se_dir + "addons/scripts/"
+    addon_planets_dir = se_dir + "addons/catalogs/planets/"
+    artificial_satellite_file = "ArtificialSatellite"
+    # file endings
+    script_ending = ".se"
+    celestial_ending = ".sc"
 
     # regions
     region_cam_settings = tuple((530, 964) + width_height)
@@ -120,6 +126,10 @@ class Params:
         12.8, 6.4, 3.2, 1.6, 0.8, 0.4, 0.2
     ]
     sufficient_perceived_diameter = 0.45
+
+class Constants:
+    earth_equatorial_rad_km = 6378.137
+    earth_polar_rad_km = 6356.752
 
 
 class Code:
