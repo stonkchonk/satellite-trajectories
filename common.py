@@ -120,6 +120,11 @@ class Params:
     calculated_sun_radius_km = 701827.6
     supposed_sun_radius_km = 695697.9
 
+    # astrophysical constants
+    earth_mass_kg = 5.9722e24
+    gravity_constant = 6.67430e-11
+    mu = earth_mass_kg * gravity_constant
+
 
     # sun distance estimation camera fov settings
     distance_estimation_fov_settings = [
