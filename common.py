@@ -88,9 +88,9 @@ class Params:
 
     # directories and files
     assets_dir = "/home/fred/Documents/Code/interplanetary-localization/assets/"
-    se_dir = "/home/fred/.steam/steam/steamapps/common/SpaceEngine/"
-    debug_images_dir = "/home/fred/Documents/Code/interplanetary-localization/debug/"
-    screenshots_dir = se_dir + "screenshots/"
+    se_dir = "/home/fred/.local/share/Steam/steamapps/common/SpaceEngine/"
+    debug_images_dir = "/home/fred/Documents/Studium/Masterthesis/satellite-trajectories/debug/"
+    screenshots_dir = "/home/fred/.local/share/Steam/steamapps/compatdata/314650/pfx/drive_c/users/steamuser/Documents/Cosmographic/SpaceEngine/screenshots/"#se_dir + "screenshots/"
     se_log_file = se_dir + "system/se.log"
     se_catalogs_pak_file = se_dir + "data/catalogs/Catalogs.pak"
     scripts_dir = se_dir + "addons/scripts/"

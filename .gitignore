@@ -1,3 +1,6 @@
 .venv
 .idea
 __pycache__/
+star_tracker/catalog_dict.py
+star_tracker/neighbors.py
+star_tracker/pairings.py
