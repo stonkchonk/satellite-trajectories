@@ -72,6 +72,22 @@ Asteroid	"ArtificialSatellite"
 }}
     """
 
+    prepare_star_calibration = """
+Hide Clouds
+Hide Atmospheres
+Show Stars
+Hide Planets
+Hide Orbits
+    """
+
+    prepare_satellite_tracking = """
+Hide Clouds
+Hide Atmospheres
+Hide Stars
+Show Planets
+Hide Orbits
+    """
+
 
 
 class Script:
@@ -111,6 +127,22 @@ class Script:
                 flight_duration=move_time_s
             ),
             Params.sleep_long*move_time_s
+        )
+
+    @classmethod
+    def prepare_star_calibration_script(cls):
+        return cls(
+            Params.prepare_star_calibration_script,
+            Templates.prepare_star_calibration,
+            Params.sleep_quick
+        )
+
+    @classmethod
+    def prepare_satellite_tracking_script(cls):
+        return cls(
+            Params.prepare_satellite_tracking_script,
+            Templates.prepare_satellite_tracking,
+            Params.sleep_quick
         )
 
     @classmethod

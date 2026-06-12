@@ -114,6 +114,10 @@ class WindowController:
         pyautogui.click(location[0], location[1])
 
     @staticmethod
+    def touchdown_command():
+        pyautogui.hotkey('ctrl', 'g')
+
+    @staticmethod
     def enter_magnitude_value(magnitude: float):
         WindowController.move(Params.bottom_menu_pos)
         time.sleep(Params.sleep_normal)
@@ -250,6 +254,23 @@ class VirtualCamera:
         WindowController.run_script(move_script)
         if not suppress_print:
             print(f"\"{self.name}\" positioned at RA: {right_ascension_deg}°, dec: {declination_deg}°, {altitude_km} km above Earth.")
+
+    def touchdown_at_position(self, right_ascension_deg: float, declination_deg: float):
+        self.set_position(400, right_ascension_deg, declination_deg)
+        print("Initiate landing.")
+        WindowController.touchdown_command()
+        time.sleep(20)
+        print("Landing completed.")
+
+    def test_something(self):
+        prepare_calibration_script = Script.prepare_star_calibration_script()
+        prepare_calibration_script.generate()
+        WindowController.run_script(prepare_calibration_script)
+        print("kalibrieren")
+        prepare_tracking_script = Script.prepare_satellite_tracking_script()
+        prepare_tracking_script.generate()
+        WindowController.run_script(prepare_tracking_script)
+        print("tracken")
 
     def set_position_celestial_coordinates(self, dist_au: float, ra_h: int, ra_m: int, ra_s: float,
                                            de_sign: Literal['+', '-'], de_d: int, de_m: int, de_s: float):

@@ -1,18 +1,24 @@
 import time
 import math
-from common import Params, Code
+from common import Params, Code, UniversalTimeStamp
 from se_automation import WindowController, VirtualCamera, SatelliteController
 from earth import EarthCenteredInertial as eci
 import numpy as np
 
 
 #WindowController.simple_setup()
-#earth_cam = VirtualCamera("earth_cam", 45, 0)
-#earth_cam.set_position(50, 9.183979, 47.7617) # 51.5 89.99 0.0
+#earth_cam = VirtualCamera("earth_cam", 45, 0) # 51.5 89.99 0.0
+#earth_cam.test_something()#touchdown_at_position(9.183979, 47.7617)
 #SatelliteController.spawn_satellite(
 #    0.01, 8000, 0.02, 51, 0
 #)
-
+ut1 = UniversalTimeStamp(2026, 6, 11, 16, 47, 33)
+ut2 = UniversalTimeStamp(2026, 6, 11, 16, 47, 33)
+ut2.second -= 100
+print(ut1==UniversalTimeStamp.from_string(str(ut2)))
+print(ut1==ut2)
+print(ut2)
+'''
 j0 = eci.determine_j0(2026, 5, 31)
 t0 = eci.determine_t0(j0)
 theta_g0_deg = eci.determine_theta_g0_deg(t0)
@@ -33,4 +39,5 @@ for v in vectors:
 vec_str = vec_str[:-3]
 vec_str += "}"
 print(vec_str)
+'''
 
