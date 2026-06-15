@@ -17,6 +17,8 @@ class Params:
     norm_radius = 499.5
     diagonal_norm_radius = norm_radius * math.sqrt(2)
     center_point = norm_radius, norm_radius
+    left_edge_point = (0, norm_radius)
+    right_edge_point = (norm_radius * 2, norm_radius)
     center_point_as_int = int(norm_radius), int(norm_radius)
 
     # angular values
@@ -38,6 +40,7 @@ class Params:
     sleep_quick = 0.25
     sleep_normal = 0.5
     sleep_long = 1.0
+    typewrite_interval = 0.05
 
     # hotkeys
     open_console = "6"
@@ -63,6 +66,7 @@ class Params:
     set_cmd = "Set"
     run_cmd = "run"
     fov_cmd = "FOV"
+    date_cmd = "Date"
 
     # script names
     set_position = "set_position"
@@ -138,49 +142,6 @@ class Constants:
     earth_equatorial_rad_km = 6378.137
     earth_polar_rad_km = 6356.752
 
-
-class UniversalTimeStamp:
-    def __init__(self, year: int, month: int, day: int, hour: int, minute: int, second: int):
-        assert 1901 <= year <= 2099
-        assert 1 <= month <= 12
-        assert 1 <= day <= 31
-        assert 1 <= hour <= 23
-        assert 1 <= minute <= 59
-        assert 1 <= second <= 59
-        self.year = year
-        self.month = month
-        self.day = day
-        self.hour = hour
-        self.minute = minute
-        self.second = second
-
-    def __str__(self):
-        return (
-            f"{self.year:04d}.{self.month:02d}.{self.day:02d} "
-            f"{self.hour:02d}:{self.minute:02d}:{self.second}.00"
-        )
-
-    @classmethod
-    def from_string(cls, s: str):
-        try:
-            date_part, time_part = s.split(" ")
-            year, month, day = map(int, date_part.split("."))
-
-            if not time_part.endswith(".00"):
-                raise ValueError("Timestamp must end with '.00'")
-
-            time_part = time_part[:-3]
-            hour, minute, second = map(int, time_part.split(":"))
-
-            return cls(year, month, day, hour, minute, second)
-
-        except Exception as e:
-            raise ValueError(f"Invalid timestamp format: '{s}'") from e
-
-    def __eq__(self, other):
-        if isinstance(other, UniversalTimeStamp):
-            return self.__str__() == other.__str__()
-        return False
 
 class Code:
     @staticmethod

@@ -99,7 +99,7 @@ class StarImager:
         if self.save_debug_images:
             Code.save_debug_image(Params.debug_gray_img, gray_image)
         # turn gray image to mask using thresholding
-        _, mask = cv2.threshold(gray_image, 68, 255, cv2.THRESH_BINARY)
+        _, mask = cv2.threshold(gray_image, 40, 255, cv2.THRESH_BINARY)
         return mask
 
     @staticmethod

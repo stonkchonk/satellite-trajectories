@@ -1,23 +1,35 @@
 import time
 import math
-from common import Params, Code, UniversalTimeStamp
+
+import pyautogui
+import pyperclip
+
+from calibration import CameraCalibration
+from common import Params, Code
+from earth import UniversalTimeStamp
 from se_automation import WindowController, VirtualCamera, SatelliteController
 from earth import EarthCenteredInertial as eci
 import numpy as np
 
 
-#WindowController.simple_setup()
-#earth_cam = VirtualCamera("earth_cam", 45, 0) # 51.5 89.99 0.0
-#earth_cam.test_something()#touchdown_at_position(9.183979, 47.7617)
+WindowController.simple_setup()
+calibrator = CameraCalibration(execute_camera_setup=True)
+calibrator.position_vector_calibration_procedure()
+#calibrator.position_vector_calibration_procedure()#view_vector_calibration_procedure()
 #SatelliteController.spawn_satellite(
 #    0.01, 8000, 0.02, 51, 0
 #)
-ut1 = UniversalTimeStamp(2026, 6, 11, 16, 47, 33)
-ut2 = UniversalTimeStamp(2026, 6, 11, 16, 47, 33)
-ut2.second -= 100
-print(ut1==UniversalTimeStamp.from_string(str(ut2)))
-print(ut1==ut2)
-print(ut2)
+#ut1 = UniversalTimeStamp(2026, 6, 11, 16, 47, 33)
+#ut2 = UniversalTimeStamp(2026, 6, 11, 16, 47, 33)
+#ut2.second -= 100
+#print(ut1==UniversalTimeStamp.from_string(str(ut2), restrain=False))
+#print(ut1==ut2)
+#print(ut2)
+#print("start")
+#pyperclip.copy("test12345 abc")
+#pyautogui.hotkey("ctrl", "v")
+
+
 '''
 j0 = eci.determine_j0(2026, 5, 31)
 t0 = eci.determine_t0(j0)

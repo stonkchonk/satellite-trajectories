@@ -4,6 +4,58 @@ import numpy as np
 
 from common import Constants, Code
 
+class UniversalTimeStamp:
+    def __init__(self, year: int, month: int, day: int, hour: int, minute: int, second: int, restrain: bool = True):
+        assert 1901 <= year <= 2099
+        assert 1 <= month <= 12
+        assert 1 <= day <= 31
+        if restrain:
+            assert 1 <= hour <= 23
+            assert 1 <= minute <= 59
+            assert 1 <= second <= 59
+        self.year = year
+        self.month = month
+        self.day = day
+        self.hour = hour
+        self.minute = minute
+        self.second = second
+
+    def __str__(self):
+        return (
+            f"{self.year:04d}.{self.month:02d}.{self.day:02d} "
+            f"{self.hour:02d}:{self.minute:02d}:{self.second}"
+        )
+
+    @classmethod
+    def from_string(cls, s: str, restrain: bool = True) -> "UniversalTimeStamp":
+        try:
+            date_part, time_part = s.split(" ")
+            year, month, day = map(int, date_part.split("."))
+
+            #time_part = time_part[:-3]
+            hour, minute, second = map(int, time_part.split(":"))
+
+            return cls(year, month, day, hour, minute, second, restrain)
+
+        except Exception as e:
+            raise ValueError(f"Invalid timestamp format: '{s}'") from e
+
+    def __eq__(self, other):
+        if isinstance(other, UniversalTimeStamp):
+            return self.__str__() == other.__str__()
+        return False
+
+    def difference_ut_seconds(self, other_time_stamp: "UniversalTimeStamp") -> int:
+        """
+        Compares UT times (hours, minutes, seconds) and returns difference in seconds (self - other).
+        Year, month and day are ignored.
+        :return: diffenrece in seconds [int]
+        """
+        return (3600 * (self.hour - other_time_stamp.hour) + 60 * (self.minute - other_time_stamp.minute) +
+                (self.second - other_time_stamp.second))
+
+
+
 
 class EarthCenteredInertial:
     def __init__(self):
@@ -65,11 +117,12 @@ class EarthCenteredInertial:
         return (theta_g_deg + ecef_longitude_deg) % 360
 
     @staticmethod
-    def determine_eci_longitude_from_time(ecef_longitude_deg: float, year: int, month: int, day: int, hours: int, minutes: int, seconds: int) -> float:
-        j0 = EarthCenteredInertial.determine_j0(year, month, day)
+    def determine_eci_longitude_from_time(ecef_longitude_deg: float, time_stamp: UniversalTimeStamp) -> float:
+
+        j0 = EarthCenteredInertial.determine_j0(time_stamp.year, time_stamp.month, time_stamp.day)
         t0 = EarthCenteredInertial.determine_t0(j0)
         theta_g0_deg = EarthCenteredInertial.determine_theta_g0_deg(t0)
-        ut_hr = EarthCenteredInertial.determine_ut_hr(hours, minutes, seconds)
+        ut_hr = EarthCenteredInertial.determine_ut_hr(time_stamp.hour, time_stamp.minute, time_stamp.second)
         theta_d_deg = EarthCenteredInertial.determine_theta_g(ut_hr, theta_g0_deg)
         return EarthCenteredInertial.determine_eci_longitude(ecef_longitude_deg, theta_d_deg)
 
@@ -85,9 +138,8 @@ class EarthCenteredInertial:
 
     @staticmethod
     def determine_eci_vector_from_lat_lon_alt(ecef_latitude_deg: float, ecef_longitude_deg: float, altitude_km: float,
-                                              year: int, month: int, day: int, hours: int, minutes: int, seconds: int):
-        eci_longitude_deg = EarthCenteredInertial.determine_eci_longitude_from_time(ecef_longitude_deg, year,
-                                                                                    month, day, hours, minutes, seconds)
+                                              time_stamp: UniversalTimeStamp):
+        eci_longitude_deg = EarthCenteredInertial.determine_eci_longitude_from_time(ecef_longitude_deg, time_stamp)
         return EarthCenteredInertial.determine_vector_from_lat_lon_alt(Code.deg_to_rad(ecef_latitude_deg),
                                                                         Code.deg_to_rad(eci_longitude_deg), altitude_km)
 

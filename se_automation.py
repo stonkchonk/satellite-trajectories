@@ -7,8 +7,10 @@ from typing import Literal
 import pyautogui
 import subprocess
 import cv2
+import pyperclip
 
 from common import Params, Code
+from earth import UniversalTimeStamp
 from geometry import Geometry
 from se_scripting import Script
 
@@ -16,6 +18,8 @@ from se_scripting import Script
 class DefaultScripts:
     turn_around_script = Script.turn_around_script()
     sun_detection_script = Script.surroundings_imaging_script()
+    prepare_calibration_script = Script.prepare_star_calibration_script()
+    prepare_tracking_script = Script.prepare_satellite_tracking_script()
 
 
 class WindowController:
@@ -34,6 +38,8 @@ class WindowController:
         print("Camera mode setup completed.")
         DefaultScripts.turn_around_script.generate()
         DefaultScripts.sun_detection_script.generate()
+        DefaultScripts.prepare_calibration_script.generate()
+        DefaultScripts.prepare_tracking_script.generate()
         print("Default scripts generated.")
         if cleanse_old_screenshots:
             try:
@@ -123,8 +129,7 @@ class WindowController:
         time.sleep(Params.sleep_normal)
         WindowController.move_click(Params.bottom_menu_input)
         pyautogui.hotkey(Params.backspace)
-        pyautogui.typewrite(str(magnitude))
-        pyautogui.hotkey(Params.enter)
+        WindowController._enter_command_base(str(magnitude))
         WindowController.move(Params.neutral_pos)
 
     @staticmethod
@@ -152,16 +157,20 @@ class WindowController:
             WindowController.move_click(click_pos)
 
     @staticmethod
-    def _enter_terminal_command(command: str):
+    def _enter_command_into_terminal(command: str):
         assert WindowController._is_terminal_open()
-        pyautogui.typewrite(command)
+        WindowController._enter_command_base(command)
+
+    @staticmethod
+    def _enter_command_base(command: str):
+        pyautogui.typewrite(command, interval=Params.typewrite_interval)
         pyautogui.hotkey(Params.enter)
 
     @staticmethod
     def enter_command_procedure(command: str):
         WindowController._open_terminal()
         time.sleep(Params.sleep_quick)
-        WindowController._enter_terminal_command(command)
+        WindowController._enter_command_into_terminal(command)
         WindowController._close_terminal()
 
     @staticmethod
@@ -244,7 +253,6 @@ class VirtualCamera:
 
     def set_position(self, altitude_km: float, right_ascension_deg: float, declination_deg: float,
                      suppress_print: bool = False):
-        dist_from_center = Geometry.earth_radius_from_altitude(altitude_km, declination_deg)
         set_position_script = Script.set_position_script(altitude_km, declination_deg, right_ascension_deg)
         set_position_script.generate()
         WindowController.run_script(set_position_script)
@@ -253,14 +261,19 @@ class VirtualCamera:
         move_script.generate()
         WindowController.run_script(move_script)
         if not suppress_print:
-            print(f"\"{self.name}\" positioned at RA: {right_ascension_deg}°, dec: {declination_deg}°, {altitude_km} km above Earth.")
+            print(f"\"{self.name}\" positioned at Longitude: {right_ascension_deg}°, Latitude: {declination_deg}°, {altitude_km} km above Earth.")
 
-    def touchdown_at_position(self, right_ascension_deg: float, declination_deg: float):
-        self.set_position(400, right_ascension_deg, declination_deg)
-        print("Initiate landing.")
+    def touchdown_at_position(self, longitude_deg: float, latitude_deg: float):
+        assert -180 <= longitude_deg <= 180
+        assert -90 <= latitude_deg <= 90
+        self.set_position(400, longitude_deg, latitude_deg)
+        print("Initiate landing...")
         WindowController.touchdown_command()
         time.sleep(20)
         print("Landing completed.")
+
+    def set_time(self, time_stamp: UniversalTimeStamp):
+        WindowController.enter_command_procedure(f"{Params.date_cmd} \"{time_stamp}\"")
 
     def test_something(self):
         prepare_calibration_script = Script.prepare_star_calibration_script()
@@ -271,6 +284,8 @@ class VirtualCamera:
         prepare_tracking_script.generate()
         WindowController.run_script(prepare_tracking_script)
         print("tracken")
+
+
 
     def set_position_celestial_coordinates(self, dist_au: float, ra_h: int, ra_m: int, ra_s: float,
                                            de_sign: Literal['+', '-'], de_d: int, de_m: int, de_s: float):

@@ -78,6 +78,7 @@ Hide Atmospheres
 Show Stars
 Hide Planets
 Hide Orbits
+Hide Galaxies
     """
 
     prepare_satellite_tracking = """
@@ -86,6 +87,7 @@ Hide Atmospheres
 Hide Stars
 Show Planets
 Hide Orbits
+Hide Galaxies
     """
 
 

@@ -26,13 +26,12 @@ class AttitudeDeterminer:
         return triangulated_unit_vector
 
     def determine_rotation_axis(self, three_observed: list[ObservedStar], three_matched_ids: list[int]) -> UnitVector:
-        left_edge_point = (0, Params.norm_radius)
-        right_edge_point = (Params.norm_radius * 2, Params.norm_radius)
-        left_edge_vector = self.triangulate_view_vector(left_edge_point, three_observed, three_matched_ids)
-        right_edge_vector = self.triangulate_view_vector(right_edge_point, three_observed, three_matched_ids)
+        left_edge_vector = self.triangulate_view_vector(Params.left_edge_point, three_observed, three_matched_ids)
+        right_edge_vector = self.triangulate_view_vector(Params.right_edge_point, three_observed, three_matched_ids)
         return UnitVector.from_cross_product(right_edge_vector, left_edge_vector)
 
-    def draw_view_vector(self, view_vector: UnitVector):
+    @staticmethod
+    def draw_view_vector(view_vector: UnitVector):
         cross_size = 5
         color = (0, 255, 0)
         thickness = 2
