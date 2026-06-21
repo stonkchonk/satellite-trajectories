@@ -60,7 +60,7 @@ class AttitudeDeterminer:
         Returns tuple of view vector and rotation axis vector or None if view vector cannot be determined.
         """
         night_sky_image = virtual_camera.take_screenshot("nightsky")
-        star_imager = StarImager(field_of_view, True)
+        star_imager = StarImager(self.field_of_view_deg, True)
         observed_viable_quadruples = star_imager.determine_viable_quadruples(night_sky_image)
 
         # not enough stars in frame

@@ -78,6 +78,7 @@ class Params:
     move_forward_script = "move_forward"
     prepare_star_calibration_script = "prepare_star_calibration"
     prepare_satellite_tracking_script = "prepare_satellite_tracking"
+    set_default_visibilities_script = "set_default_visibilities"
 
     # screenshot prefixes
     sun_detection_procedure = "sdp"

@@ -24,6 +24,7 @@ class CameraCalibration:
     def view_vector_calibration_procedure(self):
         WindowController.run_script(DefaultScripts.prepare_calibration_script)
         star_calibration_image = self.calibration_cam.take_screenshot("star_calibration")
+        print("---->", star_calibration_image.shape)
         star_imager = StarImager(self.calibration_cam.field_of_view, True)
         observed_viable_quadruples = star_imager.determine_viable_quadruples(star_calibration_image)
 
@@ -48,12 +49,14 @@ class CameraCalibration:
         self.left_view_vector = self.attitude_determiner.triangulate_view_vector(Params.left_edge_point, three_observed_stars, three_matched_stars)
         self.right_view_vector = self.attitude_determiner.triangulate_view_vector(Params.right_edge_point, three_observed_stars, three_matched_stars)
         self.attitude_determiner.draw_view_vector(self.center_view_vector)
+        print("View vector calibration completed. Do not move camera.")
 
     def position_vector_calibration_procedure(self, override_time_stamp: UniversalTimeStamp | None = None,
                                               override_lat_lon: tuple[float, float] | None = None,
                                               override_sea_altitude: float | None = None):
-        print("Enter universal time in the format YYYY.MM.DD HH:MM:SS below:")
+        WindowController.run_script(DefaultScripts.default_visibilities_script)
         if override_time_stamp is None:
+            print("Enter universal time in the format YYYY.MM.DD HH:MM:SS below:")
             time_input_str = input()
             WindowController.simple_setup()
             time_input_str = time_input_str.strip()
@@ -62,17 +65,41 @@ class CameraCalibration:
             self.initial_time_stamp = override_time_stamp
         self.calibration_cam.set_time(self.initial_time_stamp)
         print(f"Initial time is {self.initial_time_stamp}")
-        print("Enter latitude and longitude in decimal degrees as LAT LON below:")
-        lat_lon_input = input()
-        WindowController.simple_setup()
-        latitude, longitude = self.parse_lat_lon(lat_lon_input)
+
+        if override_lat_lon is None:
+            print("Enter latitude and longitude in decimal degrees as LAT LON below:")
+            lat_lon_input = input()
+            WindowController.simple_setup()
+            latitude, longitude = self.parse_lat_lon(lat_lon_input)
+        else:
+            latitude, longitude = override_lat_lon
         self.calibration_cam.touchdown_at_position(longitude, latitude)
-        print("Enter sea altitude in [m] as seen in the HUD:")
-        sea_altitude = float(input())
-        WindowController.simple_setup()
+        if override_sea_altitude is None:
+            print("Enter sea altitude in [m] as seen in the HUD:")
+            sea_altitude = float(input())
+            #WindowController.simple_setup()
+        else:
+            sea_altitude = override_sea_altitude
         self.position_vector = EarthCenteredInertial.determine_eci_vector_from_lat_lon_alt(latitude, longitude,
                                                                                            sea_altitude,
                                                                                            self.initial_time_stamp)
+        print(f"Position vector calibration completed. Remain steady.")
+
+    def full_camera_calibration_procedure(self, override_time_stamp: UniversalTimeStamp | None = None,
+                                        override_lat_lon: tuple[float, float] | None = None,
+                                        override_sea_altitude: float | None = None):
+        WindowController.simple_setup()
+        print("Starting full camera calibration procedure.")
+        self.position_vector_calibration_procedure(override_time_stamp, override_lat_lon, override_sea_altitude)
+        print("Press enter to continue with view vector calibration.")
+        _ = input()
+        WindowController.simple_setup()
+        self.view_vector_calibration_procedure()
+        print(f"Camera calibration completed. {self.center_view_vector}, {self.position_vector}")
+
+
+
+
 
 
 

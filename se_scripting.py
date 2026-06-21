@@ -90,6 +90,15 @@ Hide Orbits
 Hide Galaxies
     """
 
+    default_visibilities_script = """
+Hide Clouds
+Hide Atmospheres
+Show Stars
+Show Planets
+Hide Orbits
+Show Galaxies    
+    """
+
 
 
 class Script:
@@ -144,6 +153,14 @@ class Script:
         return cls(
             Params.prepare_satellite_tracking_script,
             Templates.prepare_satellite_tracking,
+            Params.sleep_quick
+        )
+
+    @classmethod
+    def set_default_visibilities(cls):
+        return cls(
+            Params.set_default_visibilities_script,
+            Templates.default_visibilities_script,
             Params.sleep_quick
         )
 

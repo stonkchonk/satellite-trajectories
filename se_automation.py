@@ -20,6 +20,7 @@ class DefaultScripts:
     sun_detection_script = Script.surroundings_imaging_script()
     prepare_calibration_script = Script.prepare_star_calibration_script()
     prepare_tracking_script = Script.prepare_satellite_tracking_script()
+    default_visibilities_script = Script.set_default_visibilities()
 
 
 class WindowController:
@@ -36,10 +37,13 @@ class WindowController:
         WindowController.enter_command_procedure(f"{Params.set_cmd} {Params.photo_mode_var} {Params.manual_photo_mode_val}")
         WindowController.move(Params.neutral_pos)
         print("Camera mode setup completed.")
-        DefaultScripts.turn_around_script.generate()
-        DefaultScripts.sun_detection_script.generate()
-        DefaultScripts.prepare_calibration_script.generate()
-        DefaultScripts.prepare_tracking_script.generate()
+        #DefaultScripts.turn_around_script.generate()
+        #DefaultScripts.sun_detection_script.generate()
+        #DefaultScripts.prepare_calibration_script.generate()
+        #DefaultScripts.prepare_tracking_script.generate()
+        for script in DefaultScripts.__dict__.values():
+            if hasattr(script, "generate"):
+                script.generate()
         print("Default scripts generated.")
         if cleanse_old_screenshots:
             try:
