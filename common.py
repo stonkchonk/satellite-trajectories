@@ -61,12 +61,15 @@ class Params:
     automatic_photo_mode_val = "2"
     default_star_magnitude_limit: float = 7
 
-    # se commands
+    # se commands & object names
     get_cmd = "Get"
     set_cmd = "Set"
     run_cmd = "run"
     fov_cmd = "FOV"
     date_cmd = "Date"
+    select_cmd = "Select"
+    earth_name = "Earth"
+
 
     # script names
     set_position = "set_position"
@@ -168,6 +171,25 @@ class Code:
     @staticmethod
     def angle_to_cosine_separation(angle_deg: float) -> float:
         return math.cos(Code.deg_to_rad(angle_deg))
+
+    @staticmethod
+    def triangulate_vector_from_image_point(fixed_vectors: list[np.ndarray], fixed_points: list[tuple[float, float]],
+                                            observed_point: tuple[float, float], pixel_diameter: float, angular_diameter: float) -> np.ndarray:
+        """
+        Determines direction vector of pixel point of an image.
+        :param fixed_vectors: Vectors corresponding to points.
+        :param fixed_points: Points corresponding to vectors.
+        :param observed_point: Point to determine vector for.
+        :param pixel_diameter: Pixel diameter of image.
+        :param angular_diameter: Angular diameter corresponding to the pixel diameter [rad].
+        :return: triangulated vector
+        """
+        assert len(fixed_vectors) == 3
+        assert len(fixed_points) == 3
+        vector_matrix = np.array(fixed_vectors)
+        euclidean_pixel_distances = [Code.euclidean_distance(p, observed_point) for p in fixed_points]
+        cosine_distances = [math.cos(angular_diameter * (e / pixel_diameter)) for e in euclidean_pixel_distances]
+        return np.linalg.solve(vector_matrix, cosine_distances)
 
     @staticmethod
     def cosine_separation_to_angle_deg(cosine_separation: float) -> float:

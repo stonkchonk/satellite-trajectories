@@ -1,6 +1,8 @@
+from copy import copy
+
 import numpy as np
 
-from common import Params
+from common import Params, Code
 from earth import UniversalTimeStamp, EarthCenteredInertial
 from se_automation import VirtualCamera, WindowController, DefaultScripts
 from star_tracker.catalog_parser import UnitVector
@@ -24,7 +26,6 @@ class CameraCalibration:
     def view_vector_calibration_procedure(self):
         WindowController.run_script(DefaultScripts.prepare_calibration_script)
         star_calibration_image = self.calibration_cam.take_screenshot("star_calibration")
-        print("---->", star_calibration_image.shape)
         star_imager = StarImager(self.calibration_cam.field_of_view, True)
         observed_viable_quadruples = star_imager.determine_viable_quadruples(star_calibration_image)
 
@@ -98,16 +99,98 @@ class CameraCalibration:
         print(f"Camera calibration completed. {self.center_view_vector}, {self.position_vector}")
 
 
+    @staticmethod
+    def parse_lat_lon(lat_lon_str: str) -> tuple[float, float]:
+        lat_lon_str = lat_lon_str.strip()
+        lat_str, lon_str = lat_lon_str.split()
+        return float(lat_str), float(lon_str)
+
+
+class SingleFrameMeasurement:
+    def __init__(self, time_stamp: UniversalTimeStamp, view_vector: UnitVector, position_vector: np.ndarray):
+        self.time_stamp = time_stamp
+        self.view_vector = view_vector
+        self.position_vector = position_vector
+
+    @classmethod
+    def from_e(cls):
+        pass
+
+
+class SingleFrameMeasurementSeriesCreator:
+    def __init__(self, calibration_instance: CameraCalibration | None):
+        self.calibration = calibration_instance
+        self.single_frame_measurements = []
+        self.measurement_cam = VirtualCamera("measurement cam", self.calibration.calibration_cam.field_of_view,
+                                             self.calibration.calibration_cam.exposure_comp, self.calibration.calibration_cam.exposure_comp)
+        self.star_imager = StarImager(self.calibration.calibration_cam.field_of_view, save_debug_images=True)
+
+    def create_measurement_series(self):
+        if self.calibration is None:
+            self.calibration = CameraCalibration()
+            self.calibration.full_camera_calibration_procedure()
+        WindowController.simple_setup()
+        self.measurement_cam.setup()
+        continue_taking_measurements = True
+        current_time_tamp = copy(self.calibration.initial_time_stamp)
+        while continue_taking_measurements:
+            print("Enter number to move time in seconds ahead, enter letter to end measurement.")
+            input_seconds = self.parse_input_seconds()
+            if input_seconds is None:
+                continue_taking_measurements = False
+                break
+            else:
+                current_time_tamp.second += input_seconds
+                self.single_frame_measurements.append(self.create_single_frame_measurement(current_time_tamp))
+        for m in self.single_frame_measurements:
+            print(m.time_stamp)
+            print(m.view_vector)
+            print(m.position_vector)
+            print("-----")
+
+
+
+
+
+    def create_single_frame_measurement(self, time_stamp: UniversalTimeStamp) -> SingleFrameMeasurement | None:
+        drift_angle_deg = EarthCenteredInertial.determine_angular_drift(self.calibration.initial_time_stamp, time_stamp)
+        view_vector_drifted = EarthCenteredInertial.rotate_eci_vector_around_earth_axis(
+            self.calibration.center_view_vector.value, drift_angle_deg)
+        left_vector_drifted = EarthCenteredInertial.rotate_eci_vector_around_earth_axis(
+            self.calibration.left_view_vector.value, drift_angle_deg)
+        right_vector_drifted = EarthCenteredInertial.rotate_eci_vector_around_earth_axis(
+            self.calibration.right_view_vector.value, drift_angle_deg)
+        position_vector_drifted = EarthCenteredInertial.rotate_eci_vector_around_earth_axis(
+            self.calibration.position_vector, drift_angle_deg)
+        WindowController.simple_setup()
+        WindowController.run_script(DefaultScripts.prepare_tracking_script)
+        measurement_image = self.measurement_cam.take_screenshot("measurement")
+        observed_dots = self.star_imager.all_observable_stars_of_image(measurement_image)
+        assert len(observed_dots) <= 1
+        if len(observed_dots) == 1:
+            triangulated_view_vector = Code.triangulate_vector_from_image_point(
+                [view_vector_drifted, left_vector_drifted, right_vector_drifted],
+                [Params.center_point, Params.left_edge_point, Params.right_edge_point],
+                observed_dots[0].position, Params.width_height[0], Code.deg_to_rad(self.measurement_cam.field_of_view)
+            )
+            return SingleFrameMeasurement(time_stamp, UnitVector(triangulated_view_vector), position_vector_drifted)
+        else:
+            return None
+
 
 
 
 
 
     @staticmethod
-    def parse_lat_lon(lat_lon_str: str) -> tuple[float, float]:
-        lat_lon_str = lat_lon_str.strip()
-        lat_str, lon_str = lat_lon_str.split()
-        return float(lat_str), float(lon_str)
+    def parse_input_seconds() -> int | None:
+        try:
+            input_seconds = int(input())
+            assert input_seconds >= 0
+            return input_seconds
+        except (ValueError, AssertionError):
+            return None
+
 
 
 

@@ -125,6 +125,14 @@ class StarImager:
         print(f"Viable stars in frame: {len(viable_stars)}.")
         return viable_stars
 
+    def all_observable_stars_of_image(self, night_sky_image: np.ndarray) -> list[ObservedStar]:
+        mask_image = self.raw_to_mask(night_sky_image)
+        key_points = self.determine_keypoints(mask_image)
+        all_observed_stars = []
+        for kp in key_points:
+            all_observed_stars.append(ObservedStar(int(kp.size), tuple(kp.pt)))
+        return all_observed_stars
+
     def determine_four_stars_and_their_pairings(self, night_sky_image: np.ndarray) -> tuple[dict[int, ObservedStar], dict[int, ObservedStarPair]]:
         mask_image = self.raw_to_mask(night_sky_image).astype("uint8")
         keypoints = self.determine_keypoints(mask_image)

@@ -125,6 +125,7 @@ class WindowController:
 
     @staticmethod
     def touchdown_command():
+        WindowController.enter_command_procedure(f"{Params.select_cmd} {Params.earth_name}")
         pyautogui.hotkey('ctrl', 'g')
 
     @staticmethod
@@ -276,7 +277,8 @@ class VirtualCamera:
         time.sleep(20)
         print("Landing completed.")
 
-    def set_time(self, time_stamp: UniversalTimeStamp):
+    @staticmethod
+    def set_time(time_stamp: UniversalTimeStamp):
         WindowController.enter_command_procedure(f"{Params.date_cmd} \"{time_stamp}\"")
 
     def test_something(self):

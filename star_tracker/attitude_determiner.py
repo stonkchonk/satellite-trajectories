@@ -19,11 +19,11 @@ class AttitudeDeterminer:
         assert len(three_observed) == 3
         assert len(three_matched_ids) == 3
         three_matched_catalog_stars = [catalog_dict.get(idx) for idx in three_matched_ids]
-        euclidean_distances = [Code.euclidean_distance(target_view_point, observed.position) for observed in three_observed]
-        cosine_separations = np.array([math.cos(Code.deg_to_rad(self.field_of_view_deg) * eu_dist/Params.width_height[0]) for eu_dist in euclidean_distances])
-        star_position_matrix = np.array([match.position.value for match in three_matched_catalog_stars])
-        triangulated_unit_vector = UnitVector(np.linalg.solve(star_position_matrix, cosine_separations))
-        return triangulated_unit_vector
+        return UnitVector(Code.triangulate_vector_from_image_point(
+            [match.position.value for match in three_matched_catalog_stars],
+            [observed.position for observed in three_observed],
+            target_view_point, Params.width_height[0], Code.deg_to_rad(self.field_of_view_deg))
+        )
 
     def determine_rotation_axis(self, three_observed: list[ObservedStar], three_matched_ids: list[int]) -> UnitVector:
         left_edge_vector = self.triangulate_view_vector(Params.left_edge_point, three_observed, three_matched_ids)

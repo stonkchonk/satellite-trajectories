@@ -136,7 +136,7 @@ class EarthCenteredInertial:
         j0 = EarthCenteredInertial.determine_j0(time_stamp.year, time_stamp.month, time_stamp.day)
         t0 = EarthCenteredInertial.determine_t0(j0)
         theta_g0_deg = EarthCenteredInertial.determine_theta_g0_deg(t0)
-        theta_d_deg = EarthCenteredInertial.determine_theta_g(time_stamp.determine_ut_hr(), theta_g0_deg)
+        theta_d_deg = EarthCenteredInertial.determine_theta_g(time_stamp, theta_g0_deg)
         return EarthCenteredInertial.determine_eci_longitude(ecef_longitude_deg, theta_d_deg)
 
     @staticmethod
@@ -164,6 +164,10 @@ class EarthCenteredInertial:
         :param angle_deg:
         :return: rotated eci vector
         """
+        w = Code.deg_to_rad(angle_deg)
+        assert eci_vector.shape == (3,)
+        z_rotation_matrix = np.array([[np.cos(w), -np.sin(w), 0], [np.sin(w), np.cos(w), 0], [0, 0, 1]])
+        return np.matmul(z_rotation_matrix, eci_vector)
 
 
 
