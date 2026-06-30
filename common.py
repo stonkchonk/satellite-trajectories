@@ -19,6 +19,7 @@ class Params:
     center_point = norm_radius, norm_radius
     left_edge_point = (0, norm_radius)
     right_edge_point = (norm_radius * 2, norm_radius)
+    top_edge_point = (norm_radius, 0)
     center_point_as_int = int(norm_radius), int(norm_radius)
 
     # angular values
@@ -196,6 +197,11 @@ class Code:
         return Code.rad_to_deg(math.acos(cosine_separation))
 
     @staticmethod
+    def angular_separation_of_two_vector_rad(v1: np.ndarray, v2: np.ndarray) -> float:
+        assert v1.shape == v2.shape
+        return math.acos(np.dot(v1, v2) / (np.linalg.norm(v1) * np.linalg.norm(v2)))
+
+    @staticmethod
     def save_debug_image(filename: str, image: np.ndarray):
         cv2.imwrite(Params.debug_images_dir + filename, image)
 
@@ -210,6 +216,15 @@ class Code:
             if idx != exclusion_idx:
                 modified_list.append(element)
         return modified_list
+
+    @staticmethod
+    def format_to_geogebra_representation(vectors: list[np.ndarray]) -> str:
+        geogebra_str = "{"
+        for vector in vectors:
+            assert vector.shape == (3,)
+            geogebra_str += f"({vector[0]}, {vector[1]}, {vector[2]}),"
+        geogebra_str = geogebra_str[:-1] + "}"
+        return geogebra_str
 
     @staticmethod
     def fancy_format_ra_dec(ra_dec_deg: tuple[float, float], opencv_friendly_text: bool = False):

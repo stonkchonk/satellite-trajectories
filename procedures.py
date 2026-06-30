@@ -1,3 +1,4 @@
+import time
 from copy import copy
 
 import numpy as np
@@ -20,7 +21,7 @@ class CameraCalibration:
         self.position_vector: np.ndarray | None = None
         self.center_view_vector: UnitVector | None = None
         self.left_view_vector: UnitVector | None = None
-        self.right_view_vector: UnitVector | None = None
+        self.top_view_vector: UnitVector | None = None
         self.initial_time_stamp: UniversalTimeStamp | None = None
 
     def view_vector_calibration_procedure(self):
@@ -48,7 +49,7 @@ class CameraCalibration:
 
         self.center_view_vector = self.attitude_determiner.triangulate_view_vector(Params.center_point, three_observed_stars, three_matched_stars)
         self.left_view_vector = self.attitude_determiner.triangulate_view_vector(Params.left_edge_point, three_observed_stars, three_matched_stars)
-        self.right_view_vector = self.attitude_determiner.triangulate_view_vector(Params.right_edge_point, three_observed_stars, three_matched_stars)
+        self.top_view_vector = self.attitude_determiner.triangulate_view_vector(Params.top_edge_point, three_observed_stars, three_matched_stars)
         self.attitude_determiner.draw_view_vector(self.center_view_vector)
         print("View vector calibration completed. Do not move camera.")
 
@@ -92,8 +93,9 @@ class CameraCalibration:
         WindowController.simple_setup()
         print("Starting full camera calibration procedure.")
         self.position_vector_calibration_procedure(override_time_stamp, override_lat_lon, override_sea_altitude)
-        print("Press enter to continue with view vector calibration.")
+        print("Point camera towards satellite then press enter.")
         _ = input()
+        time.sleep(Params.sleep_quick)
         WindowController.simple_setup()
         self.view_vector_calibration_procedure()
         print(f"Camera calibration completed. {self.center_view_vector}, {self.position_vector}")
@@ -112,15 +114,11 @@ class SingleFrameMeasurement:
         self.view_vector = view_vector
         self.position_vector = position_vector
 
-    @classmethod
-    def from_e(cls):
-        pass
-
 
 class SingleFrameMeasurementSeriesCreator:
     def __init__(self, calibration_instance: CameraCalibration | None):
         self.calibration = calibration_instance
-        self.single_frame_measurements = []
+        self.single_frame_measurements: list[SingleFrameMeasurement] = []
         self.measurement_cam = VirtualCamera("measurement cam", self.calibration.calibration_cam.field_of_view,
                                              self.calibration.calibration_cam.exposure_comp, self.calibration.calibration_cam.exposure_comp)
         self.star_imager = StarImager(self.calibration.calibration_cam.field_of_view, save_debug_images=True)
@@ -130,7 +128,9 @@ class SingleFrameMeasurementSeriesCreator:
             self.calibration = CameraCalibration()
             self.calibration.full_camera_calibration_procedure()
         WindowController.simple_setup()
+        WindowController.run_script(DefaultScripts.prepare_tracking_script)
         self.measurement_cam.setup()
+        self.measurement_cam.update_star_magnitude_limit(7.0)
         continue_taking_measurements = True
         current_time_tamp = copy(self.calibration.initial_time_stamp)
         while continue_taking_measurements:
@@ -140,13 +140,19 @@ class SingleFrameMeasurementSeriesCreator:
                 continue_taking_measurements = False
                 break
             else:
+                WindowController.simple_setup()
                 current_time_tamp.second += input_seconds
+                self.measurement_cam.set_time(current_time_tamp)
                 self.single_frame_measurements.append(self.create_single_frame_measurement(current_time_tamp))
         for m in self.single_frame_measurements:
             print(m.time_stamp)
             print(m.view_vector)
             print(m.position_vector)
+            ra_rad, dec_rad = m.view_vector.to_radians
+            print(Code.fancy_format_ra_dec((Code.rad_to_deg(ra_rad), Code.rad_to_deg(dec_rad))))
             print("-----")
+        vectors = [m.view_vector.value for m in self.single_frame_measurements]
+        print(Code.format_to_geogebra_representation(vectors))
 
 
 
@@ -158,19 +164,18 @@ class SingleFrameMeasurementSeriesCreator:
             self.calibration.center_view_vector.value, drift_angle_deg)
         left_vector_drifted = EarthCenteredInertial.rotate_eci_vector_around_earth_axis(
             self.calibration.left_view_vector.value, drift_angle_deg)
-        right_vector_drifted = EarthCenteredInertial.rotate_eci_vector_around_earth_axis(
-            self.calibration.right_view_vector.value, drift_angle_deg)
+        top_vector_drifted = EarthCenteredInertial.rotate_eci_vector_around_earth_axis(
+            self.calibration.top_view_vector.value, drift_angle_deg)
         position_vector_drifted = EarthCenteredInertial.rotate_eci_vector_around_earth_axis(
             self.calibration.position_vector, drift_angle_deg)
         WindowController.simple_setup()
-        WindowController.run_script(DefaultScripts.prepare_tracking_script)
         measurement_image = self.measurement_cam.take_screenshot("measurement")
+        Code.save_debug_image(f"measurement_{len(self.single_frame_measurements)}.png", measurement_image)
         observed_dots = self.star_imager.all_observable_stars_of_image(measurement_image)
-        assert len(observed_dots) <= 1
-        if len(observed_dots) == 1:
+        if len(observed_dots) >= 1:
             triangulated_view_vector = Code.triangulate_vector_from_image_point(
-                [view_vector_drifted, left_vector_drifted, right_vector_drifted],
-                [Params.center_point, Params.left_edge_point, Params.right_edge_point],
+                [view_vector_drifted, left_vector_drifted, top_vector_drifted],
+                [Params.center_point, Params.left_edge_point, Params.top_edge_point],
                 observed_dots[0].position, Params.width_height[0], Code.deg_to_rad(self.measurement_cam.field_of_view)
             )
             return SingleFrameMeasurement(time_stamp, UnitVector(triangulated_view_vector), position_vector_drifted)
