@@ -2,6 +2,7 @@ import time
 from copy import copy
 
 import numpy as np
+from fontTools.subset import intersect
 
 from common import Params, Code
 from earth import UniversalTimeStamp, EarthCenteredInertial
@@ -115,7 +116,7 @@ class SingleFrameMeasurement:
         self.position_vector = position_vector
 
 
-class SingleFrameMeasurementSeriesCreator:
+class SingleFrameMeasurementSeries:
     def __init__(self, calibration_instance: CameraCalibration | None):
         self.calibration = calibration_instance
         self.single_frame_measurements: list[SingleFrameMeasurement] = []
@@ -155,9 +156,6 @@ class SingleFrameMeasurementSeriesCreator:
         print(Code.format_to_geogebra_representation(vectors))
 
 
-
-
-
     def create_single_frame_measurement(self, time_stamp: UniversalTimeStamp) -> SingleFrameMeasurement | None:
         drift_angle_deg = EarthCenteredInertial.determine_angular_drift(self.calibration.initial_time_stamp, time_stamp)
         view_vector_drifted = EarthCenteredInertial.rotate_eci_vector_around_earth_axis(
@@ -183,10 +181,6 @@ class SingleFrameMeasurementSeriesCreator:
             return None
 
 
-
-
-
-
     @staticmethod
     def parse_input_seconds() -> int | None:
         try:
@@ -197,5 +191,76 @@ class SingleFrameMeasurementSeriesCreator:
             return None
 
 
+class DualFrameMeasurementSeries:
+    def __init__(self, dual_frame_measurements: list[tuple[SingleFrameMeasurement, SingleFrameMeasurement]]):
+        self.dual_frame_measurements = dual_frame_measurements
+
+    @classmethod
+    def create_from_two_single_series(cls, first_series: SingleFrameMeasurementSeries, second_series: SingleFrameMeasurementSeries):
+        assert len(first_series.single_frame_measurements) == len(second_series.single_frame_measurements)
+        dual_frame_measurements = []
+        for idx, single_frame_measurement in enumerate(first_series.single_frame_measurements):
+            assert single_frame_measurement is not None
+            assert second_series.single_frame_measurements[idx] is not None
+            dual_frame_measurements.append(
+                (copy(single_frame_measurement), copy(second_series.single_frame_measurements[idx]))
+            )
+        return DualFrameMeasurementSeries(dual_frame_measurements)
+
+    @property
+    def intersection_vectors(self) -> list[np.ndarray]:
+        intersection_vectors = []
+        for dual_frame_measurement in self.dual_frame_measurements:
+            first, second = dual_frame_measurement
+            p1 = first.position_vector
+            v1 = first.view_vector.value
+            p2 = second.position_vector
+            v2 = second.view_vector.value
+            intersection_vectors.append(self.intersection_center_point(p1, v1, p2, v2))
+        return intersection_vectors
+
+    @staticmethod
+    def closest_approach_two_lines(p1: np.ndarray, v1: np.ndarray, p2: np.ndarray, v2: np.ndarray) -> tuple[float, float]:
+        """
+        Solution from: https://math.stackexchange.com/questions/1993953/closest-points-between-two-lines
+        Determines closest approach between two lines L1 and L2 with L1 = p1 + t*v1 and L2 = p2 + s*v2
+        :param p1: position vector of line 1
+        :param v1: direction vector of line 1
+        :param p2: position vector of line 2
+        :param v2: direction vector of line 2
+        :return: (t, s)
+        """
+        # determine matrix parameters
+        m11 = np.dot(v2, v1)
+        m12 = -np.dot(v1, v1)
+        m21 = np.dot(v2, v2)
+        m22 = -np.dot(v1, v2)
+        n1 = np.dot(p1, v1) - np.dot(p2, v1)
+        n2 = np.dot(p1, v2) - np.dot(p2, v2)
+        # determine parameter solutions
+        m = np.array([[m11, m12], [m21, m22]])
+        n = np.array([n1, n2])
+        solutions = np.linalg.solve(m, n)
+        return solutions[0], solutions[1]
+
+    @staticmethod
+    def intersection_center_point(p1: np.ndarray, v1: np.ndarray, p2: np.ndarray, v2: np.ndarray) -> np.ndarray:
+        """
+        Determines center point of closest approach between two lines L1 and L2 with L1 = p1 + t*v1 and L2 = p2 + s*v2
+        :param p1: position vector of line 1
+        :param v1: direction vector of line 1
+        :param p2: position vector of line 2
+        :param v2: direction vector of line 2
+        :return: point vector which somewhat resembles an intersection between two lines which do not intersect
+        """
+        t, s = DualFrameMeasurementSeries.closest_approach_two_lines(p1, v1, p2, v2)
+        l1 = p1 + t*v1
+        l2 = p2 + s*v2
+        l1_l2 = l2 - l1
+        return l1 + 0.5 * l1_l2
 
 
+
+class OrbitalParameterDeterminer:
+
+    def __init__(self):
