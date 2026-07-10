@@ -209,6 +209,10 @@ class DualFrameMeasurementSeries:
 
     @property
     def intersection_vectors(self) -> list[np.ndarray]:
+        """
+        Outputs a list of intersection eci vectors where view lines of two observations intersect each other.
+        This equals the supposed eci position of the satellite.
+        """
         intersection_vectors = []
         for dual_frame_measurement in self.dual_frame_measurements:
             first, second = dual_frame_measurement

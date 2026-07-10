@@ -24,3 +24,5 @@ w1 = Code.rad_to_deg(Code.angular_separation_of_two_vector_rad(vectors[0].value,
 w2 = Code.rad_to_deg(Code.angular_separation_of_two_vector_rad(vectors[0].value, vectors[2].value))
 w3 = Code.rad_to_deg(Code.angular_separation_of_two_vector_rad(vectors[1].value, vectors[2].value))
 print(w1, w2, w3)
+a = [1,2,3,4,5]
+print(a[1:-1])

@@ -1,6 +1,122 @@
 import numpy
 import numpy as np
-from common import Params
+from common import Params, Code
+from math import sin, cos, sqrt, atan2, atan, pi
+
+from star_tracker.catalog_parser import UnitVector
+
+
+class ParametricTrajectory:
+    def __init__(self, theta_1 : float, r_1: float, theta_2 : float, r_2: float, theta_3 : float, r_3 : float):
+        self.theta_1 = theta_1
+        self.r_1 = r_1
+        self.theta_2 = theta_2
+        self.r_2 = r_2
+        self.theta_3 = theta_3
+        self.r_3 = r_3
+
+        self.argument_of_periapsis = self._determine_argument_of_periapsis() # omega
+        self.eccentricity = self._determine_eccentricity(self.argument_of_periapsis) # e
+        self.semi_major_axis = self._determine_semi_major_axis(self.argument_of_periapsis, self.eccentricity) # a
+
+        # avoid negative eccentricities as they confuse argument of periapsis
+        if self.eccentricity < 0:
+            self.eccentricity = -self.eccentricity
+            self.argument_of_periapsis = Code.normalize_angle(self.argument_of_periapsis + pi)
+
+
+
+    def _determine_argument_of_periapsis(self) -> float:
+        # A_12, B_12, C_12, alpha_12
+        var_A_12 = cos(self.theta_2) * self.r_2 - cos(self.theta_1) * self.r_1
+        var_B_12 = sin(self.theta_2) * self.r_2 - sin(self.theta_1) * self.r_1
+        var_C_12 = sqrt(var_A_12 ** 2 + var_B_12 ** 2)
+        var_alpha_12 = atan2(var_B_12, var_A_12)
+
+        # A_13, B_13, C_13, alpha_13
+        var_A_13 = cos(self.theta_3) * self.r_3 - cos(self.theta_1) * self.r_1
+        var_B_13 = sin(self.theta_3) * self.r_3 - sin(self.theta_1) * self.r_1
+        var_C_13 = sqrt(var_A_13 ** 2 + var_B_13 ** 2)
+        var_alpha_13 = atan2(var_B_13, var_A_13)
+
+        # D, E, F
+        var_D = cos(var_alpha_12 - var_alpha_13)
+        var_E = -sin(var_alpha_12 - var_alpha_13)
+        var_F = (var_C_13 * (self.r_1 - self.r_2)) / (
+                var_C_12 * (self.r_1 - self.r_3)
+        )
+
+        return var_alpha_13 - atan((var_F - var_D) / var_E)
+
+    def _determine_eccentricity(self, argument_of_periapsis: float) -> float:
+        # A_12, B_12, C_12, alpha_12
+        var_A_12 = cos(self.theta_2) * self.r_2 - cos(self.theta_1) * self.r_1
+        var_B_12 = sin(self.theta_2) * self.r_2 - sin(self.theta_1) * self.r_1
+        var_C_12 = sqrt(var_A_12 ** 2 + var_B_12 ** 2)
+        var_alpha_12 = atan2(var_B_12, var_A_12)
+
+        return (self.r_1 - self.r_2) / (var_C_12 * cos(var_alpha_12 - argument_of_periapsis))
+
+
+    def _determine_semi_major_axis(self, argument_of_periapsis: float, eccentricity: float) -> float:
+        return self.r_1 * (1+ eccentricity * cos(self.theta_1 - argument_of_periapsis)) / (1 - eccentricity ** 2)
+
+    @staticmethod
+    def determine_orbital_plane_vector(first_eci_vector: np.ndarray, last_eci_vector: np.ndarray) -> UnitVector:
+        """
+        Determines the orbital plane vector which is perpendicular to two measurement vectors.
+        :param first_eci_vector: measured eci vector
+        :param last_eci_vector: measured eci vector
+        :return: orbital plane described by perpendicular unit vector
+        """
+        assert first_eci_vector.shape == (3,)
+        assert last_eci_vector.shape == (3,)
+        return UnitVector.from_cross_product(UnitVector(first_eci_vector), UnitVector(last_eci_vector))
+
+    @staticmethod
+    def _orbital_plane_deviations(eci_vectors: list[np.ndarray]) -> list[float]:
+        """
+
+        :param eci_vectors:
+        :return:
+        """
+        for v in eci_vectors:
+            assert v.shape == (3,)
+        plane_vector = ParametricTrajectory.determine_orbital_plane_vector(eci_vectors[0], eci_vectors[-1])
+        deviations_deg = []
+        for v in eci_vectors:
+            deviations_deg.append(abs(Code.rad_to_deg(Code.angular_separation_of_two_vector_rad(plane_vector.value, v) - pi / 2)))
+        return deviations_deg
+
+    @staticmethod
+    def verify_orbital_planar_integrity(eci_vectors: list[np.ndarray], max_deviation_deg: float = 0.2) -> bool:
+        """
+        Checks that all vectors are located within the same plane, tolerating some deviation.
+        :param eci_vectors: list of vectors
+        :param max_deviation_deg: maximum allowed deviation in degrees
+        :return: true or false
+        """
+        return all([deviation <= max_deviation_deg for deviation in ParametricTrajectory._orbital_plane_deviations(eci_vectors)])
+
+    @staticmethod
+    def _select_middle_vector(eci_vectors: list[np.ndarray]) -> int:
+        """
+        Returns index of middle vector in list of vectors.
+        :param eci_vectors: list of vectors in orbital plane
+        :return: index
+        """
+        assert ParametricTrajectory.verify_orbital_planar_integrity(eci_vectors)
+        first, last = eci_vectors[0], eci_vectors[-1]
+        deviation_differences = []
+        for idx, v in enumerate(eci_vectors):
+            first_deviation = Code.angular_separation_of_two_vector_rad(v, first)
+            last_deviation = Code.angular_separation_of_two_vector_rad(v, last)
+            deviation_differences.append(first_deviation - last_deviation)
+        return deviation_differences.index(min(deviation_differences))
+
+
+
+
 
 class GaussAlgorithm:
     def __init__(self, t1: float, t2: float, t3: float, R1: numpy.ndarray, R2: numpy.ndarray, R3: numpy.ndarray,

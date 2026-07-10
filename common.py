@@ -158,6 +158,10 @@ class Code:
         return angle_rad / Params.radians_per_degree
 
     @staticmethod
+    def normalize_angle(angle_rad: float) -> float:
+        return angle_rad % (2 * math.pi)
+
+    @staticmethod
     def km_to_au(length: float) -> float:
         return length / Params.astronomical_unit_km
 
