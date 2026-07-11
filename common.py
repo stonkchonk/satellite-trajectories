@@ -1,5 +1,6 @@
 # common properties and values
 import math
+from math import atan2
 
 import cv2
 import numpy as np
@@ -201,9 +202,26 @@ class Code:
         return Code.rad_to_deg(math.acos(cosine_separation))
 
     @staticmethod
-    def angular_separation_of_two_vector_rad(v1: np.ndarray, v2: np.ndarray) -> float:
+    def angular_separation_of_two_vectors_rad(v1: np.ndarray, v2: np.ndarray) -> float:
+        """
+        Determines angle between two vectors as 0 <= angle <= π.
+        """
         assert v1.shape == v2.shape
         return math.acos(np.dot(v1, v2) / (np.linalg.norm(v1) * np.linalg.norm(v2)))
+
+    @staticmethod
+    def full_circle_theta_angle_of_vector_rad(eci_vector: np.ndarray, reference_plane_normal: np.ndarray) -> float:
+        """
+        Determines theta angle of eci vectors as -π <= angle <= π output as 0 <= angle <= 2π.
+        To determine the correct sign, it needs a reference plane normal.
+        """
+        xz_plane_normal = np.array([0, 1, 0])
+        e_x = np.cross(reference_plane_normal, xz_plane_normal)
+        e_y = np.cross(reference_plane_normal, e_x)
+        x = np.dot(eci_vector, e_x)
+        y = np.dot(eci_vector, e_y)
+        return Code.normalize_angle(atan2(y, x))
+
 
     @staticmethod
     def save_debug_image(filename: str, image: np.ndarray):

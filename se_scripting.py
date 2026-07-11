@@ -79,6 +79,9 @@ Show Stars
 Hide Planets
 Hide Orbits
 Hide Galaxies
+Hide Nebulae
+Hide Clusters
+Hide Aurora
     """
 
     prepare_satellite_tracking = """
@@ -88,6 +91,9 @@ Hide Stars
 Show Planets
 Hide Orbits
 Hide Galaxies
+Hide Nebulae
+Hide Clusters
+Hide Aurora
     """
 
     default_visibilities_script = """
@@ -96,7 +102,10 @@ Hide Atmospheres
 Show Stars
 Show Planets
 Hide Orbits
-Show Galaxies    
+Show Galaxies
+Show Nebulae
+Show Clusters
+Show Aurora    
     """
 
 

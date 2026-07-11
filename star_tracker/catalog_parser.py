@@ -81,6 +81,9 @@ class UnitVector:
     def __str__(self):
         return f'UnitVector.from_array([{', '.join([str(e) for e in self.value.tolist()])}])'
 
+    def __eq__(self, other: "UnitVector") -> bool:
+        return self.value == other.value
+
 
 class CatalogStar:
     def __init__(self, name: str, position: UnitVector, visual_magnitude: float):

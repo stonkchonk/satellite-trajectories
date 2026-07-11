@@ -74,7 +74,7 @@ class ParametricTrajectory:
         return UnitVector.from_cross_product(UnitVector(first_eci_vector), UnitVector(last_eci_vector))
 
     @staticmethod
-    def _orbital_plane_deviations(eci_vectors: list[np.ndarray]) -> list[float]:
+    def _orbital_plane_deviations(eci_vectors: list[np.ndarray], plane_vector: UnitVector) -> list[float]:
         """
 
         :param eci_vectors:
@@ -82,37 +82,65 @@ class ParametricTrajectory:
         """
         for v in eci_vectors:
             assert v.shape == (3,)
-        plane_vector = ParametricTrajectory.determine_orbital_plane_vector(eci_vectors[0], eci_vectors[-1])
         deviations_deg = []
         for v in eci_vectors:
-            deviations_deg.append(abs(Code.rad_to_deg(Code.angular_separation_of_two_vector_rad(plane_vector.value, v) - pi / 2)))
+            deviations_deg.append(abs(Code.rad_to_deg(Code.angular_separation_of_two_vectors_rad(plane_vector.value, v) - pi / 2)))
         return deviations_deg
 
     @staticmethod
-    def verify_orbital_planar_integrity(eci_vectors: list[np.ndarray], max_deviation_deg: float = 0.2) -> bool:
+    def verify_orbital_planar_integrity(eci_vectors: list[np.ndarray], plane_vector: UnitVector,
+                                        max_deviation_deg: float = 0.2) -> bool:
         """
         Checks that all vectors are located within the same plane, tolerating some deviation.
         :param eci_vectors: list of vectors
         :param max_deviation_deg: maximum allowed deviation in degrees
         :return: true or false
         """
-        return all([deviation <= max_deviation_deg for deviation in ParametricTrajectory._orbital_plane_deviations(eci_vectors)])
+        return all([deviation <= max_deviation_deg for deviation in ParametricTrajectory._orbital_plane_deviations(eci_vectors, plane_vector)])
 
     @staticmethod
-    def _select_middle_vector(eci_vectors: list[np.ndarray]) -> int:
+    def _select_middle_vector(eci_vectors: list[np.ndarray], plane_vector: UnitVector) -> int:
         """
         Returns index of middle vector in list of vectors.
         :param eci_vectors: list of vectors in orbital plane
         :return: index
         """
-        assert ParametricTrajectory.verify_orbital_planar_integrity(eci_vectors)
         first, last = eci_vectors[0], eci_vectors[-1]
         deviation_differences = []
         for idx, v in enumerate(eci_vectors):
-            first_deviation = Code.angular_separation_of_two_vector_rad(v, first)
-            last_deviation = Code.angular_separation_of_two_vector_rad(v, last)
+            first_deviation = Code.angular_separation_of_two_vectors_rad(v, first)
+            last_deviation = Code.angular_separation_of_two_vectors_rad(v, last)
             deviation_differences.append(first_deviation - last_deviation)
         return deviation_differences.index(min(deviation_differences))
+
+    @staticmethod
+    def _determine_eci_theta_origin_vector(orbital_plane_vector: UnitVector) -> UnitVector:
+        """
+        Determines the origin vector for the orbital plane from where we determine the theta angles.
+        This vector is basically located at theta = 0.
+        :return:
+        """
+
+    @classmethod
+    def from_eci_measurements(cls, measured_eci_vectors: list[np.ndarray]) -> "ParametricTrajectory":
+        assert len(measured_eci_vectors) >= 3
+
+        first_vector = measured_eci_vectors[0]
+        last_vector = measured_eci_vectors[-1]
+        plane_vector = cls.determine_orbital_plane_vector(first_vector, last_vector)
+
+        assert cls.verify_orbital_planar_integrity(measured_eci_vectors, plane_vector)
+
+        middle_vector = measured_eci_vectors[cls._select_middle_vector(measured_eci_vectors, plane_vector)]
+        theta_1 = Code.full_circle_theta_angle_of_vector_rad(first_vector, plane_vector.value)
+        theta_2 = Code.full_circle_theta_angle_of_vector_rad(middle_vector, plane_vector.value)
+        theta_3 = Code.full_circle_theta_angle_of_vector_rad(last_vector, plane_vector.value)
+        r_1 = np.sqrt(first_vector.dot(first_vector))
+        r_2 = np.sqrt(middle_vector.dot(middle_vector))
+        r_3 = np.sqrt(last_vector.dot(last_vector))
+        return cls(theta_1, theta_2, theta_3, r_1, r_2, r_3)
+
+
 
 
 

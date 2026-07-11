@@ -90,10 +90,13 @@ class CameraCalibration:
 
     def full_camera_calibration_procedure(self, override_time_stamp: UniversalTimeStamp | None = None,
                                         override_lat_lon: tuple[float, float] | None = None,
-                                        override_sea_altitude: float | None = None):
+                                        override_sea_altitude: float | None = None,
+                                        setup_calibration_camera: bool = False):
         WindowController.simple_setup()
         print("Starting full camera calibration procedure.")
         self.position_vector_calibration_procedure(override_time_stamp, override_lat_lon, override_sea_altitude)
+        if setup_calibration_camera:
+            self.calibration_cam.setup()
         print("Point camera towards satellite then press enter.")
         _ = input()
         time.sleep(Params.sleep_quick)
@@ -124,36 +127,44 @@ class SingleFrameMeasurementSeries:
                                              self.calibration.calibration_cam.exposure_comp, self.calibration.calibration_cam.exposure_comp)
         self.star_imager = StarImager(self.calibration.calibration_cam.field_of_view, save_debug_images=True)
 
-    def create_measurement_series(self):
+    def create_measurement_series(self, forward_second_steps: None | list[int] = None):
         if self.calibration is None:
             self.calibration = CameraCalibration()
-            self.calibration.full_camera_calibration_procedure()
+            self.calibration.full_camera_calibration_procedure(setup_calibration_camera=True)
         WindowController.simple_setup()
         WindowController.run_script(DefaultScripts.prepare_tracking_script)
         self.measurement_cam.setup()
         self.measurement_cam.update_star_magnitude_limit(7.0)
-        continue_taking_measurements = True
         current_time_tamp = copy(self.calibration.initial_time_stamp)
-        while continue_taking_measurements:
-            print("Enter number to move time in seconds ahead, enter letter to end measurement.")
-            input_seconds = self.parse_input_seconds()
-            if input_seconds is None:
-                continue_taking_measurements = False
-                break
-            else:
-                WindowController.simple_setup()
-                current_time_tamp.second += input_seconds
+        if forward_second_steps is None:
+            continue_taking_measurements = True
+            while continue_taking_measurements:
+                print("Enter number to move time in seconds ahead, enter letter to end measurement.")
+                input_seconds = self.parse_input_seconds()
+                if input_seconds is None:
+                    continue_taking_measurements = False
+                    break
+                else:
+                    WindowController.simple_setup()
+                    current_time_tamp.second += input_seconds
+                    self.measurement_cam.set_time(current_time_tamp)
+                    self.single_frame_measurements.append(self.create_single_frame_measurement(current_time_tamp))
+        else:
+            for step in forward_second_steps:
+                current_time_tamp.second += step
                 self.measurement_cam.set_time(current_time_tamp)
                 self.single_frame_measurements.append(self.create_single_frame_measurement(current_time_tamp))
+
         for m in self.single_frame_measurements:
-            print(m.time_stamp)
-            print(m.view_vector)
-            print(m.position_vector)
-            ra_rad, dec_rad = m.view_vector.to_radians
-            print(Code.fancy_format_ra_dec((Code.rad_to_deg(ra_rad), Code.rad_to_deg(dec_rad))))
-            print("-----")
-        vectors = [m.view_vector.value for m in self.single_frame_measurements]
-        print(Code.format_to_geogebra_representation(vectors))
+            #print(m.time_stamp)
+            #print(m.view_vector)
+            #print(m.position_vector)
+            #ra_rad, dec_rad = m.view_vector.to_radians
+            #print(Code.fancy_format_ra_dec((Code.rad_to_deg(ra_rad), Code.rad_to_deg(dec_rad))))
+            #print("-----")
+            pass
+        #vectors = [m.view_vector.value for m in self.single_frame_measurements]
+        #print(Code.format_to_geogebra_representation(vectors))
 
 
     def create_single_frame_measurement(self, time_stamp: UniversalTimeStamp) -> SingleFrameMeasurement | None:
@@ -268,3 +279,6 @@ class DualFrameMeasurementSeries:
 class OrbitalParameterDeterminer:
 
     def __init__(self):
+        pass
+
+
