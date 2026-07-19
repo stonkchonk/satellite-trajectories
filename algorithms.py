@@ -1,4 +1,3 @@
-import numpy
 import numpy as np
 from common import Params, Code
 from math import sin, cos, sqrt, atan2, atan, pi
@@ -46,7 +45,7 @@ class ParametricTrajectory:
                 var_C_12 * (self.r_1 - self.r_3)
         )
 
-        return var_alpha_13 - atan((var_F - var_D) / var_E)
+        return Code.normalize_angle(var_alpha_13 - atan((var_F - var_D) / var_E))
 
     def _determine_eccentricity(self, argument_of_periapsis: float) -> float:
         # A_12, B_12, C_12, alpha_12
@@ -110,7 +109,7 @@ class ParametricTrajectory:
         for idx, v in enumerate(eci_vectors):
             first_deviation = Code.angular_separation_of_two_vectors_rad(v, first)
             last_deviation = Code.angular_separation_of_two_vectors_rad(v, last)
-            deviation_differences.append(first_deviation - last_deviation)
+            deviation_differences.append(abs(first_deviation - last_deviation))
         return deviation_differences.index(min(deviation_differences))
 
     @staticmethod
@@ -138,7 +137,8 @@ class ParametricTrajectory:
         r_1 = np.sqrt(first_vector.dot(first_vector))
         r_2 = np.sqrt(middle_vector.dot(middle_vector))
         r_3 = np.sqrt(last_vector.dot(last_vector))
-        return cls(theta_1, theta_2, theta_3, r_1, r_2, r_3)
+        print(plane_vector, r_1/8000, r_2/8000, r_3/8000, theta_1, theta_2, theta_3)
+        return cls(theta_1, r_1, theta_2, r_2, theta_3, r_3)
 
 
 
@@ -147,8 +147,8 @@ class ParametricTrajectory:
 
 
 class GaussAlgorithm:
-    def __init__(self, t1: float, t2: float, t3: float, R1: numpy.ndarray, R2: numpy.ndarray, R3: numpy.ndarray,
-                pd1: numpy.ndarray, pd2: numpy.ndarray, pd3: numpy.ndarray):
+    def __init__(self, t1: float, t2: float, t3: float, R1: np.ndarray, R2: np.ndarray, R3: np.ndarray,
+                 pd1: np.ndarray, pd2: np.ndarray, pd3: np.ndarray):
         """
         Performs Gauss orbit determination algorithm.
         :param t1: observation time 1 [s]
@@ -235,8 +235,8 @@ class GaussAlgorithm:
 
         # Step 7: Calculate a, b, c coefficients
         a = -(self.A**2 +2*self.A*self.E + self.R2sq)
-        b = -2*Params.mu*self.B * (self.A + self.E)
-        c = -Params.mu**2 * self.B**2
+        b = -2 * Params.mu_km * self.B * (self.A + self.E)
+        c = -Params.mu_km ** 2 * self.B ** 2
 
         # Step 8: Find positive real roots of polynomial.
         coefficients = [1, 0, a, 0, 0, b, 0, 0, c]
@@ -244,13 +244,30 @@ class GaussAlgorithm:
         real_roots = roots[np.isclose(roots.imag, 0)].real
         return [r for r in real_roots if r > 0]
 
-    def gauss_algorithm_orbit_from_root(self, r2: float):
+    def gauss_algorithm_orbit_from_root(self, r2_root: float) -> list[np.ndarray]:
+        """
+        Determine candidate vectors from one solution of r2
+        :param r2_root: solution of Step 8 as root of polynomial.
+        :return: list of three candidate vectors
+        """
         # Step 9: Calculate rho for slant ranges
-        rho1 = (1 / self.D0) * ((6 * (self.D31 * self.tau1 / self.tau3 + self.D21 * self.tau / self.tau3) * r2 ** 3 + Params.mu * self.D31 * (self.tau ** 2 - self.tau1 ** 1) * self.tau1 / self.tau3) / (6 * r2 ** 3 + Params.mu * (self.tau ** 2 - self.tau3 ** 2)) - self.D11)
-        rho3 = (1 / self.D0) * ((6 * (self.D13 * self.tau3 / self.tau1 + self.D23 * self.tau / self.tau1) * r2 ** 3 + Params.mu * self.D13 * (self.tau ** 2 - self.tau3 ** 1) * self.tau3 / self.tau1) / (6 * r2 ** 3 + Params.mu * (self.tau ** 2 - self.tau1 ** 2)) - self.D33)
-        rho2 = self.A + Params.mu * self.B / r2 ** 3
+        rho1 = (1 / self.D0) * ((6 * (self.D31 * self.tau1 / self.tau3 + self.D21 * self.tau / self.tau3) * r2_root ** 3 + Params.mu_km * self.D31 * (self.tau ** 2 - self.tau1 ** 2) * self.tau1 / self.tau3) / (6 * r2_root ** 3 + Params.mu_km * (self.tau ** 2 - self.tau3 ** 2)) - self.D11)
+        rho3 = (1 / self.D0) * ((6 * (self.D13 * self.tau3 / self.tau1 - self.D23 * self.tau / self.tau1) * r2_root ** 3 + Params.mu_km * self.D13 * (self.tau ** 2 - self.tau3 ** 2) * self.tau3 / self.tau1) / (6 * r2_root ** 3 + Params.mu_km * (self.tau ** 2 - self.tau1 ** 2)) - self.D33)
+        rho2 = self.A + Params.mu_km * self.B / r2_root ** 3
 
         # Step 10: calculate radii vectors
-        self.r1 = self.R1 + rho1 * self.pd1
-        self.r2 = self.R2 + rho2 * self.pd2
-        self.r3 = self.R3 + rho3 * self.pd3
+        r1 = self.R1 + rho1 * self.pd1
+        r2 = self.R2 + rho2 * self.pd2
+        r3 = self.R3 + rho3 * self.pd3
+
+        print(np.linalg.norm(r1), np.linalg.norm(r2), np.linalg.norm(r3))
+        print(rho1, rho2, rho3, "<<rhos")
+
+        return [r1, r2, r3]
+
+    def gauss_algorithm_select_solution(self):
+        r2_roots = self.gauss_algorithm_roots()
+        for r2_root in r2_roots:
+            r_candidates = self.gauss_algorithm_orbit_from_root(r2_root)
+            print(r2_root, r_candidates)
+            return r_candidates

@@ -79,12 +79,12 @@ class CameraCalibration:
         self.calibration_cam.touchdown_at_position(longitude, latitude)
         if override_sea_altitude is None:
             print("Enter sea altitude in [m] as seen in the HUD:")
-            sea_altitude = float(input())
+            sea_altitude_m = float(input())
             #WindowController.simple_setup()
         else:
-            sea_altitude = override_sea_altitude
+            sea_altitude_m = override_sea_altitude
         self.position_vector = EarthCenteredInertial.determine_eci_vector_from_lat_lon_alt(latitude, longitude,
-                                                                                           sea_altitude,
+                                                                                           sea_altitude_m / 1000,
                                                                                            self.initial_time_stamp)
         print(f"Position vector calibration completed. Remain steady.")
 
@@ -97,6 +97,7 @@ class CameraCalibration:
         self.position_vector_calibration_procedure(override_time_stamp, override_lat_lon, override_sea_altitude)
         if setup_calibration_camera:
             self.calibration_cam.setup()
+        WindowController.enter_command_procedure(f"{Params.select_cmd} {Params.satellite_name}")
         print("Point camera towards satellite then press enter.")
         _ = input()
         time.sleep(Params.sleep_quick)
@@ -118,14 +119,30 @@ class SingleFrameMeasurement:
         self.view_vector = view_vector
         self.position_vector = position_vector
 
+    def __str__(self):
+        return f"{{{self.time_stamp}; {self.view_vector.value.tolist()}; {self.position_vector.tolist()}}}"
+
+    @classmethod
+    def from_string(cls, sfm_str: str) -> "SingleFrameMeasurement":
+        sfm_str = sfm_str.strip().strip("{}")
+        ts_str, vv_str, pv_str = sfm_str.split(";")
+        return cls(UniversalTimeStamp.from_string(ts_str, False),
+                   UnitVector(np.fromstring(vv_str.strip().strip("[]"), sep=",", dtype=float)),
+                   np.fromstring(pv_str.strip().strip("[]"), sep=",", dtype=float))
+
 
 class SingleFrameMeasurementSeries:
     def __init__(self, calibration_instance: CameraCalibration | None):
         self.calibration = calibration_instance
         self.single_frame_measurements: list[SingleFrameMeasurement] = []
-        self.measurement_cam = VirtualCamera("measurement cam", self.calibration.calibration_cam.field_of_view,
-                                             self.calibration.calibration_cam.exposure_comp, self.calibration.calibration_cam.exposure_comp)
-        self.star_imager = StarImager(self.calibration.calibration_cam.field_of_view, save_debug_images=True)
+        self.measurement_cam: VirtualCamera | None = (
+            VirtualCamera("measurement cam", self.calibration.calibration_cam.field_of_view,
+                          self.calibration.calibration_cam.exposure_comp,
+                          self.calibration.calibration_cam.exposure_comp)) \
+            if self.calibration is not None else None
+        self.star_imager: StarImager | None = (
+            StarImager(self.calibration.calibration_cam.field_of_view, save_debug_images=True)) \
+            if self.calibration is not None else None
 
     def create_measurement_series(self, forward_second_steps: None | list[int] = None):
         if self.calibration is None:
@@ -148,12 +165,12 @@ class SingleFrameMeasurementSeries:
                     WindowController.simple_setup()
                     current_time_tamp.second += input_seconds
                     self.measurement_cam.set_time(current_time_tamp)
-                    self.single_frame_measurements.append(self.create_single_frame_measurement(current_time_tamp))
+                    self.single_frame_measurements.append(self.create_single_frame_measurement(copy(current_time_tamp)))
         else:
             for step in forward_second_steps:
                 current_time_tamp.second += step
                 self.measurement_cam.set_time(current_time_tamp)
-                self.single_frame_measurements.append(self.create_single_frame_measurement(current_time_tamp))
+                self.single_frame_measurements.append(self.create_single_frame_measurement(copy(current_time_tamp)))
 
         for m in self.single_frame_measurements:
             #print(m.time_stamp)
@@ -201,6 +218,17 @@ class SingleFrameMeasurementSeries:
         except (ValueError, AssertionError):
             return None
 
+    def __str__(self) -> str:
+        return "|".join([sfm.__str__() for sfm in self.single_frame_measurements])
+
+    @classmethod
+    def from_string(cls, sfms_string: str) -> "SingleFrameMeasurementSeries":
+        sfms_string = sfms_string.strip()
+        sfm_measurement_strings = sfms_string.split("|")
+        new_sfms = cls(None)
+        new_sfms.single_frame_measurements = [SingleFrameMeasurement.from_string(sfm_str) for sfm_str in sfm_measurement_strings]
+        return new_sfms
+
 
 class DualFrameMeasurementSeries:
     def __init__(self, dual_frame_measurements: list[tuple[SingleFrameMeasurement, SingleFrameMeasurement]]):
@@ -246,17 +274,9 @@ class DualFrameMeasurementSeries:
         :return: (t, s)
         """
         # determine matrix parameters
-        m11 = np.dot(v2, v1)
-        m12 = -np.dot(v1, v1)
-        m21 = np.dot(v2, v2)
-        m22 = -np.dot(v1, v2)
-        n1 = np.dot(p1, v1) - np.dot(p2, v1)
-        n2 = np.dot(p1, v2) - np.dot(p2, v2)
-        # determine parameter solutions
-        m = np.array([[m11, m12], [m21, m22]])
-        n = np.array([n1, n2])
-        solutions = np.linalg.solve(m, n)
-        return solutions[0], solutions[1]
+        v_matrix = np.column_stack([v1, -v2, np.cross(v2, v1)])
+        t = np.linalg.solve(v_matrix, p2 - p1)
+        return t[0], t[1]
 
     @staticmethod
     def intersection_center_point(p1: np.ndarray, v1: np.ndarray, p2: np.ndarray, v2: np.ndarray) -> np.ndarray:

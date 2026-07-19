@@ -71,6 +71,7 @@ class Params:
     date_cmd = "Date"
     select_cmd = "Select"
     earth_name = "Earth"
+    satellite_name = "ArtificialSatellite"
 
 
     # script names
@@ -135,7 +136,8 @@ class Params:
     # astrophysical constants
     earth_mass_kg = 5.9722e24
     gravity_constant = 6.67430e-11
-    mu = earth_mass_kg * gravity_constant
+    mu_m = earth_mass_kg * gravity_constant #m³/s²
+    mu_km = 398600#mu_m / 1e9
 
 
     # sun distance estimation camera fov settings
@@ -207,7 +209,8 @@ class Code:
         Determines angle between two vectors as 0 <= angle <= π.
         """
         assert v1.shape == v2.shape
-        return math.acos(np.dot(v1, v2) / (np.linalg.norm(v1) * np.linalg.norm(v2)))
+
+        return math.acos(np.clip(np.dot(v1, v2) / (np.linalg.norm(v1) * np.linalg.norm(v2)), -1, 1))
 
     @staticmethod
     def full_circle_theta_angle_of_vector_rad(eci_vector: np.ndarray, reference_plane_normal: np.ndarray) -> float:
