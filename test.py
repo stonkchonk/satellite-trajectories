@@ -2,7 +2,7 @@ from copy import copy
 
 import numpy as np
 
-from algorithms import ParametricTrajectory, GaussAlgorithm
+from algorithms import ParametricTrajectory, GaussAlgorithm, SimplifiedGaussAlgorithm
 from common import Code, Params
 from procedures import SingleFrameMeasurement, SingleFrameMeasurementSeries, DualFrameMeasurementSeries
 
@@ -33,3 +33,12 @@ gauss_algo = GaussAlgorithm(t[0], t[1], t[2], R[0], R[1], R[2], pd[0], pd[1], pd
 measured_eci_vectors = gauss_algo.gauss_algorithm_select_solution()
 gauss_trajectory = ParametricTrajectory.from_eci_measurements(measured_eci_vectors)
 print(f"Gauss: arg peri: {gauss_trajectory.argument_of_periapsis}, sma: {gauss_trajectory.semi_major_axis}, ecc: {gauss_trajectory.eccentricity}")
+
+sfm = series_1.single_frame_measurements
+sga = SimplifiedGaussAlgorithm(sfm[0].time_stamp.determine_ut_s(), sfm[-1].time_stamp.determine_ut_s(),
+                               sfm[0].position_vector, sfm[-1].position_vector,
+                               sfm[0].view_vector.value, sfm[-1].view_vector.value)
+
+solution_vectors = sga.determine_solution()
+for v in solution_vectors:
+    print(np.linalg.norm(v))

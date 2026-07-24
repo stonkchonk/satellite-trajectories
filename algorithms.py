@@ -1,4 +1,5 @@
 import numpy as np
+import scipy.optimize as sc
 from common import Params, Code
 from math import sin, cos, sqrt, atan2, atan, pi
 
@@ -6,7 +7,11 @@ from star_tracker.catalog_parser import UnitVector
 
 
 class ParametricTrajectory:
-    def __init__(self, theta_1 : float, r_1: float, theta_2 : float, r_2: float, theta_3 : float, r_3 : float):
+    """
+    For elliptic and hyperbolic trajectories. Specifically not suited for circular and parabolic trajectories.
+    """
+    def __init__(self, theta_1 : float, r_1: float, theta_2 : float, r_2: float, theta_3 : float, r_3 : float,
+                 plane_normal_vector: UnitVector):
         self.theta_1 = theta_1
         self.r_1 = r_1
         self.theta_2 = theta_2
@@ -17,6 +22,8 @@ class ParametricTrajectory:
         self.argument_of_periapsis = self._determine_argument_of_periapsis() # omega
         self.eccentricity = self._determine_eccentricity(self.argument_of_periapsis) # e
         self.semi_major_axis = self._determine_semi_major_axis(self.argument_of_periapsis, self.eccentricity) # a
+
+        self.plane_normal_vector = plane_normal_vector
 
         # avoid negative eccentricities as they confuse argument of periapsis
         if self.eccentricity < 0:
@@ -137,12 +144,30 @@ class ParametricTrajectory:
         r_1 = np.sqrt(first_vector.dot(first_vector))
         r_2 = np.sqrt(middle_vector.dot(middle_vector))
         r_3 = np.sqrt(last_vector.dot(last_vector))
-        print(plane_vector, r_1/8000, r_2/8000, r_3/8000, theta_1, theta_2, theta_3)
-        return cls(theta_1, r_1, theta_2, r_2, theta_3, r_3)
+        return cls(theta_1, r_1, theta_2, r_2, theta_3, r_3, plane_vector)
 
 
+class CircularTrajectory:
+    def __init__(self, r: float, plane_normal_vector: UnitVector):
+        self.r = r
+        self.plane_normal_vector = plane_normal_vector
 
+    @classmethod
+    def from_eci_measurements(cls, measured_eci_vectors: list[np.ndarray]) -> "CircularTrajectory":
+        assert len(measured_eci_vectors) >= 2
 
+        first_vector = measured_eci_vectors[0]
+        last_vector = measured_eci_vectors[-1]
+        plane_vector = ParametricTrajectory.determine_orbital_plane_vector(first_vector, last_vector)
+
+        assert ParametricTrajectory.verify_orbital_planar_integrity(measured_eci_vectors, plane_vector)
+
+        magnitude_first = np.linalg.norm(first_vector)
+        magnitude_last = np.linalg.norm(last_vector)
+        magnitude_avg = float((magnitude_first + magnitude_last) / 2)
+        if abs(magnitude_first - magnitude_last) / magnitude_avg > 0.005:
+            print("Warning: Orbit might not be too circular, proceeding anyway.")
+        return cls(magnitude_avg, plane_vector)
 
 
 
@@ -154,12 +179,12 @@ class GaussAlgorithm:
         :param t1: observation time 1 [s]
         :param t2: observation time 2 [s]
         :param t3: observation time 3 [s]
-        :param R1: position vector in ECI coordinate system at t1
-        :param R2: position vector in ECI coordinate system at t2
-        :param R3: position vector in ECI coordinate system at t3
-        :param pd1: observation direction vector in ECI coordinate system at t1
-        :param pd2: observation direction vector in ECI coordinate system at t2
-        :param pd3: observation direction vector in ECI coordinate system at t3
+        :param R1: position vector in ECI coordinate system at t1 [(km, km, km)]
+        :param R2: position vector in ECI coordinate system at t2 [(km, km, km)]
+        :param R3: position vector in ECI coordinate system at t3 [(km, km, km)]
+        :param pd1: observation direction vector in ECI coordinate system at t1 (unit vector)
+        :param pd2: observation direction vector in ECI coordinate system at t2 (unit vector)
+        :param pd3: observation direction vector in ECI coordinate system at t3 (unit vector)
         """
         self.t1 = t1
         self.t2 = t2
@@ -265,9 +290,69 @@ class GaussAlgorithm:
 
         return [r1, r2, r3]
 
-    def gauss_algorithm_select_solution(self):
+    def gauss_algorithm_select_solution(self) -> list[np.ndarray] | None:
         r2_roots = self.gauss_algorithm_roots()
+        solutions_viable = []
+        r_candidates: list[list[np.ndarray]] = []
         for r2_root in r2_roots:
-            r_candidates = self.gauss_algorithm_orbit_from_root(r2_root)
-            print(r2_root, r_candidates)
-            return r_candidates
+            r_candidates.append(self.gauss_algorithm_orbit_from_root(r2_root))
+        for r_candidate in r_candidates:
+            preliminary_plane_normal_vector = ParametricTrajectory.determine_orbital_plane_vector(r_candidate[0], r_candidate[-1])
+            solutions_viable.append(ParametricTrajectory.verify_orbital_planar_integrity(r_candidate, preliminary_plane_normal_vector))
+        viable_count = solutions_viable.count(True)
+        if viable_count == 1:
+            return r_candidates[solutions_viable.index(True)]
+        else:
+            print("There is no unique solution for the Gauss algorithm.")
+            print("-->solutions viable:", solutions_viable)
+            print("--> r candidates:", r_candidates)
+            return None
+
+
+
+
+class SimplifiedGaussAlgorithm:
+    """
+    For circular orbits only
+    """
+    def __init__(self, t1: float, t2: float, R1: np.ndarray, R2: np.ndarray, pd1: np.ndarray, pd2: np.ndarray):
+        """
+        Performs simplified Gauss orbit determination algorithm for circular orbits.
+        :param t1: observation time 1 [s]
+        :param t2: observation time 2 [s]
+        :param R1: position vector in ECI coordinate system at t1 [(km, km, km)]
+        :param R2: position vector in ECI coordinate system at t2 [(km, km, km)]
+        :param pd1: observation direction vector in ECI coordinate system at t1 (unit vector)
+        :param pd2: observation direction vector in ECI coordinate system at t2 (unit vector)
+        """
+        self.t1 = t1
+        self.t2 = t2
+        self.R1 = R1
+        self.R2 = R2
+        self.pd1 = pd1
+        self.pd2 = pd2
+
+    def _equations(self, x):
+        d1, d2 = x
+        r1 = self.R1 + d1 * self.pd1
+        r2 = self.R2 + d2 * self.pd2
+        r1_norm = np.linalg.norm(r1)
+        r2_norm = np.linalg.norm(r2)
+        # Kreisbahnbedingung
+        eq1 = np.dot(r1, r1) - np.dot(r2, r2)
+        # Zeitbedingung
+        eq2 = np.arccos(np.clip(np.dot(r1, r2) / (r1_norm * r2_norm), -1.0, 1.0)) * np.sqrt(r1_norm ** 3 / Params.mu_km) - (self.t2 - self.t1)
+        return [eq1, eq2]
+
+    def determine_solution(self) -> list[np.ndarray] | None:
+        initial_guess = [6400.0, 6400.0]
+        solution = sc.root(self._equations, initial_guess)
+        # solution.x ->  d1, d2
+        if solution.success:
+            r1 = self.R1 + solution.x[0] * self.pd1
+            r2 = self.R2 + solution.x[1] * self.pd2
+            return [r1, r2]
+        else:
+            return None
+
+

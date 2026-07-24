@@ -1,6 +1,6 @@
 from copy import copy
 
-from algorithms import ParametricTrajectory, GaussAlgorithm
+from algorithms import ParametricTrajectory, GaussAlgorithm, SimplifiedGaussAlgorithm
 from procedures import CameraCalibration, SingleFrameMeasurementSeries, DualFrameMeasurementSeries
 from common import Params, Code
 from earth import UniversalTimeStamp
@@ -31,15 +31,14 @@ series_2.create_measurement_series(forward_time_steps)
 
 print(series_1)
 print(series_2)
-exit(22)
+
+
 print("determining orbit's parameters")
 dual_frame_series = DualFrameMeasurementSeries.create_from_two_single_series(series_1, series_2)
 measured_eci_vectors = dual_frame_series.intersection_vectors
 
 trajectory = ParametricTrajectory.from_eci_measurements(measured_eci_vectors)
 print(f"arg peri: {trajectory.argument_of_periapsis}, sma: {trajectory.semi_major_axis}, ecc: {trajectory.eccentricity}")
-
-
 """
 sfm = series_1.single_frame_measurements
 t = []
