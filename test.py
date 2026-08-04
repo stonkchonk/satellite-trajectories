@@ -22,7 +22,7 @@ sfm = series_1.single_frame_measurements
 t = []#[0, 118.1, 237.58]
 R = []#[np.array([3489.8, 3430.2, 4078.5]), np.array([3460.1, 3460.1, 4078.5]), np.array([3429.9, 3490.1, 4078.5])]
 pd = []#[np.array([0.71643, 0.68074, -0.15270]), np.array([0.56897, 0.79531, -0.20917]), np.array([0.41841, 0.87007, -0.26059])]
-
+"""
 for i in [0, 1, 2]:
     print(sfm[i].time_stamp)
     t.append(copy(sfm[i].time_stamp).determine_ut_s())
@@ -42,3 +42,23 @@ sga = SimplifiedGaussAlgorithm(sfm[0].time_stamp.determine_ut_s(), sfm[-1].time_
 solution_vectors = sga.determine_solution()
 for v in solution_vectors:
     print(np.linalg.norm(v))
+"""
+
+A = np.array([
+    [ 0.74278135,  0.55708601,  0.37139068],
+    [-0.20628425,  0.92827912, -0.30942637],
+    [ 0.66666667, -0.33333333,  0.66666667]
+])
+B = np.array([
+    [1, 0, 0],
+    [0, -2, 0],
+    [0, 0, 0]
+])
+eigenvalues = np.linalg.eigvals(B)
+real_eigenvalues = eigenvalues[np.isclose(eigenvalues.imag, 0)].real
+
+#two_norm = max()
+print(A, real_eigenvalues, abs(real_eigenvalues), max(abs(real_eigenvalues)), B.shape)
+
+Code.append_measurement_list("test.json", [(1,2,3.435), (2.222, 1, 0)])
+print(Code.load_measurement_list("test.json"))

@@ -8,8 +8,8 @@ from common import Params, Code
 from earth import UniversalTimeStamp, EarthCenteredInertial
 from se_automation import VirtualCamera, WindowController, DefaultScripts
 from star_tracker.catalog_parser import UnitVector
-from star_tracker.star_imager import StarImager
-from star_tracker.star_matching import MultiMatcher
+from star_tracker.star_imager import StarImager, ObservedStar
+from star_tracker.star_matching import MultiMatcher, StarMatcher
 from star_tracker.attitude_determiner import AttitudeDeterminer
 
 
@@ -25,7 +25,8 @@ class CameraCalibration:
         self.top_view_vector: UnitVector | None = None
         self.initial_time_stamp: UniversalTimeStamp | None = None
 
-    def view_vector_calibration_procedure(self):
+
+    def view_vector_calibration_procedure(self, return_matched_star_ids: bool = False) -> None | list[int]:
         WindowController.run_script(DefaultScripts.prepare_calibration_script)
         star_calibration_image = self.calibration_cam.take_screenshot("star_calibration")
         star_imager = StarImager(self.calibration_cam.field_of_view, True)
@@ -48,11 +49,54 @@ class CameraCalibration:
         three_observed_stars = list(observed_stars_dict.values())[:-1]
         three_matched_stars = list(matching_quadruple_ids.values())[:-1]
 
-        self.center_view_vector = self.attitude_determiner.triangulate_view_vector(Params.center_point, three_observed_stars, three_matched_stars)
-        self.left_view_vector = self.attitude_determiner.triangulate_view_vector(Params.left_edge_point, three_observed_stars, three_matched_stars)
-        self.top_view_vector = self.attitude_determiner.triangulate_view_vector(Params.top_edge_point, three_observed_stars, three_matched_stars)
+        self.center_view_vector, self.top_view_vector, self.left_view_vector = self.determine_fixed_point_view_vectors(
+            three_observed_stars, three_matched_stars, self.calibration_cam.field_of_view)
         self.attitude_determiner.draw_view_vector(self.center_view_vector)
         print("View vector calibration completed. Do not move camera.")
+
+        if return_matched_star_ids:
+            return list(matching_quadruple_ids.values())
+        else:
+            return None
+
+    def determine_matchable_quadruples(self, max_quadruples: int):
+        matchable_quadruples: list[tuple[dict[int, int], dict[int, ObservedStar]]] = []
+
+        WindowController.run_script(DefaultScripts.prepare_calibration_script)
+        star_calibration_image = self.calibration_cam.take_screenshot("star_calibration")
+        star_imager = StarImager(self.calibration_cam.field_of_view, True)
+        observed_viable_quadruples = star_imager.determine_viable_quadruples(star_calibration_image, max_quadruples)
+
+        num_viable_quadruples = len(observed_viable_quadruples)
+        for idx, observed_quadruple in enumerate(observed_viable_quadruples):
+            star_matcher = StarMatcher(observed_quadruple)
+            try:
+                print(f"Attempt match with quadruple {idx + 1 } of {num_viable_quadruples}.")
+                res = star_matcher.determine_matching_quadruple()
+                if res is not None:
+                    matchable_quadruples.append((res, observed_quadruple.observed_stars_dict))
+                else:
+                    raise Exception("Could not determine match.")
+                print("Success")
+            except:
+                print(f"No match for quadruple {idx + 1} of {num_viable_quadruples}.")
+
+        return matchable_quadruples
+
+    @staticmethod
+    def determine_fixed_point_view_vectors(three_observed_stars: list[ObservedStar], three_matched_stars: list[int], fov_deg: float) -> tuple[UnitVector, UnitVector, UnitVector]:
+        """
+        :return: center_view_vector, top_view_vector, left_view_vector
+        """
+        assert len(three_observed_stars) == 3
+        assert len(three_matched_stars) == 3
+        attitude_determiner = AttitudeDeterminer(fov_deg)
+        center_view_vector = attitude_determiner.triangulate_view_vector(Params.center_point,three_observed_stars, three_matched_stars)
+        left_view_vector = attitude_determiner.triangulate_view_vector(Params.left_edge_point, three_observed_stars, three_matched_stars)
+        top_view_vector = attitude_determiner.triangulate_view_vector(Params.top_edge_point, three_observed_stars, three_matched_stars)
+        return center_view_vector, top_view_vector, left_view_vector
+
+
 
     def position_vector_calibration_procedure(self, override_time_stamp: UniversalTimeStamp | None = None,
                                               override_lat_lon: tuple[float, float] | None = None,

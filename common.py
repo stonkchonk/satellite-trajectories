@@ -1,5 +1,7 @@
 # common properties and values
+import json
 import math
+import os
 from math import atan2
 
 import cv2
@@ -100,10 +102,11 @@ class Params:
     ]
 
     # directories and files
-    assets_dir = "/home/fred/Documents/Code/interplanetary-localization/assets/"
-    se_dir = "/home/fred/.local/share/Steam/steamapps/common/SpaceEngine/"
-    debug_images_dir = "/home/fred/Documents/Studium/Masterthesis/satellite-trajectories/debug/"
-    screenshots_dir = "/home/fred/.local/share/Steam/steamapps/compatdata/314650/pfx/drive_c/users/steamuser/Documents/Cosmographic/SpaceEngine/screenshots/"#se_dir + "screenshots/"
+    assets_dir = "./assets/"
+    se_dir = "D:/SteamLibrary/steamapps/common/SpaceEngine/"
+    debug_images_dir = "./debug/"
+    experiments_dir = "./experiments/"
+    screenshots_dir = "C:/Users/Bububau Spielcasino/Documents/Cosmographic/SpaceEngine/screenshots/"#se_dir + "screenshots/"
     se_log_file = se_dir + "system/se.log"
     se_catalogs_pak_file = se_dir + "data/catalogs/Catalogs.pak"
     scripts_dir = se_dir + "addons/scripts/"
@@ -233,6 +236,41 @@ class Code:
     @staticmethod
     def read_debug_image(filename: str) -> np.ndarray:
         return cv2.imread(Params.debug_images_dir + filename)
+
+    @staticmethod
+    def write_text_file(filename: str, content: str, append: bool = False):
+        mode = "a" if append else "w"
+        with open(Params.experiments_dir + filename, mode, encoding="utf-8") as file:
+            file.write(content)
+
+    @staticmethod
+    def read_text_file(filename: str) -> str:
+        with open(Params.experiments_dir + filename, "r", encoding="utf-8") as file:
+            return file.read()
+
+    @staticmethod
+    def load_measurement_list(filename: str) -> list[tuple]:
+        path = Params.experiments_dir + filename
+        if not os.path.exists(path):
+            return []
+
+        content = Code.read_text_file(filename)
+        if not content.strip():
+            return []
+
+        data = json.loads(content)
+        return [tuple(entry) for entry in data]
+
+    @staticmethod
+    def save_measurement_list(filename: str, measurements: list[tuple]) -> None:
+        content = json.dumps(measurements, indent=4)
+        Code.write_text_file(filename, content)
+
+    @staticmethod
+    def append_measurement_list(filename: str, new_measurements: list[tuple]) -> None:
+        measurements = Code.load_measurement_list(filename)
+        measurements.extend(new_measurements)
+        Code.save_measurement_list(filename, measurements)
 
     @staticmethod
     def list_exclude_element(original_list: list, exclusion_idx: int) -> list:

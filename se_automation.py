@@ -5,13 +5,12 @@ import shutil
 from typing import Literal
 
 import pyautogui
-import subprocess
 import cv2
-import pyperclip
+import win32con
+import win32gui
 
 from common import Params, Code
 from earth import UniversalTimeStamp
-from geometry import Geometry
 from se_scripting import Script
 
 
@@ -37,10 +36,6 @@ class WindowController:
         WindowController.enter_command_procedure(f"{Params.set_cmd} {Params.photo_mode_var} {Params.manual_photo_mode_val}")
         WindowController.move(Params.neutral_pos)
         print("Camera mode setup completed.")
-        #DefaultScripts.turn_around_script.generate()
-        #DefaultScripts.sun_detection_script.generate()
-        #DefaultScripts.prepare_calibration_script.generate()
-        #DefaultScripts.prepare_tracking_script.generate()
         for script in DefaultScripts.__dict__.values():
             if hasattr(script, "generate"):
                 script.generate()
@@ -62,34 +57,59 @@ class WindowController:
 
 
     @staticmethod
-    def _prepare_window():
-        # obtain window information
+    def _prepare_window(pixel_correction: tuple[int, int] = (16, 39)):
         win_info = WindowController._obtain_window_info(Params.se_title)
+
         if win_info is None:
-            raise Exception(f"Window \"{Params.se_title}\" not found.")
-        # window to front
-        win_id = win_info[0]
-        subprocess.call(["wmctrl", "-ia", win_id])
-        # resize and adjust placement
-        subprocess.call(["wmctrl", "-r", Params.se_title, "-e", f"0,{Params.top_corner[0]},{Params.top_corner[1]},{Params.width_height[0]},{Params.width_height[1]}"])
-        # validate window size with refreshed window info
+            raise Exception(f'Window "{Params.se_title}" not found.')
+
+        hwnd = win_info["hwnd"]
+        win32gui.ShowWindow(hwnd, win32con.SW_RESTORE)
+        win32gui.SetForegroundWindow(hwnd)
+
+        win32gui.MoveWindow(
+            hwnd,
+            Params.top_corner[0],
+            Params.top_corner[1],
+            Params.width_height[0] + pixel_correction[0],
+            Params.width_height[1] + pixel_correction[1],
+            True
+        )
+
         time.sleep(Params.sleep_normal)
-        win_info = WindowController._obtain_window_info(Params.se_title)
-        if len(win_info) < 5:
-            print("Warning: No window size validation possible.")
-            return
-        match = re.match(r"\((\d+)x(\d+)\)", win_info[4])
-        width, height = int(match.group(1)), int(match.group(2))
-        if width != Params.width_height[0] or height != Params.width_height[1]:
-            raise Exception(f"Could not resize window to {Params.width_height}. "
-                            f"Do not to run {Params.se_title} in maximized or full screen mode.")
+
+        rect = win32gui.GetWindowRect(hwnd)
+        width = rect[2] - rect[0]
+        height = rect[3] - rect[1]
+
+        if (width - pixel_correction[0], height - pixel_correction[1]) != tuple(Params.width_height):
+            raise Exception(
+                f"Could not resize window to {Params.width_height}."
+            )
 
     @staticmethod
-    def _obtain_window_info(window_title: str) -> list[str] | None:
-        for win_info in subprocess.check_output(["wmctrl", "-l"]).decode("utf-8").splitlines():
-            if window_title in win_info:
-                return win_info.split()
-        return None
+    def _obtain_window_info(window_title: str):
+        windows = []
+
+        def callback(hwnd, _):
+            if not win32gui.IsWindowVisible(hwnd):
+                return
+
+            title = win32gui.GetWindowText(hwnd)
+            if window_title in title:
+                rect = win32gui.GetWindowRect(hwnd)
+                windows.append({
+                    "hwnd": hwnd,
+                    "title": title,
+                    "x": rect[0],
+                    "y": rect[1],
+                    "width": rect[2] - rect[0],
+                    "height": rect[3] - rect[1]
+                })
+
+        win32gui.EnumWindows(callback, None)
+
+        return windows[0] if windows else None
 
     @staticmethod
     def _window_present(win_info: list[str] | None) -> bool:
