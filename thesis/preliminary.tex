@@ -1,0 +1,57 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[letterpaper,top=2cm,bottom=2cm,left=3cm,right=3cm,marginparwidth=1.75cm]{geometry}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{url}
+\usepackage{float}
+
+\title{Image based trajectory determination of artificial satellites \\\large Preliminary outline on geometry, data acquisition and determination models}
+\author{Frederic Heil\\
+	\texttt{frederic.heil@hs-weingarten.de}}
+
+\begin{document}
+	\maketitle
+	\section{Introduction}
+	- what is orbit determination
+	- domain of this one (cameras not telescopes), earth based, primarily artificial satellites (ggf bild von satellite trail )
+	\section{Geometry}
+	\subsection{The Keplerian orbit}
+	- orbital params a, e, arg peri
+	- parametrized form
+	- orbital plane
+	- idealized form
+	\subsection{Reference coordinate system}
+	- earth centered inertial coordinate system will be used
+	- related to ecef, but position vectors related to background stars and not earth bound position
+	
+	\section{Data acquisition}
+	\subsection{Earth bound camera based observation}
+	- image of model containing position vector, view vector
+	- these need to be determined
+	- what is observable? (satellite looks like dot in each image)
+	\subsection{Determination of position vectors}
+	- known values: lat, lon, alt (in ecef) and time
+	- determination of eci longitude from time
+	- earth shape (ellipsoid)
+	- full determination of position vector (eci)
+	\subsection{Determination of view vectors}
+	- camera calibration using stars (reference to previous paper)
+	- triangulation
+	- adjustment of calibration view vectors over time
+	
+	\section{Orbit determination models}
+	\subsection{Parametric trajectory from angles and radii}
+	- at first 2D solution
+	- three angles and three radii are needed
+	- from this we determine a, e, arg peri
+	- variants: ellptic/hyperbolic, circular, parabolic
+	\subsection{Tranfering the 2D solution to 3D}
+	- angles in eci reference sytsem
+	- determination of radii using stereo vision
+	- determination of the orbital plane from eci vectors
+	\subsection{Gauss method of orbit determination}
+	- describe gauss algo 
+	- does not need to be completed, my solution can be used from a certain stem onwards
+	\subsection{Simplified Gauss method}
+	- my method using gauss approach for circular orbits
+\end{document}
