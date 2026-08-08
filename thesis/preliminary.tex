@@ -1,4 +1,5 @@
 \documentclass[11pt,a4paper]{article}
+\usepackage[english]{babel}
 \usepackage[letterpaper,top=2cm,bottom=2cm,left=3cm,right=3cm,marginparwidth=1.75cm]{geometry}
 \usepackage{amsmath}
 \usepackage{graphicx}
@@ -12,8 +13,11 @@
 \begin{document}
 	\maketitle
 	\section{Introduction}
-	- what is orbit determination
-	- domain of this one (cameras not telescopes), earth based, primarily artificial satellites (ggf bild von satellite trail )
+	Image based trajectory determination of artificial satellites using ground based cameras is a multi-stage procedure that, in order to be implemented sucessfully, requires several problems to be solved. A thorough understanding of the underlying geometry and reference frames is needed. Once that has been established, methods for obtaining visual data can be defined, specifically for position and view vectors. These serve as an essential input for trajectory determinantion algorithms which will be used to determine the properties of a Keplarian orbit and its dedicated orbital plane.\newline
+	The scope of this paper is limited to ground based observations, specifically systems using one or two cameas which are not supposed to change their location on earth for the process of imaging. No additional technologies, such as radar or laser measurements are to be used. Camera calibration in this context, specifically the process of determining view vectors, initially uses a star based calibration procedure, which limits the field-of-view range of cameras to certain values, which will be elaborated in section \ref{determine_view_vecs}. Furthermore, the automated distinction between stars and satellites in measurement images could be considered as an additional problem to be solved, but is not part of the scope.\newline
+	Trajectory-model-wise, the scope of this paper is limited to Keplarian orbits, which solve the 2-body problem with point masses. For the obsevable objects, namely artificial satellites, the main focus lies in the region of low earth orbit. Planet earth is the main gravitationally dominating force, observation arcs are rather short and because of this, more complicated orbital models are simply unfeasible, thus not part of the scope.
+
+
 	\section{Geometry}
 	\subsection{The Keplerian orbit}
 	- orbital params a, e, arg peri
@@ -35,6 +39,7 @@
 	- earth shape (ellipsoid)
 	- full determination of position vector (eci)
 	\subsection{Determination of view vectors}
+	\label{determine_view_vecs}
 	- camera calibration using stars (reference to previous paper)
 	- triangulation
 	- adjustment of calibration view vectors over time
@@ -54,4 +59,77 @@
 	- does not need to be completed, my solution can be used from a certain stem onwards
 	\subsection{Simplified Gauss method}
 	- my method using gauss approach for circular orbits
+	
+	\begin{thebibliography}{9}
+		\setlength{\itemsep}{4pt}       % space between bibliography items
+		\setlength{\parskip}{0pt}       % space between paragraphs
+		\setlength{\parsep}{0pt}        % extra space within items
+		
+		\bibitem{distance}
+		"Distance measurement" \emph{How NASA Calculates the Distance, Velocity and Position of the Voyager Spacecrafts}, Karthikeyan KC, 2015, \url{https://geekswipe.net/technology/aerospace/how-nasa-calculates-the-distance-velocity-and-position-of-the-voyager-spacecrafts/}. \newline Accessed 03.10.2025
+		
+		\bibitem{tracker}
+		Star Tracker, NASA, 2019, \newline\url{https://exoplanets.nasa.gov/star-tracker/}. Accessed 03.10.2025
+		
+		\bibitem{space_engine}
+		"About" \emph{Space Engine}, Cosmographic Software LLC, 2025,\newline
+		\url{https://spaceengine.org/manual/making-addons/scenario-scripts/}.\newline
+		Accessed 06.10.2025
+		
+		\bibitem{equatorial}
+		"Equatorial coordinate system", \emph{COSMOS - The SAO Encyclopedia of Astronomy}, Swinburne University of Technology, \url{https://www.astronomy.swin.edu.au/cosmos/E/Equatorial+Coordinate+System}. \newline Accessed 04.10.2025
+		
+		\bibitem{skybox}
+		"Skybox", Valve Developer Community, 2024, \url{https://developer.valvesoftware.com/wiki/Skybox_(2D)}. \newline Accessed 05.10.2025
+		
+		\bibitem{lens_dist}
+		B. Prescott and G. F. McLean. "Camera Calibration", Line-Based Correction of Radial Lens Distortion, \newline 1996, pp. 2-3, \url{https://www.sciencedirect.com/science/article/abs/pii/S1077316996904074}. \newline Accessed 11.10.2025
+		
+		\bibitem{machine_learning}
+		Prof. Dr. Markus Schneider. "Nonlinear Modeling, Model Selection", \emph{Nonlinear Modeling and Generalization}, \newline
+		5812 Machine Learning Lecture Notes, 03.2024, pp.29-32.\newline
+		Accessed 04.07.2024
+		
+		\bibitem{constant_radius}
+		Ignasi Ribas. "Introduction", The Sun and stars as the primary energy input in planetary atmospheres, \newline 2010, p. 4, \url{https://doi.org/10.1017/S1743921309992298}\newline
+		Accessed 15.10.2025
+		
+		\bibitem{lorri}
+		A.F. Cheng et al. "LORRI Requirements", Long-Range Reconnaissance Imager on New Horizons, 2007, p. 192, \url{https://link.springer.com/article/10.1007/s11214-007-9271-6}\newline
+		Accessed 17.10.2025
+		
+		\bibitem{astronomical_unit}
+		The Editors of Encyclopaedia Britannica. "Astronomical unit", unit of measurement, \newline\url{https://www.britannica.com/science/astronomical-unit}\newline
+		Accessed 17.10.2025
+		
+		\bibitem{parker_solar_probe}
+		NASA Science Editorial Team. "NASA’s Parker Solar Probe Sails Through 25th Sun Flyby", Parker Solar Probe, 2025, \newline\url{https://science.nasa.gov/blogs/parker-solar-probe/2025/09/18}\newline
+		Accessed 18.10.2025
+		
+		\bibitem{voyager_1}
+		NASA. "Mission Status", Where are Voyager 1 and Voyager 2 Now?, 2025, \newline\url{https://science.nasa.gov/mission/voyager/where-are-voyager-1-and-voyager-2-now}\newline
+		Accessed 18.10.2025
+		
+		\bibitem{star_catalog}
+		Browse Software Development Team. BSC5P - Bright Star Catalog, 2024,
+		\newline\url{https://heasarc.gsfc.nasa.gov/w3browse/star-catalog/bsc5p.html}\newline
+		Accessed 12.09.2025
+		
+		\bibitem{four_stars_algo}
+		Dong Ying, Xing Fei, You Zheng. Brightness Independent 4-Star Matching Algorithm
+		for Lost-in-Space 3-Axis Attitude Acquisition, 2006,\newline
+		\url{https://www.sciencedirect.com/science/article/abs/pii/S1007021406702322}\newline
+		Accessed 15.08.2025
+		
+		\bibitem{unit_to_radec}
+		"Compute the Right Ascension and Declination Angles", \emph{Right Ascension and Declination Algorithm}, \newline Fundamental Technologies Voyager LECP Pages, 2002,\newline
+		\url{https://voyager-mac.umd.edu/docs/ftec_2006/SEDR/algorithm.html}\newline
+		Accessed 19.10.2025
+		
+		\bibitem{rotation_formula}
+		Hui Cheng, K. C. Gupta. "Introduction", An Historical Note on Finite Rotations, 1989, p. 1,\newline
+		\url{https://iel.ucdavis.edu/publication/1989/j_ASMEAM.pdf}\newline
+		Accessed 21.10.2025
+		
+	\end{thebibliography}
 \end{document}
