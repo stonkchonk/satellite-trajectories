@@ -13,6 +13,7 @@
 \begin{document}
 	\maketitle
 	\section{Introduction}
+	\label{sec:introduction}
 	Image based trajectory determination of artificial satellites using ground based cameras is a multi-stage procedure that, in order to be implemented sucessfully, requires several problems to be solved. A thorough understanding of the underlying geometry and reference frames is needed. Once that has been established, methods for obtaining visual data can be defined, specifically for position and view vectors. These serve as an essential input for trajectory determinantion algorithms which will be used to determine the properties of a Keplarian orbit and its dedicated orbital plane.\newline
 	The scope of this paper is limited to ground based observations, specifically systems using one or two cameas which are not supposed to change their location on earth for the process of imaging. No additional technologies, such as radar or laser measurements are to be used. Camera calibration in this context, specifically the process of determining view vectors, initially uses a star based calibration procedure, which limits the field-of-view range of cameras to certain values, which will be elaborated in section \ref{determine_view_vecs}. Furthermore, the automated distinction between stars and satellites in measurement images could be considered as an additional problem to be solved, but is not part of the scope.\newline
 	Trajectory-model-wise, the scope of this paper is limited to Keplarian orbits, which solve the 2-body problem with point masses. For the obsevable objects, namely artificial satellites, the main focus lies in the region of low earth orbit. Planet earth is the main gravitationally dominating force, observation arcs are rather short and because of this, more complicated orbital models are simply unfeasible, thus not part of the scope.
@@ -20,14 +21,89 @@
 
 	\section{Geometry}
 	\subsection{The Keplerian orbit}
-	- orbital params a, e, arg peri
-	- parametrized form
-	- orbital plane
-	- idealized form
-	\subsection{Reference coordinate system}
-	- earth centered inertial coordinate system will be used
-	- related to ecef, but position vectors related to background stars and not earth bound position
+	\label{sec:kepler_orbit}
+	Geometrically, the shape of a Keplarian orbit can be described as an intersection between a plane and a cone, which carries some implications. Firstly, the shape of an orbit is either a circle, an ellipse, a parabola or a hyperbola. Secodly, as the intersection implies, the orbit lies within a plane. \cite{orbit_equation} \newline
+	The current orbital radius $r$, which represents the current distance of an orbiting object (a satellite) from a gravitational center (planet earth) can be desrcibed with the following formula for circles and ellipses in a polar coordinate system, as provided by Weber \cite{elliptical_orbits} and modified to account for argument of periapsis $\omega$: 
 	
+	\begin{equation}\label{r_theta}
+		r(\theta)=\frac{a(1-e^2)}{1+e\cdot\cos(\theta-\omega)}
+	\end{equation}
+	\noindent
+	Hereby, $a$ represents the semi major axis of the orbit, which corresponds to the average distance between satellite and gravitational center. For elliptical orbits, this is just the average between the closest distance (periapsis $r_p$) and the furthest distance (apoapsis $r_a$), as illustrated in figure \ref{fig:parametric_ellipse}, stated below in equation \ref{semi_major_axis}:
+	\begin{equation}\label{semi_major_axis}
+		a = \frac{r_p + r_a}{2}
+	\end{equation}
+	\noindent
+	The parameter $e$ represents the eccentricity, an inherent property of conic sections. For circles it is $e=0$, so that equation \ref{r_theta} collapses to $r(\theta)=a$. For ellipses it is $0 < e < 1$, for parabolas $e = 1$ and for hyperbolas $1 < e$. The parameter $\theta$ represents the so called true anomaly, which simply corrensponds to the parameter angle in a polar coordinate system. \cite{orbital_nomenclature} \newline
+	The angle $\omega$ corrensponds to the argument of periapsis, which marks the closest distance (periapsis) in the polar coordinate system.\newline
+	For hyperbolas, equation \ref{r_theta} is to be slightly modified, such that the sign of the dividend changes, which leads to: 
+	\begin{equation}\label{r_theta_hyperbola}
+		r(\theta)=\frac{-a(1-e^2)}{1+e\cdot\cos(\theta-\omega)} = \frac{a(e^2-1)}{1+e\cdot\cos(\theta-\omega)}
+	\end{equation}
+	\cite{hyperbolic_orbits} \newline
+	This type of trajectories posess an asymptote, as visualized in \ref{fig:parametric_hyperbola}, which is never reached by the moving satellite. The asymptote, which the sattelite moves along, is the one with the gravitational center in its focal point. The semi major axis $a$ can also be defined by equation \ref{semi_major_axis}, however the apoapsis is located on the unreachable asymptote closest to the gravitational center, as illustrated in figure \ref{fig:parametric_hyperbola}.
+	\newline
+	As apparent from equation \ref{r_theta}, it does not hold up for an eccentricity value of $e = 1$ for parabolas. In case of $e = 1$ a modified equation is provided as follows:
+	
+	\begin{equation}\label{r_theta_parabolic}
+		r(\theta)=\frac{p}{1+\cos(\theta-\omega)}
+	\end{equation}
+	\noindent
+	Hereby $p$ corresponds to a constant value, so that $\frac{p}{2}$ equates to the distance between gravitational center and periapsis. A semi major axis value $a$ can not be defined as there is no apoapsis for this type of trajectory. \cite{parabolic_orbits}\newline
+	Equations \ref{r_theta}, \ref{r_theta_hyperbola} and \ref{r_theta_parabolic} yield real numbers when plugging in concrete values for $\theta$. They can be expanded into parametric curves, which helps visualize the actual appearance of the different types of trajectories as follows:
+	\begin{equation}
+		\begin{aligned}
+			r(\theta)=\frac{a(1-e^2)}{1+e\cdot\cos(\theta-\omega)} \cdot \begin{pmatrix}
+				\cos(\theta) \\
+				\sin(\theta)
+			\end{pmatrix} \\
+			r(\theta)=\frac{a(e^2-1)}{1+e\cdot\cos(\theta-\omega)} \cdot \begin{pmatrix}
+				\cos(\theta) \\
+				\sin(\theta)
+			\end{pmatrix} \\
+			r(\theta)=\frac{p}{1+\cos(\theta-\omega)} \cdot \begin{pmatrix}
+				\cos(\theta) \\
+				\sin(\theta)
+			\end{pmatrix}
+		\end{aligned}
+	\end{equation}
+	\noindent
+	
+	\begin{figure}[H]
+		\centering
+		\begin{minipage}{0.48\linewidth}
+			\centering
+			\includegraphics[width=\linewidth]{images/ellipse_parametric.png}
+			\caption{Parametric curve of an elliptic obit.}
+			\label{fig:parametric_ellipse}
+		\end{minipage}
+		\hfill
+		\begin{minipage}{0.48\linewidth}
+			\centering
+			\includegraphics[width=\linewidth]{images/hyperbola_parametric.png}
+			\caption{Parametric curve of a hyperbolic trajectory.}
+			\label{fig:parametric_hyperbola}
+		\end{minipage}
+		
+	\end{figure}
+	\noindent
+	This covers the different types of Keplarian trajectories as well as their properties in two dimensions.\newline
+	Stated above, geometrically, each trajectory can be defined as an intersection between a cone and a plane in three dimensions. This leaves the property of the orbital plane to be defined. This plane always contains the point of the gravitational center. Also, the gravitational center shall be defined as the origin of the coordinate system, as elaborated below in section \ref{sec:reference_coordinate}.
+	Hence, the plane can be sufficiently defined by a normal vector.
+	
+	\subsection{Reference coordinate system}
+	\label{sec:reference_coordinate}
+	The reference coordinate system of our choice is the Earth Centered Inertial (ECI) coordinate system. This coordinate system is aligned to planet earth but not fixed to its surface. The Z-axis is aligned to earth's rotation axis, while the X-Y-plane is aligned to earth's equatorial plane, as visualized below. Both X-, and Y-axes are fixed in reference to the background stars.
+	
+	\begin{figure}[H]
+		\centering
+		\includegraphics[width=0.46\linewidth]{images/Earth_Centered_Inertial_Coordinate_System.png}
+		\caption{Earth Centered Inertial coordinate system aligned to planet earth. \cite{reference_frames}}
+		\label{fig:1a}
+	\end{figure}
+	\noindent
+	In this reference frame, when stationed at a fixed loction on planet earth, the position vector changes over time. This is different from the Earth Centered Earth Fixed (ECEF) coordinate system, which is fixed to earth's surface, such that position vectors in a fixed position do not change over time. \cite{reference_frames}
+		
 	\section{Data acquisition}
 	\subsection{Earth bound camera based observation}
 	- image of model containing position vector, view vector
@@ -65,11 +141,26 @@
 		\setlength{\parskip}{0pt}       % space between paragraphs
 		\setlength{\parsep}{0pt}        % extra space within items
 		
-		\bibitem{distance}
-		"Distance measurement" \emph{How NASA Calculates the Distance, Velocity and Position of the Voyager Spacecrafts}, Karthikeyan KC, 2015, \url{https://geekswipe.net/technology/aerospace/how-nasa-calculates-the-distance-velocity-and-position-of-the-voyager-spacecrafts/}. \newline Accessed 03.10.2025
+		\bibitem{orbit_equation}
+		Orbital Mechanics \& Astrodynamics \emph{The Orbit Equation}, Bryan Weber, \url{https://orbital-mechanics.space/the-orbit-equation/the-orbit-equation.html}. \newline Accessed 09.08.2026
+		
+		\bibitem{orbital_nomenclature}
+		Orbital Mechanics \& Astrodynamics \emph{Orbital Nomenclature}, Bryan Weber, \url{https://orbital-mechanics.space/the-orbit-equation/orbital-nomenclature.html}. \newline Accessed 09.08.2026
+		
+		\bibitem{elliptical_orbits}
+		Orbital Mechanics \& Astrodynamics \emph{Elliptical Orbits}, Bryan Weber, \url{https://orbital-mechanics.space/the-orbit-equation/elliptical-orbits.html}. \newline Accessed 09.08.2026
+		
+		\bibitem{hyperbolic_orbits}
+		Orbital Mechanics \& Astrodynamics \emph{Hyperbolic Trajectories}, Bryan Weber, \url{https://orbital-mechanics.space/the-orbit-equation/hyperbolic-trajectories.html}. \newline Accessed 09.08.2026
+		
+		\bibitem{parabolic_orbits}
+		Orbital Mechanics \& Astrodynamics \emph{Parabolic Trajectories}, Bryan Weber, \url{https://orbital-mechanics.space/the-orbit-equation/parabolic-trajectories.html}. \newline Accessed 09.08.2026
+		
+		\bibitem{reference_frames}
+		Orbital Mechanics \& Astrodynamics \emph{Reference Frames}, Bryan Weber, \url{https://orbital-mechanics.space/intro/reference-frames.html}. \newline Accessed 09.08.2026
 		
 		\bibitem{tracker}
-		Star Tracker, NASA, 2019, \newline\url{https://exoplanets.nasa.gov/star-tracker/}. Accessed 03.10.2025
+		Star Tracker, NASA, 2019, \newline\url{https://exoplanets.nasa.gov/star-tracker/}. Accessed 09.08.2026
 		
 		\bibitem{space_engine}
 		"About" \emph{Space Engine}, Cosmographic Software LLC, 2025,\newline
