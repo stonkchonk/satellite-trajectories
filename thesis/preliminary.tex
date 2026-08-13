@@ -2,6 +2,7 @@
 \usepackage[english]{babel}
 \usepackage[letterpaper,top=2cm,bottom=2cm,left=3cm,right=3cm,marginparwidth=1.75cm]{geometry}
 \usepackage{amsmath}
+\usepackage{amsfonts} 
 \usepackage{graphicx}
 \usepackage{url}
 \usepackage{float}
@@ -15,7 +16,7 @@
 	\section{Introduction}
 	\label{sec:introduction}
 	Image based trajectory determination of artificial satellites using ground based cameras is a multi-stage procedure that, in order to be implemented sucessfully, requires several problems to be solved. A thorough understanding of the underlying geometry and reference frames is needed. Once that has been established, methods for obtaining visual data can be defined, specifically for position and view vectors. These serve as an essential input for trajectory determinantion algorithms which will be used to determine the properties of a Keplarian orbit and its dedicated orbital plane.\newline
-	The scope of this paper is limited to ground based observations, specifically systems using one or two cameas which are not supposed to change their location on earth for the process of imaging. No additional technologies, such as radar or laser measurements are to be used. Camera calibration in this context, specifically the process of determining view vectors, initially uses a star based calibration procedure, which limits the field-of-view range of cameras to certain values, which will be elaborated in section \ref{determine_view_vecs}. Furthermore, the automated distinction between stars and satellites in measurement images could be considered as an additional problem to be solved, but is not part of the scope.\newline
+	The scope of this paper is limited to ground based observations, specifically systems using one or two cameas which are not supposed to change their location on earth for the process of imaging. No additional technologies, such as radar or laser measurements are to be used. Camera calibration in this context, specifically the process of determining view vectors, initially uses a star based calibration procedure, which limits the field-of-view range of cameras to certain values, which will be elaborated in section \ref{sec:determine_view_vecs}. Furthermore, the automated distinction between stars and satellites in measurement images could be considered as an additional problem to be solved, but is not part of the scope.\newline
 	Trajectory-model-wise, the scope of this paper is limited to Keplarian orbits, which solve the 2-body problem with point masses. For the obsevable objects, namely artificial satellites, the main focus lies in the region of low earth orbit. Planet earth is the main gravitationally dominating force, observation arcs are rather short and because of this, more complicated orbital models are simply unfeasible, thus not part of the scope.
 
 
@@ -93,29 +94,54 @@
 	
 	\subsection{Reference coordinate system}
 	\label{sec:reference_coordinate}
-	The reference coordinate system of our choice is the Earth Centered Inertial (ECI) coordinate system. This coordinate system is aligned to planet earth but not fixed to its surface. The Z-axis is aligned to earth's rotation axis, while the X-Y-plane is aligned to earth's equatorial plane, as visualized below. Both X-, and Y-axes are fixed in reference to the background stars.
+	The reference coordinate system of our choice is the Earth Centered Inertial (ECI) coordinate system. This coordinate system is aligned to planet earth but not fixed to its surface. The Z-axis is aligned to earth's rotation axis, while the X-Y-plane is aligned to earth's equatorial plane, as visualized below. Both X-, and Y-axes are fixed in reference to the background stars. Each position can be described by a vector in $\mathbb{R}^3$.
 	
 	\begin{figure}[H]
 		\centering
-		\includegraphics[width=0.46\linewidth]{images/Earth_Centered_Inertial_Coordinate_System.png}
+		\includegraphics[width=0.45\linewidth]{images/Earth_Centered_Inertial_Coordinate_System.png}
 		\caption{Earth Centered Inertial coordinate system aligned to planet earth. \cite{reference_frames}}
-		\label{fig:1a}
+		\label{fig:eci}
 	\end{figure}
 	\noindent
 	In this reference frame, when stationed at a fixed loction on planet earth, the position vector changes over time. This is different from the Earth Centered Earth Fixed (ECEF) coordinate system, which is fixed to earth's surface, such that position vectors in a fixed position do not change over time. \cite{reference_frames}
 		
 	\section{Data acquisition}
 	\subsection{Earth bound camera based observation}
-	- image of model containing position vector, view vector
-	- these need to be determined
-	- what is observable? (satellite looks like dot in each image)
+	\label{sec:eath_bound_observation}
+	Before setting up mathematical models and implemanting trajectory determination algorithms, we need to take a look at what kind of data is readily available, what is unavailable (to be determined by algorithms later on) and how observed images look like. This serves as the basis on how we have to define models and what problems need to be solved. For this purpose, we define the geometric model of a stationary observer / camera on the surface of planet earth using the following figure:
+	
+	\begin{figure}[H]
+		\centering
+		\includegraphics[width=0.8\linewidth]{images/knowns_and_unknowns.png}
+		\caption{Initially known and unknown properties of earth bound camera based satellite observation depicted in a two dimensional represention.}
+		\label{fig:knowns_and_unknowns}
+	\end{figure}
+	\noindent
+	Hereby, all variables are annotated with an index $i$. That is, because these values change over time and are only valid for a certain time stamp $i$, which is a known property.\newline
+	The first readily available propery apart from the time stamp is the position vector $p_i \in \mathbb{R}^3$, which describes the stationary position of the observer on planet earth in ECI coordinates. The determination of this property is elaborated in section \ref{sec:determination_position}.\newline
+	Secondly, we have the view vector $v_i \in \mathbb{R}^3$. This vector marks the visual direction of the satellite as seen from the observer's position in ECI coordinates. The magnitude of this vector does not match the distance between the observer and the satellite, as this property is yet to be determined. Because of this, the value if the vector is normed to unit length.
+	Further known or readily determinable properties are camera properties. For one, the camera's field of view is a fixed value. Moreover, the cameras alignment / rotation is readily determinable, so that each pixel can be assigned to a view vector $v_i$. The process of view vector determination and camera alignment is elaborated in section \ref{sec:determine_view_vecs}.\newline
+	This sums up all readiliy available or readily determinable properties of earth bound camera based satellite observation. The unknown properties of this model comprise of the absolute position vector of the satellite $r_i \in \mathbb{R}^3$ and the distance vector $d_i \in \mathbb{R}^3$ which marks the distance between observer and satelitte, of which only the direction is known as $v_i$. The vectors are related to one another as they form the sum $r_i = p_i + d_i$. \newline
+	Now, that available and unavailable parameters have been established, we can examine the visual data that is captured as images and what the appearance of satellites will be. \newline
+	As visible from the ground, satellites appear as more or less bright dots similar to stars, even so that they may be observable to the naked eye. Their movement appears smoothly and their brightness does not change drastically, as they do not posess flashing lights like aircraft. They are illuminated by the sun, until they enter earth's shadow at whicht they become invisible. \cite{satellites_at_night}
+	\begin{figure}[H]
+		\centering
+		\includegraphics[width=0.8\linewidth]{images/s_captures_moved.png}
+		\caption{Stars and a sattelite (encircled) are perceived as dots by cameras.}
+		\label{fig:satelitte_appearance}
+	\end{figure}
+	\noindent
+	Illustrated above in figure \ref{fig:satelitte_appearance} are three image frames, supposed to be taken at three time stamps $t_1$, $t_2$ and $t_3$ by a ground-fixed camera. In each frame, stars and a satellite (encircled) are visible. For one, the satellite would not be distinguishable from the background stars if it were not marked. Differentiation between satellites and stars may be automated, however we consider this issue not to be part of this research project.\newline
+	Next up, there are two relevant types of apparent movenents visible in the image series. As planet earth rotates, background stars move slowly in the image frame. The apparent movement of the satellite is caused mainly by its inherent movement along its trajectory and marginally by the rotation of planet earth. \newline
+	These aspects have to be factored in especially during camera alignment and view vector determination procedures.
 	\subsection{Determination of position vectors}
+	\label{sec:determination_position}
 	- known values: lat, lon, alt (in ecef) and time
 	- determination of eci longitude from time
 	- earth shape (ellipsoid)
 	- full determination of position vector (eci)
-	\subsection{Determination of view vectors}
-	\label{determine_view_vecs}
+	\subsection{Determination of camera alignment and view vectors}
+	\label{sec:determine_view_vecs}
 	- camera calibration using stars (reference to previous paper)
 	- triangulation
 	- adjustment of calibration view vectors over time
@@ -159,19 +185,10 @@
 		\bibitem{reference_frames}
 		Orbital Mechanics \& Astrodynamics \emph{Reference Frames}, Bryan Weber, \url{https://orbital-mechanics.space/intro/reference-frames.html}. \newline Accessed 09.08.2026
 		
-		\bibitem{tracker}
-		Star Tracker, NASA, 2019, \newline\url{https://exoplanets.nasa.gov/star-tracker/}. Accessed 09.08.2026
+		\bibitem{satellites_at_night}
+		Can You See Satellites At Night? How Do You Spot Them?, 	Visnja Radosavljevic, Optics Mag, 2025, \url{https://opticsmag.com/can-you-see-satellites-at-night/}. \newline Accessed 13.08.2026
 		
-		\bibitem{space_engine}
-		"About" \emph{Space Engine}, Cosmographic Software LLC, 2025,\newline
-		\url{https://spaceengine.org/manual/making-addons/scenario-scripts/}.\newline
-		Accessed 06.10.2025
 		
-		\bibitem{equatorial}
-		"Equatorial coordinate system", \emph{COSMOS - The SAO Encyclopedia of Astronomy}, Swinburne University of Technology, \url{https://www.astronomy.swin.edu.au/cosmos/E/Equatorial+Coordinate+System}. \newline Accessed 04.10.2025
-		
-		\bibitem{skybox}
-		"Skybox", Valve Developer Community, 2024, \url{https://developer.valvesoftware.com/wiki/Skybox_(2D)}. \newline Accessed 05.10.2025
 		
 		\bibitem{lens_dist}
 		B. Prescott and G. F. McLean. "Camera Calibration", Line-Based Correction of Radial Lens Distortion, \newline 1996, pp. 2-3, \url{https://www.sciencedirect.com/science/article/abs/pii/S1077316996904074}. \newline Accessed 11.10.2025
@@ -180,26 +197,6 @@
 		Prof. Dr. Markus Schneider. "Nonlinear Modeling, Model Selection", \emph{Nonlinear Modeling and Generalization}, \newline
 		5812 Machine Learning Lecture Notes, 03.2024, pp.29-32.\newline
 		Accessed 04.07.2024
-		
-		\bibitem{constant_radius}
-		Ignasi Ribas. "Introduction", The Sun and stars as the primary energy input in planetary atmospheres, \newline 2010, p. 4, \url{https://doi.org/10.1017/S1743921309992298}\newline
-		Accessed 15.10.2025
-		
-		\bibitem{lorri}
-		A.F. Cheng et al. "LORRI Requirements", Long-Range Reconnaissance Imager on New Horizons, 2007, p. 192, \url{https://link.springer.com/article/10.1007/s11214-007-9271-6}\newline
-		Accessed 17.10.2025
-		
-		\bibitem{astronomical_unit}
-		The Editors of Encyclopaedia Britannica. "Astronomical unit", unit of measurement, \newline\url{https://www.britannica.com/science/astronomical-unit}\newline
-		Accessed 17.10.2025
-		
-		\bibitem{parker_solar_probe}
-		NASA Science Editorial Team. "NASA’s Parker Solar Probe Sails Through 25th Sun Flyby", Parker Solar Probe, 2025, \newline\url{https://science.nasa.gov/blogs/parker-solar-probe/2025/09/18}\newline
-		Accessed 18.10.2025
-		
-		\bibitem{voyager_1}
-		NASA. "Mission Status", Where are Voyager 1 and Voyager 2 Now?, 2025, \newline\url{https://science.nasa.gov/mission/voyager/where-are-voyager-1-and-voyager-2-now}\newline
-		Accessed 18.10.2025
 		
 		\bibitem{star_catalog}
 		Browse Software Development Team. BSC5P - Bright Star Catalog, 2024,
