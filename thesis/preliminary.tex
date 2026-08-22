@@ -136,10 +136,89 @@
 	These aspects have to be factored in especially during camera alignment and view vector determination procedures.
 	\subsection{Determination of position vectors}
 	\label{sec:determination_position}
-	- known values: lat, lon, alt (in ecef) and time
-	- determination of eci longitude from time
-	- earth shape (ellipsoid)
-	- full determination of position vector (eci)
+	As stated previously in section \ref{sec:eath_bound_observation}, the position vector $p_i$ in ECI coordinates is a readily available value. The actual vector values are initially unknown and have to be derived from known values of the observer. These known values are latitude, longitude and height on earth and the current time stamp. From these four values, the $p_i$ vector can be sufficiently derived.
+	First of all, we have to factor in the shape of planet earth, which is ellipsoidal, rather than perfectly spherical. Sanz Subirana et. al. provide a set of equations to perform a transformation from latitude, longitude and height to a $\mathbb{R}^3$ vector in ECEF coordinates, which can be transformed to ECI coordinates later on.\newline
+	As follows, we define latitude as $\varphi$, longitude as $\lambda$ and height above ellipsoid as $h$. Further known general values are earth's equatorial radius $a$ and polar radius $b$. The geometric context is illustrated in figure \ref{fig:cartesian_ellipsoidal} below:
+	
+	\begin{figure}[H]
+		\centering
+		\includegraphics[width=0.5\linewidth]{images/cartesian_ellipsoidal.png}
+		\caption{Cartesian and ellipsoidal coordinates on planet earth. \cite{esa_cartesian_ellipsoidal}}
+		\label{fig:cartesian_ellipsoidal}
+	\end{figure}
+	\noindent
+	As the shape of earth is ellipsoidal, an ellipse can be defined as a section of the ellipsoid along the Z-axis, for example in the YZ-plane. This ellipse, just as the orbital ellipses posesses an eccentricity $e$ which is defined as follows:
+	\begin{equation}
+		\label{ellipsoid_e}
+		e^2=\frac{a^2 - b^2}{a^2}
+	\end{equation}
+	Using the value of $e$, the radius $N$ of the prime vertical is defined as follows:
+	\begin{equation}
+		\label{ellipsoid_N}
+		N=\frac{a}{\sqrt{1-e^2\sin(\varphi)^2}}
+	\end{equation}
+	Using $e$, $N$ and the height value $h$, the components of position vector $p$ can now be sufficiently defined as:
+	\begin{equation}
+		\label{ellipsoid_p}
+		p=
+		\begin{pmatrix}
+			p_x \\
+			p_y \\
+			p_z
+		\end{pmatrix} = 
+		\begin{pmatrix}
+			(N+h)\cos(\varphi)\cos(\lambda) \\
+			(N+h)\cos(\varphi)\sin(\lambda) \\
+			((1-e^2)N+h)\sin(\varphi)
+		\end{pmatrix}
+	\end{equation}
+	\cite{esa_cartesian_ellipsoidal}\newline
+	In the ECEF coordinate system, the longitude value $\lambda$ is always fixed. In the ECI coordinate system, earth rotates around the Z-axis, as such that of the parameters latitude, longitude and height only longitude in reference to the ECI coordinate origin changes as time progresses. To determine longitude subject to time, Curtis provides a set of equations and a process to solve this issue. To elaborate the following process, some underlying geometric elements must be defined beforehand.
+	
+	\begin{figure}[H]
+		\centering
+		\includegraphics[width=0.47\linewidth]{images/siderial_time.png}
+		\caption{Geometric context of ECI longitude subject to time.  \cite{curtis_siderial_time}}
+		\label{fig:curtis_siderial_time}
+	\end{figure}
+	\noindent
+	As illustrated above in figure \ref{fig:curtis_siderial_time}, the geometric context consists of several angles along the polar axis, which corresponds to the Z-axis in our ECI coordinate system, as illustrated in figure \ref{fig:eci}. The axis $\gamma$ corresponds to the X-axis. Time stamps in this context are defined as \emph{YYYY.MM.DD HH:MM:SS}, which consists of year, month, day, hours, minutes and seconds to date any observation in Universal Time (UT).\newline
+	The first relevant value is $\theta_{G0}$, which corresponds to ECI longitude angle at which Greenwhich (hereby short for the prime meridian of the ECEF coordinate system) is located on any day at 0hr UT, meaning \emph{YYYY.MM.DD 00:00:00}. \newline
+	Next up, we have $\theta_{G}$, the angular location of Greenwich at the time stamp of observation, meaning that hours, minutes and seconds in the time stamp are fully specified. \newline
+	Finally we have $\Lambda$ and $\theta$ related by $\theta=\Lambda+\theta_{G}$, where $\Lambda$ describes the longitude angle between observer and Greenwich at time of observation and $\theta$ describes the longitude angle between observer and axis $\gamma$.
+	To determine these values, specifically starting with $\theta_{G0}$, a complex process is required which consists of several steps, outlined below:
+	\begin{enumerate}
+		\item The determination of the current Julian day ($J_0$):\newline The current Julian day depicts the number of days since noon (UT) on January 1st, 4713 BC. For any given date within limitations, consisting of year (y), month (m) and day (d), the following formula applies:
+		\begin{equation}
+			J_0 = 367y - \left\lfloor
+			\frac{7\left(y + \left\lfloor \frac{m+9}{12} \right\rfloor\right)}{4}
+			\right\rfloor + \left\lfloor \frac{275m}{9}\right\rfloor + d + 1721013.5
+		\end{equation}
+		constrained to $1901 \leq y \leq 2099$, $1 \leq m \leq 12$ and $1 \leq d \leq 31$.
+		
+		\item The determination of $T_0$ in the J2000 epoch:\newline
+		The J2000 Julian epoch starts noon (UT) on January 1st, 2000 and marks the number of days since the start of the Julian calendar, which is 2451545. This step consists of calculating the number of Julian centuries $T_0$ between the start of J2000 and the current observation date. This can be archieved with the following formula containing the result of the previous step:
+		\begin{equation}
+			T_0 = \frac{J_0-2451545}{36525}
+		\end{equation}
+		
+		\item The determination of $\theta_{G0}$: \newline
+		With the result $T_0$ of the previus step, we can now determine the angle $\theta_{G0}$ with the following polynomial, which yields the value in degrees:
+		\begin{equation}
+			\theta_{G0} = 100.4606184 + 36000.77004\cdot T_0 + 0.000387933\cdot T_0^2 -2.583(10^{-8})\cdot T_0^3
+		\end{equation}
+		
+		\item The determination of $\theta_{G}$ and $\theta$:\newline
+		Having calculated $\theta_{G0}$, we can now compute $\theta_{G}$ for any arbitrary time of the day using the following equation, which yields a degree value:
+		\begin{equation}
+			\theta_{G} = \theta_{G0} + 360.98564724\cdot\frac{UT}{24}
+		\end{equation}
+		Hereby $UT$ corresponds to the current time of the day as floating point number (e.g. the time value 09:41:22 corresponds to 9.68944 [hr]). The angular value slightly above 360° stems from the fact, that the rotation of earth against the background stars, a siderial rotation, is slightly shorter than 24 hours. With $\theta_{G}$ determined and known $\Lambda$ value, $\theta$ arised from the geometric context as $\theta=\Lambda+\theta_{G}$.
+	\end{enumerate}
+	\cite{curtis_siderial_time}
+	\newpage\noindent
+	Now, that $\theta$, the longitude of the observer in ECI coordinates at a specific time stamp $i$, has been determined, we can use the previously established equation \ref{ellipsoid_p} to determine the position vector. This can be done by inserting $\theta$ for $\lambda$ which yields the final result of $p_i$.
+	
 	\subsection{Determination of camera alignment and view vectors}
 	\label{sec:determine_view_vecs}
 	- camera calibration using stars (reference to previous paper)
@@ -188,6 +267,12 @@
 		\bibitem{satellites_at_night}
 		Can You See Satellites At Night? How Do You Spot Them?, 	Visnja Radosavljevic, Optics Mag, 2025, \url{https://opticsmag.com/can-you-see-satellites-at-night/}. \newline Accessed 13.08.2026
 		
+		\bibitem{esa_cartesian_ellipsoidal}
+		J. Sanz Subirana, J.M. Juan Zornoza and M. Hernández-Pajares, "Coordinate Conversions", Gnss Data Processing Volume I: Fundamentals and Algorithms, 2013, p. 185, \url{https://gssc.esa.int/navipedia/GNSS_Book/ESA_GNSS-Book_TM-23_Vol_I.pdf}. \newline Accessed 14.08.2026
+		
+		\bibitem{curtis_siderial_time}
+		H.D. Curtis, "Siderial Time", Orbital Mechanics for Engineering Students 2nd Edition, 2010, pp. 275-280, \url{https://shop.elsevier.com/books/orbital-mechanics-for-engineering-students/curtis/978-0-12-374778-5}\newline
+		Accessed 03.05.2026
 		
 		
 		\bibitem{lens_dist}
