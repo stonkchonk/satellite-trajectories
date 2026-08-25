@@ -221,6 +221,56 @@
 	
 	\subsection{Determination of camera alignment and view vectors}
 	\label{sec:determine_view_vecs}
+	This section elaborates the determination of camera alignment and view vectors using a star based calibration procedure, as previously established. Hereby a view vector constitutes to the variable $v_i$ as explained in section \ref{sec:eath_bound_observation}. As for the camera alignment, we assume that any observer camera is fixed to the ground (as in fixed to the ECEF coordinate system) and pointing in a certain direction. Furthermore it may be rotated in such a way, that we initially can not deduct any view vectors (in ECI coordinates) from dots in an image.
+	\begin{figure}[H]
+		\centering
+		\begin{minipage}{0.32\linewidth}
+			\centering
+			\includegraphics[
+			width=\linewidth]{images/cam_calib.png}
+			\caption{Calibration aspects of an image}
+			\label{fig:cam_calib_blank}
+		\end{minipage}
+		\hfill
+		\begin{minipage}{0.32\linewidth}
+			\centering
+			\includegraphics[width=\linewidth]{images/cam_calib_points.png}
+			\caption{Determination of camera alignment}
+			\label{fig:cam_calib_points}
+		\end{minipage}
+		\hfill
+		\begin{minipage}{0.32\linewidth}
+			\centering
+			\includegraphics[width=\linewidth]{images/cam_calib_sat.png}
+			\caption{Determination of the view vector}
+			\label{fig:cam_calib_sat}
+		\end{minipage}
+	\end{figure}
+	\noindent
+	First, we need to determine alignment which constitutes to the calibration of the camera. Illustrated in figure \ref{fig:cam_calib_blank} are visual components of an image, taken at a certain time stamp, which are necessary for calibration. Within the image frame, we define three key points: $C$ (located in the center), $T$ (centered on the top edge) and $L$ (centered on the left edge). Visible within the image are dots, which correspond to at least three known stars ($S1$, $S2$ and $S3$) and (initially optional) the artificial satellite $A$. The assignment of three dots to actual known stars requires a star matching algorithm to be carried out. Such an algorithm has been established in a previous work \cite{self_localization_in_space} which constitutes to a modified version of the brightness independent 4-Star matching algorithm presented by Ying et. al. \cite{four_stars_algo}.\newline
+	Once three stars have been identified, three view vectors (in ECI coordinates) $v_{S1}$, $v_{S2}$ and $v_{S3}$ can be assigned to the three dots $S1$, $S2$ and $S3$.\newline
+	Figure \ref{fig:cam_calib_points} illustrates the triangulation of the key points $C$, $T$ and $L$, a process that yields three corresponding view vectors $v_C$, $v_T$ and $v_L$.
+	
+	\begin{equation}
+		\begin{bmatrix}
+			\text{---} & v_{S1} & \text{---} \\
+			\text{---} & v_{S2} & \text{---} \\
+			\text{---} & v_{S3} & \text{---}
+		\end{bmatrix}\cdot
+		\begin{bmatrix}
+			P
+		\end{bmatrix}=
+		\begin{bmatrix}
+			\cos(\gamma_{S1}) \\
+			\cos(\gamma_{S2}) \\
+			\cos(\gamma_{S3}) \\
+		\end{bmatrix}
+	\end{equation}
+	
+	\begin{equation}
+		\gamma_i = \delta ...
+	\end{equation}
+	
 	- camera calibration using stars (reference to previous paper)
 	- triangulation
 	- adjustment of calibration view vectors over time
@@ -274,25 +324,21 @@
 		H.D. Curtis, "Siderial Time", Orbital Mechanics for Engineering Students 2nd Edition, 2010, pp. 275-280, \url{https://shop.elsevier.com/books/orbital-mechanics-for-engineering-students/curtis/978-0-12-374778-5}\newline
 		Accessed 03.05.2026
 		
-		
-		\bibitem{lens_dist}
-		B. Prescott and G. F. McLean. "Camera Calibration", Line-Based Correction of Radial Lens Distortion, \newline 1996, pp. 2-3, \url{https://www.sciencedirect.com/science/article/abs/pii/S1077316996904074}. \newline Accessed 11.10.2025
-		
-		\bibitem{machine_learning}
-		Prof. Dr. Markus Schneider. "Nonlinear Modeling, Model Selection", \emph{Nonlinear Modeling and Generalization}, \newline
-		5812 Machine Learning Lecture Notes, 03.2024, pp.29-32.\newline
-		Accessed 04.07.2024
-		
 		\bibitem{star_catalog}
 		Browse Software Development Team. BSC5P - Bright Star Catalog, 2024,
 		\newline\url{https://heasarc.gsfc.nasa.gov/w3browse/star-catalog/bsc5p.html}\newline
 		Accessed 12.09.2025
 		
+		\bibitem{self_localization_in_space}
+		Frederic Heil "Determining attitude to the background stars", \emph{Image based self localization in interplanetary space}, 2025, pp. 9-11,\newline \url{https://github.com/stonkchonk/satellite-trajectories/blob/main/thesis/papers/heil_self_localization_2025.pdf}\newline
+		Accessed 23.08.2026
+		
 		\bibitem{four_stars_algo}
 		Dong Ying, Xing Fei, You Zheng. Brightness Independent 4-Star Matching Algorithm
 		for Lost-in-Space 3-Axis Attitude Acquisition, 2006,\newline
 		\url{https://www.sciencedirect.com/science/article/abs/pii/S1007021406702322}\newline
-		Accessed 15.08.2025
+		Accessed 23.08.2026
+		
 		
 		\bibitem{rotation_formula}
 		Hui Cheng, K. C. Gupta. "Introduction", An Historical Note on Finite Rotations, 1989, p. 1,\newline
