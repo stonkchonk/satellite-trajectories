@@ -211,7 +211,7 @@
 		\item The determination of $\theta_{G}$ and $\theta$:\newline
 		Having calculated $\theta_{G0}$, we can now compute $\theta_{G}$ for any arbitrary time of the day using the following equation, which yields a degree value:
 		\begin{equation}
-			\theta_{G} = \theta_{G0} + 360.98564724\cdot\frac{UT}{24}
+			\theta_{G} = \theta_{G0} + 360.98564724^\circ\cdot\frac{UT[\mathrm{hr}]}{24[\mathrm{hr}]}
 		\end{equation}
 		Hereby $UT$ corresponds to the current time of the day as floating point number (e.g. the time value 09:41:22 corresponds to 9.68944 [hr]). The angular value slightly above 360° stems from the fact, that the rotation of earth against the background stars, a siderial rotation, is slightly shorter than 24 hours. With $\theta_{G}$ determined and known $\Lambda$ value, $\theta$ arised from the geometric context as $\theta=\Lambda+\theta_{G}$.
 	\end{enumerate}
@@ -249,31 +249,48 @@
 	\noindent
 	First, we need to determine alignment which constitutes to the calibration of the camera. Illustrated in figure \ref{fig:cam_calib_blank} are visual components of an image, taken at a certain time stamp, which are necessary for calibration. Within the image frame, we define three key points: $C$ (located in the center), $T$ (centered on the top edge) and $L$ (centered on the left edge). Visible within the image are dots, which correspond to at least three known stars ($S1$, $S2$ and $S3$) and (initially optional) the artificial satellite $A$. The assignment of three dots to actual known stars requires a star matching algorithm to be carried out. Such an algorithm has been established in a previous work \cite{self_localization_in_space} which constitutes to a modified version of the brightness independent 4-Star matching algorithm presented by Ying et. al. \cite{four_stars_algo}.\newline
 	Once three stars have been identified, three view vectors (in ECI coordinates) $v_{S1}$, $v_{S2}$ and $v_{S3}$ can be assigned to the three dots $S1$, $S2$ and $S3$.\newline
-	Figure \ref{fig:cam_calib_points} illustrates the triangulation of the key points $C$, $T$ and $L$, a process that yields three corresponding view vectors $v_C$, $v_T$ and $v_L$.
+	Figure \ref{fig:cam_calib_points} illustrates the triangulation of the key points $C$, $T$ and $L$, a process that yields three corresponding view vectors $v_C$, $v_T$ and $v_L$. To triangulate any pixel point $P$, as in to determine $v_P$, we have to determine the angular distances between the stars dots and $P$ first using the following formula:
+	\begin{equation}
+		\label{img_angular_dist}
+		\gamma_i = \delta \cdot \frac{d_i}{w}= \delta \cdot \frac{|S_i-P|}{w}
+	\end{equation}
+	It is assumed that the image is rectilinear and square with a fixed pixel width $w$ and a corresponding agular diameter $\delta$. The value $\gamma_{i}$ represents the angular distance between a star point $S_i$ and $P$, whereas their pixel distance is expressed as $d_i$. These $\gamma$ values are to be determined between any $P$ and each of the three stars and are plugged in to the next equation:
 	
 	\begin{equation}
+		\label{img_lgs}
 		\begin{bmatrix}
 			\text{---} & v_{S1} & \text{---} \\
 			\text{---} & v_{S2} & \text{---} \\
 			\text{---} & v_{S3} & \text{---}
 		\end{bmatrix}\cdot
 		\begin{bmatrix}
-			P
+			v_P
 		\end{bmatrix}=
 		\begin{bmatrix}
-			\cos(\gamma_{S1}) \\
-			\cos(\gamma_{S2}) \\
-			\cos(\gamma_{S3}) \\
+			\cos(\gamma_{1}) \\
+			\cos(\gamma_{2}) \\
+			\cos(\gamma_{3}) \\
 		\end{bmatrix}
 	\end{equation}
+	Solving this equation vor $v_P$ yields the corresponding vector value (in ECI coordinates) for any point $P$ on the image. \cite{self_localization_in_space}\newline
+	If the artificial satellite $A$ is visible in the same image, $v_A$ can be determined similarly using equations \ref{img_angular_dist} and \ref{img_lgs} using the same process. A more generalized approach however is to determine $v_A$ of $A$ by triangulating it with the previously triangulated points $C$, $T$ and $L$, as shown in figure \ref{fig:cam_calib_sat}. Initially after calibration the satellite might not be visible in the camera's field of view, but at a later point in time. Stated previously, the camera is fixed to the ground, meaning that the observation frame moves as earth rotates. This means, that the determined image calibration vectors $v_C$, $v_T$ and $v_L$ which are fixed to the image also move with earth's rotation. Supposing that $v_C$, $v_T$ and $v_L$ have been determined at time stamp $t_0$, we can determine $v_C'$, $v_T'$ and $v_L'$ at $t_1$ using the following rotation angle and formula:
 	
 	\begin{equation}
-		\gamma_i = \delta ...
+		\label{vector_rotation}
+		\begin{aligned}
+			\alpha=360.98564724^\circ\cdot \frac{\varDelta t}{T_d}=360.98564724^\circ\cdot \frac{(t_1-t_0)[\mathrm{hr}]}{24[\mathrm{hr}]} \\
+			v_P'=
+			\begin{bmatrix}
+				\cos(\alpha) & -\sin(\alpha) & 0 \\
+				\sin(\alpha) & \cos(\alpha) & 0 \\
+				0 & 0 & 1 \\
+			\end{bmatrix}
+			\cdot v_P
+		\end{aligned}
 	\end{equation}
+	Stated previously in section \ref{sec:determination_position}, earth rotates slightly more than 360° in 24 hours relative to the ECI coordinate system. With the difference $t_1-t_0$ we obtain the rotation angle $\alpha$ at which the observer location rotates relative to the Z-axis. That angle can be applied to $v_P$ using a rotation matrix which rotates the vector around the Z-axis as well.\newline
+	As the satellite dot shows up in a later image at $t_1$, we can now triangulate $v_A$ of $A$ using $v_C'$, $v_T'$ and $v_L'$ equivalently to the previously performed star calibration of $C$, $T$ and $L$.
 	
-	- camera calibration using stars (reference to previous paper)
-	- triangulation
-	- adjustment of calibration view vectors over time
 	
 	\section{Orbit determination models}
 	\subsection{Parametric trajectory from angles and radii}
