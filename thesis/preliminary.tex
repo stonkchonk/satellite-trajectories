@@ -7,6 +7,8 @@
 \usepackage{url}
 \usepackage{float}
 
+\DeclareMathOperator{\atantwo}{atan2}
+
 \title{Image based trajectory determination of artificial satellites \\\large Preliminary outline on geometry, data acquisition and determination models}
 \author{Frederic Heil\\
 	\texttt{frederic.heil@hs-weingarten.de}}
@@ -294,10 +296,129 @@
 	
 	\section{Orbit determination models}
 	\subsection{Parametric trajectory from angles and radii}
-	- at first 2D solution
-	- three angles and three radii are needed
-	- from this we determine a, e, arg peri
-	- variants: ellptic/hyperbolic, circular, parabolic
+	Previously, in section \ref{sec:kepler_orbit} we have established the Keplerian orbit. Elliptical and hyperbolic orbits can be described using equations \ref{r_theta} and \ref{r_theta_hyperbola}, characterized by $a$, $e$ and $\omega$. These equations differ from each other in the sign, but yield similar curves mirrored at the X-axis if equipped with the same values $a$, $e$ and $\omega$ otherwise. For this reason, equation \ref{r_theta} can also be used to model hyperbolic trajectories, the sign is simply flipped. If we allow negative values specifically for $a$ and $e$, this issue can be omitted and equation \ref{r_theta} can be used in the following to model both elliptical and hyperbolic trajectories.\newline
+	We start off with three distinct measurements where three radii $r_i$ and three angles $\theta_i$ for $i \in \{1,2,3\}$ are known. Geometric context is given in figures \ref{fig:parametric_ellipse} and \ref{fig:parametric_hyperbola}. Going back to section \ref{sec:eath_bound_observation} we know that $r_i$ values are initially unknown. Their determination is an issue for upcoming sections.\newline
+	We start the derivation process by plugging in radii and angular values into equation \ref{r_theta}, which yields a system of three equations for $i \in \{1,2,3\}$ structured as follows:
+	
+	\begin{equation}\label{derivation_basis}
+		r_i=\frac{a(1-e^2)}{1+e\cdot\cos(\theta_i-\omega)}
+	\end{equation}
+	
+	\noindent
+	From this, we rearrange equation \ref{derivation_basis} to factor out $a$ subject to $e$ and $\omega$ as follows:
+	
+	\begin{equation*}
+		r_i=\frac{a(1-e^2)}{1+e\cdot\cos(\theta_i-\omega)} \Leftrightarrow a=\frac{r_i(1+e\cdot\cos(\theta_i-\omega))}{1-e^2}
+	\end{equation*}
+	\begin{equation}\label{halbachse}
+		\boxed{a=\frac{r_i(1+e\cdot\cos(\theta_i-\omega))}{1-e^2}}
+	\end{equation}
+	Next up, we obtain $e$ subject to $\omega$ by equating expression \ref{halbachse} with itself but with two different index values $i$ and $j$ with $j \in \{1,2,3\}$ and $i \neq j$ to use different radii and angles as follows:
+	
+	\begin{equation*}
+		\begin{aligned}
+			\frac{r_i(1+e\cdot\cos(\theta_i-\omega))}{1-e^2}=\frac{r_j(1+e\cdot\cos(\theta_j-\omega))}{1-e^2} \Leftrightarrow \\
+			r_i+r_ie\cdot\cos(\theta_i-\omega)=r_j+r_je\cdot\cos(\theta_j-\omega) \Leftrightarrow \\
+			r_i-r_j=e(r_j\cdot\cos(\theta_j-\omega)-r_i\cdot\cos(\theta_i-\omega))
+		\end{aligned}
+	\end{equation*}
+	\noindent
+	Some simplications can be applied:\newline $C_{ij}\cdot\cos(\alpha_{ij}-\omega) = r_j\cdot\cos(\theta_j-\omega)-r_i\cdot\cos(\theta_i-\omega)$ and \newline
+	$\alpha_{ij}=\atantwo(B_{ij}, A_{ij})$ with \newline $C_{ij}=\sqrt{A_{ij}^2+B_{ij}^2}$ , $A_{ij}=\cos(\theta_j)r_j-\cos(\theta_i)r_i$ and $B_{ij}=\sin(\theta_j)r_j-\sin(\theta_i)r_i$.\newline
+	Hence:
+	\newline
+	\begin{equation*}
+		\begin{aligned}
+			r_i-r_j=e(C_{ij}\cdot\cos(\alpha_{ij}-\omega)) \Leftrightarrow 
+			\frac{r_i-r_j}{C_{ij}\cdot\cos(\alpha_{ij}-\omega)}=e
+		\end{aligned}
+	\end{equation*}
+	\begin{equation}\label{excentritaet}
+		\boxed{e=\frac{r_i-r_j}{C_{ij}\cdot\cos(\alpha_{ij}-\omega)}}
+	\end{equation}
+	\noindent
+	Next up, we obtain $\omega$ by equating expression \ref{excentritaet} with itself with two different index pairs $ij$ and $ik$ with $k \in \{1,2,3\}$ and $i \neq j \neq k$ as follows:
+	
+	\begin{equation*}
+		\begin{aligned}
+			\frac{r_i-r_j}{C_{ij}\cdot\cos(\alpha_{ij}-\omega)}=\frac{r_i-r_k}{C_{ik}\cdot\cos(\alpha_{ik}-\omega)} \Leftrightarrow \\
+			(r_i-r_j)\cdot(C_{ik}\cdot\cos(\alpha_{ik}-\omega))=(r_i-r_k)\cdot(C_{ij}\cdot\cos(\alpha_{ij}-\omega)) \Leftrightarrow \\
+			\frac{C_{ik}(r_i-r_j)}{C_{ij}(r_i-r_k)}=\frac{\cos(\alpha_{ij}-\omega)}{\cos(\alpha_{ik}-\omega)}
+		\end{aligned}
+	\end{equation*}\noindent
+	Some simplifications can be applied:\newline
+	$D+E\cdot\tan(\alpha_{ik}-\omega)=\frac{\cos(\alpha_{ij}-\omega)}{\cos(\alpha_{ik}-\omega)}$ with \newline $D=\cos(\alpha_{ij}-\alpha_{ik})$,  $E=-\sin(\alpha_{ij}-\alpha_{ik})$ and also $F=\frac{C_{ik}(r_i-r_j)}{C_{ij}(r_i-r_k)}$.\newline
+	Hence:
+	
+	\begin{equation*}
+		\begin{aligned}
+			F=D+E\cdot\tan(\alpha_{ik}-\omega) \Leftrightarrow -\arctan\left(\frac{F-D}{E}\right)+\alpha_{ik}=\omega
+		\end{aligned}
+	\end{equation*}\noindent
+	With the final simplification of: \newline
+	$G=\frac{F-D}{E}$\newline
+	We end up with:\newline
+	\begin{equation}\label{argument_periapsis}
+		\boxed{\omega=\alpha_{ik}-\arctan(G)}
+	\end{equation}
+	\noindent
+	As a result, the characteristical parameters $a$, $e$ and $\omega$ of elliptical and hyperbolic trajectories can simply be determined starting with $\omega$ from equation \ref{argument_periapsis} then putting that result into equation \ref{excentritaet} to determine $e$ and finally putting both values into equation \ref{halbachse} to determine $a$.\newline
+	This mathematical model can be used to characterize ellipses and hyperbolas however there are two special cases where it does not work, namely circular orbits and parabolic trajectories. In the special case of a circular orbit with $e=0$, all three measured radii posess the same value $r_1=r_2=r_3$. This causes the definition of $F=\frac{C_{ik}(r_i-r_j)}{C_{ij}(r_i-r_k)}$ to be undefined due to zero division, which causes $\omega$ to be undefined. Incidentally, no argument of periapsis $\omega$ can be defined for a circle as there is no closest point to the center. A circular orbit can simply be expressed using its semi major axis as $r(\theta)=a$. With one known radius value $r_i$ the semi major axis is already sufficiently defined:
+	\begin{equation}
+		\label{ein_langweiliger_kreis}
+		\boxed{a=r_i}
+	\end{equation}
+	For an orbit to be circular it is necessary that all radii measurements $r_1$, $r_2$ and $r_3$ are exactly the same value wise.\newline
+	In the special case of parabolic trajectories with $e=1$ multiple expressions (e.g. \ref{derivation_basis} and \ref{halbachse}) with $e$ in the denominator do not hold up due zero division. Mentioned previously in section \ref{sec:kepler_orbit}, parabolas can be modeled with equation \ref{r_theta_parabolic} which is characterized by $p$ and $\omega$. For determining these parameters, we only need two distinct measurements where two radii $r_i$ for $i \in \{1,2\}$ and two angles $\theta_i$ for $i \in \{1,2\}$ are known. The derivation starts off by putting values of $r_i$ and $\theta_i$ into equation \ref{r_theta_parabolic}, which can be rearranged to obtain $p$ subject to $\omega$:
+	\begin{equation*}
+		\begin{aligned}
+			r_i=\frac{p}{1+\cos(\theta_i-\omega)} \Leftrightarrow \\
+			r_i\cdot(1+\cos(\theta_i-\omega))=p
+		\end{aligned}
+	\end{equation*}
+	\begin{equation}\label{halbachse_parabel}
+		\boxed{p=r_i\cdot(1+\cos(\theta_i-\omega))}
+	\end{equation}
+	\noindent
+	Next up, we determine $\omega$ by inserting expression \ref{halbachse_parabel} with index $i$ into expression \ref{r_theta_parabolic} with $r_j$ and $\theta_j$ put into place for $j \in \{1, 2\}$ and $i\neq j$ as follows:
+	\begin{equation*}
+		\begin{aligned}
+			r_j=\frac{r_i(1+\cos(\theta_i-\omega))}{1+\cos(\theta_j-\omega)} \Leftrightarrow \\
+			r_j+r_j\cdot\cos(\theta_j-\omega)=r_i+r_i\cdot\cos(\theta_i-\omega) \Leftrightarrow \\
+			r_j-r_i=r_i\cdot\cos(\omega-\theta_i)-r_j\cdot\cos(\omega-\theta_j)
+		\end{aligned}
+	\end{equation*}
+	\noindent
+	Some simplification can be applied:\newline
+	$\sqrt{I^2+H^2}\cdot\cos(\omega+\beta) = r_i\cdot\cos(\omega-\theta_i)-r_j\cdot\cos(\omega-\theta_j)$ with\newline $I=r_i\cdot\cos(\theta_i)-r_j\cdot\cos(\theta_j)$, $H=r_i\cdot\sin(\theta_i)-r_j\cdot\sin(\theta_j)$ and\newline $\beta=-\atantwo(H, I)$.\newline
+	Hence:
+	\begin{equation*}
+		\begin{aligned}
+			r_j-r_i=\sqrt{I^2+H^2}\cdot\cos(\omega+\beta) \Leftrightarrow \\
+			\arccos\left(\frac{r_j-r_i}{\sqrt{I^2+H^2}}\right)-\beta=\omega
+		\end{aligned}
+	\end{equation*}
+	With the final simplification of: \newline
+	$J=\frac{r_j-r_i}{\sqrt{I^2+H^2}}$\newline
+	We end up with:
+	\begin{equation}
+		\label{arg_peri_parabola}
+		\boxed{\omega=\arccos(J)-\beta}
+	\end{equation}
+	\noindent
+	As a result, the characteristical parameters $p$ and $\omega$ of parabolic trajectories can simply be determined starting with $\omega$ from equation \ref{arg_peri_parabola} then putting that result into equation \ref{halbachse_parabel} to determine $p$.\newline
+	Now, that mathematical models for determining elliptical, hyperbolic, circular and parabolic trajectories have been established, we can define a generalized process which determines a parametric trajectory from three measurements without the prior knowledge which type of trajectory and thus model it is going to be. \newline Before doing so it should be noted that some expressions in these models contain singularities which could cause problems due to zero division. In the ellipse/hyperbola model these are conatined within equation \ref{excentritaet} and expressions for $F$ and $G$. In the parabolic model it occurs within the expression for $J$. These singularities only appear if certain values are exactly identical. Due to the application of these models in a physical rather than purely mathematical setting and because of their input values which posess a large mantissa and are obtained by camera systems with limited accuracies singularities are very unlikely to occur. For this reason we simply chose to ignore them as they will have no stake in the average use case. If a sigularity were to appear during calculation, it may be averted by permutating indices of measurements and performing a recalculation. \newline
+	Once again we start off with three radii $r_1$, $r_2$ and $r_3$ and their corresponding angles $\theta_1$, $\theta_2$ and $\theta_3$ as a basis for the following steps:
+	\begin{enumerate}
+		\item Check if $r_1=r_2=r_3$. If yes, assume a circular trajectory and proceed with step 5.
+		\item Assume an elliptical/hyperbolic trajectory. Calculate all intermediate parameters beforehand using radii and angle values. Determine $\omega$ using equation \ref{argument_periapsis}.
+		\item Determine $e$ subject to $\omega$. If $|e|=1$, assume a parabolic trajectory and proceed with step 6.
+		\item Determine $a$ subject to $e$ and $\omega$ using equation \ref{halbachse}. An \textbf{elliptical/hyperbolic} trajectory is now sufficiently defined. \newline\textbf{Done.}
+		\item Determine $a$ using equation \ref{ein_langweiliger_kreis}. A \textbf{circular} trajectory is now sufficiently defined. \newline\textbf{Done.}
+		\item Determine $\omega$ using equation \ref{arg_peri_parabola}.
+		\item Determine $p$ subject to $\omega$ using equation \ref{halbachse_parabel}. A \textbf{parabolic} trajectory is now sufficiently defined. \newline\textbf{Done.}
+	\end{enumerate}
+	
 	\subsection{Tranfering the 2D solution to 3D}
 	- angles in eci reference sytsem
 	- determination of radii using stereo vision
