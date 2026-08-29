@@ -484,6 +484,7 @@
 	which should intersect each other in a mathematical setting. However in a physical setting where cameras are limited in accuracy an exact intersection is unlikely to occur. A feasible guess for satellite location would be the closest approach between the two lines, more specifically the point in the middle of $l_1$ and $l_2$ where they approach each other the closest. \newline
 	Fitzpatrick presents a readily available solution. At their points of closest approach $l_2(s)-l_1(t)$ is minimal in magnitude and perpendicular both to $v_1$ and $v_2$ meaning that scalar products between view vectors and $l_2(s)-l_1(t)$ should be zero:
 	\begin{equation}
+		\label{sysm_of_linear_eqs}
 		\begin{aligned}
 			0=v_1\cdot(l_2(s)-l_1(t)) \\
 			0=v_2\cdot(l_2(s)-l_1(t))
@@ -498,16 +499,149 @@
 	Thereby, we obtain a method for full orbit determination using two cameras which can be formulated as a process:
 	
 	\begin{enumerate}
-		\item Determine three radii vectors $r_1$, $r_2$ and $r_3$ for three points in time with a two camera setup using equation \ref{sat_position_2cams}.
+		\item Measure position vectors $p_i$ and $v_i$ of two observing cameras for three points in time resulting in six measured vectors total.
+		\item Determine three radii vectors $r_1$, $r_2$ and $r_3$ using equation \ref{sat_position_2cams}. The system of linear equations resulting from expression \ref{sysm_of_linear_eqs} needs to be solved beforehand to obtain $t_{min}$ and $s_{min}$ for each observation.
 		\item Chose two radii vectors and determine the plane normal vector $n$ using equation \ref{normal_plane}.
 		\item With $n$ established, determine the angle $\theta_i$ for each radii vecto $r_i$ using equation \ref{theta_3d}.
 		\item The values of $r_i$ will now be referred to as magnitudes of their corresponging radii vectors. Magnitudes $r_i$ and angles $\theta_i$ serve as input for the process defined in section \ref{sec:parametric_trajectory} which yields a parametric model.\newline \textbf{Done.}
 	\end{enumerate}
 	
 	
-	\subsection{Gauss method of orbit determination}
-	- describe gauss algo 
-	- does not need to be completed, my solution can be used from a certain stem onwards
+	\subsection{Gaussian method of orbit determination}
+	The Gaussian method of orbit determination is an algorithm originally developed by Gauss that requires only a single camera, thus a less complex setup than the previous approach.\newline
+	Curtis provides the complete algorithm, as in the initial idea, the derivation and the final process which can be used for computation. In the following, we are only going have a look at the idea and the process as the derivation of underlying equations is of no particular relevance for the scope. Furthermore, we are going to apply some modifications to the process, as we can use some previously established solutions to reduce the number of steps. We start off with geometric context and the initial idea, illustrated in the figure below:
+	
+	\begin{figure}[H]
+		\centering
+		\includegraphics[width=0.6\linewidth]{images/gauss_known_and_unknown.png}
+		\caption{Initially known and unknown properties of Gaussian orbit determination depicted in a two dimensional represention.}
+		\label{fig:gauss_algo_idea}
+	\end{figure}
+	\noindent
+	Initially, three observations at three different time stamps $t_1$, $t_2$ and $t_3$ from a fixed location on earth are taken, which yield three position vectors $p_1$, $p_2$ and $p_3$ as well as three view vectors $v_1$, $v_2$ and $v_3$. Unknown vectors are the satellite positions or radii vectors $r_1$, $r_2$ and $r_3$ similar to section \ref{sec:eath_bound_observation}. They can be described using the following relations
+	
+	\begin{equation}
+		\label{gauss_algo_r_vectors}
+		r_1=p_1+\rho_1v_1 \qquad r_2=p_2+\rho_2v_2 \qquad r_3=p_3+\rho_3v_3
+	\end{equation}
+	\noindent
+	with $\rho_i \in \mathbb{R}$ for $i \in \{1,2,3\}$. Through this we reduce the unknown parameters to three real numbers. The goal of this algorithm is to determine fitting solutions for the unknowns so that the observations match a physical orbit around planet earth considering gravitational parameters. This solution can be calculated using the following procedure as elaborated by Curtis:
+	
+	\begin{enumerate}
+		\item Determine time intervals $\tau_1$, $\tau_3$ and $\tau$ from $t_1$, $t_2$ and $t_3$ as follows: 
+		\begin{equation}
+			\tau_1 = t_1 - t_2 \qquad \tau_3 = t_3 - t_2 \qquad \tau = \tau_3 -\tau_1
+		\end{equation}
+		
+		\item Determine the cross products $m_1$, $m_2$ and $m_3$ from view vectors $v_1$, $v_2$ and $v_3$ as follows:
+		\begin{equation}
+			m_1=v_2\times v_3 \qquad m_2=v_1\times v_3 \qquad m_3=v_1\times v_2
+		\end{equation}
+		
+		\item Determine the scalar product $D_0$ as follows:
+		\begin{equation}
+			D_0=v_1\cdot m_1
+		\end{equation}
+		
+		\item Calculate the nine scalar products $D_{ij}$ for $i,j \in \{1,2,3\}$ as follows:
+		\begin{equation}
+			\begin{aligned}
+				D_{11}=p_1\cdot m_1 \qquad D_{12}=p_1\cdot m_2 \qquad D_{13}=p_1\cdot m_3 \\
+				D_{21}=p_2\cdot m_1 \qquad D_{22}=p_2\cdot m_2 \qquad D_{23}=p_2\cdot m_3 \\
+				D_{31}=p_3\cdot m_1 \qquad D_{32}=p_3\cdot m_2 \qquad D_{33}=p_3\cdot m_3
+			\end{aligned}
+		\end{equation}
+		
+		\item Calculate real number parameters $A$ and $B$ with the following expressions:
+		\begin{equation}
+			\begin{aligned}
+				A = \frac{1}{D_0}
+				\left(
+				-D_{12}\frac{\tau_3}{\tau}
+				+ D_{22}
+				+ D_{32}\frac{\tau_1}{\tau}
+				\right) \\
+				B = \frac{1}{6D_0}
+				\left(
+				D_{12}\left(\tau_3^2-\tau^2\right)\frac{\tau_3}{\tau}
+				+
+				D_{32}\left(\tau^2-\tau_1^2\right)\frac{\tau_1}{\tau}
+				\right)
+			\end{aligned}
+		\end{equation}
+		
+		\item Determine the scalar products $E$ and $p_2^2$ as follows:
+		\begin{equation}
+			E=p_2 \cdot v_2 \qquad p_2^2=p_2\cdot p_2
+		\end{equation}
+		
+		\item Determine the real number parameters $a$, $b$ and $c$ with the following expressions:
+		\begin{equation}
+			\begin{aligned}
+				a = -\left(A^2 + 2AE + p_2^2\right) \qquad b = -2\mu B(A + E) \qquad c = -\mu^2 B^2
+			\end{aligned}
+		\end{equation}
+		\noindent
+		Hereby, $\mu$ represents the gravitational parameter, the product of earth's mass and the universal gravity constant.
+		
+		\item An eigth degree polynomial equation containing the parameters $a$, $b$ and $c$ is defined as follows:
+		\begin{equation}
+			x^8+ax^6+bx^3+c=0
+		\end{equation}
+		\noindent
+		Of this polynomial, real roots $w$ larger than zero must be determined. (hier weiterschreiben für schritt 8)
+		
+		\item Determine the unknown parameters $\rho_1$, $\rho_2$ and $\rho_3$ with the following expressions:
+		\begin{equation}
+			\begin{aligned}
+				\rho_1 =
+				\frac{1}{D_0}
+				\left(
+				\frac{
+					6\left(
+					D_{31}\frac{\tau_1}{\tau_3}
+					+
+					D_{21}\frac{\tau}{\tau_3}
+					\right)w^3
+					+
+					\mu D_{31}
+					\left(\tau^2-\tau_1^2\right)
+					\frac{\tau_1}{\tau_3}
+				}{
+					6w^3+\mu\left(\tau^2-\tau_3^2\right)
+				}
+				-
+				D_{11}
+				\right) \\
+				\rho_3 =
+				\frac{1}{D_0}
+				\left(
+				\frac{
+					6\left(
+					D_{13}\frac{\tau_3}{\tau_1}
+					-
+					D_{23}\frac{\tau}{\tau_1}
+					\right)w^3
+					+
+					\mu D_{13}
+					\left(\tau^2-\tau_3^2\right)
+					\frac{\tau_3}{\tau_1}
+				}{
+					6w^3+\mu\left(\tau^2-\tau_1^2\right)
+				}
+				-
+				D_{33}
+				\right) \\
+				\rho_2 = A + \frac{\mu B}{w^3} 
+			\end{aligned}
+		\end{equation}
+		
+		\item Use the previously defined equations \ref{gauss_algo_r_vectors} to determine $r_1$, $r_2$ and $r_3$ from $\rho_1$, $\rho_2$ and $\rho_3$ and already known vectors.
+		
+	\end{enumerate}
+	
+	
+	
 	\subsection{Simplified Gauss method}
 	- my method using gauss approach for circular orbits
 	
@@ -563,6 +697,10 @@
 		Sean Fitzpatrick, "Finding the closest points on skew lines." Elementary Linear Algebra: For University of Lethbridge Math 1410, \newline
 		\url{https://opentext.uleth.ca/Math1410/sec-lines.html}\newline
 		Accessed 29.08.2026
+		
+		\bibitem{curtis_gauss_algo}
+		H.D. Curtis, "Gauss method of preliminary orbit determination", Orbital Mechanics for Engineering Students 2nd Edition, 2010, pp. 297-304, \url{https://shop.elsevier.com/books/orbital-mechanics-for-engineering-students/curtis/978-0-12-374778-5}\newline
+		Accessed 03.05.2026
 		
 	\end{thebibliography}
 \end{document}
