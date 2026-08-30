@@ -584,14 +584,14 @@
 		\noindent
 		Hereby, $\mu$ represents the gravitational parameter, the product of earth's mass and the universal gravity constant.
 		
-		\item An eigth degree polynomial equation containing the parameters $a$, $b$ and $c$ is defined as follows:
+		\item An eighth degree polynomial equation containing the parameters $a$, $b$ and $c$ is defined as follows:
 		\begin{equation}
 			x^8+ax^6+bx^3+c=0
 		\end{equation}
 		\noindent
-		Of this polynomial, real roots $w$ larger than zero must be determined. (hier weiterschreiben für schritt 8)
+		Of this polynomial, a real number root $w$ larger than zero as solution for $x$  must be determined. If there is more than one solution $w$ it means that there is more than one physically feasible trajectory. The entire algorithm must be started over from step 1 exchanging one of the measurements for an additional one until a signle solution $w$ has been determined. For computation, Curtis proposes using Newton's method and plotting the polynomial as function to determine a proper initial estimate of $x$. We propose using a solver like NumPy roots which determines the roots of any polynomial \cite{numpy_roots} and works out of the box.
 		
-		\item Determine the unknown parameters $\rho_1$, $\rho_2$ and $\rho_3$ with the following expressions:
+		\item Determine the unknown parameters $\rho_1$, $\rho_2$ and $\rho_3$ using $w$ with the following expressions:
 		\begin{equation}
 			\begin{aligned}
 				\rho_1 =
@@ -637,13 +637,71 @@
 		\end{equation}
 		
 		\item Use the previously defined equations \ref{gauss_algo_r_vectors} to determine $r_1$, $r_2$ and $r_3$ from $\rho_1$, $\rho_2$ and $\rho_3$ and already known vectors.
-		
+	\end{enumerate}
+	\cite{curtis_gauss_algo}
+	\newline
+	From here on onwards the Gauss algorithm as presented by Curtis contains three additional steps to establish orbital properties from $r_1$, $r_2$ and $r_3$ determined in step 10. However, we have already established a method to determine orbital properties which we reuse to formulate a sigle final step as follows:
+	
+	\begin{enumerate}
+		\setcounter{enumi}{10}
+		\item Use the orbit determination procedure established in section \ref{sec:orbit_two_cameras} starting from step 3 as $r_1$, $r_2$ and $r_3$ are already known. This yields vector $n$ and a parametric model.\newline
+		\textbf{Done.}
 	\end{enumerate}
 	
 	
 	
-	\subsection{Simplified Gauss method}
-	- my method using gauss approach for circular orbits
+	\subsection{Simplified Gaussian method of orbit determination}
+	The previously presented Gaussian method determines viable parameters to form all types of parametric trajectories that fit observations to physical orbits. Due to orbits of satellites at lower altitudes above the earth being mostly circular we propose a method that always assumes a circular model. This way we only need to determine the plane normal vector $n$ and the semi major axis $a$. The aspect that we want to keep is the use of a single camera so that the setup is very much similar to figure \ref{fig:gauss_algo_idea}, except that one measurement less is needed. Known values are the position vectors $p_1$, $p_2$, the view vectors $v_1$, $v_2$, whereupon they are related similar to expression \ref{gauss_algo_r_vectors} so that $r_1$, $r_2$, $\rho_1$ and $\rho_2$ are unknowns. Furthermore, the time stamps $t_1$, $t_2$ of measurement recordings are supposed to be known.\newline
+	We start off with the circularity condition, meaning that all radii vectors $r_i$ must posess the same magnitude which formulates as follows: 
+	\begin{equation}
+		\label{circle_gauss_circle_condition}
+		\boxed{|r_1|=|r_2|\Leftrightarrow \sqrt{(p_1+\rho_1v_1)^2}=\sqrt{(p_2+\rho_2v_2)^2}}
+	\end{equation}
+	\noindent
+	Next, the orbital period $T$ subject to the semi major axis $a$ and the gravitational parameter $\mu$ can be expressed as follows:
+	\begin{equation}
+		\label{circle_gauss_period}
+		T=\frac{2\pi}{\sqrt{\mu}}a^{\frac{3}{2}}=\frac{2\pi}{\sqrt{\mu}}|r_i|^{\frac{3}{2}}
+	\end{equation}
+	\cite{elliptical_orbits}\newline
+	Knowing that $a=|r_1|=|r_2|$, the value of $a$ can be substituted for the magnitude of any radius vector $r_i$. Next, the angle $\varphi$ with $0 \leq \varphi \leq \pi$ between $r_1$ and $r_2$ can be described using the $\arccos$ as follows:
+	\begin{equation}
+		\label{circle_gauss_phi}
+		\varphi = \arccos\left(\frac{r_1\cdot r_2}{|r_1|\cdot|r_2|}\right)
+	\end{equation}
+	\noindent
+	This angle describes the arc of the circlular orbit which the satellite traverses between time stamps $t_1$ and $t_2$ under the condition that $t_2 - t_1 \leq \frac{T}{2}$. This restriction needs to be in place, because the output range of $\arccos$ does not cover a full circle. This relation between time stamps and arc formulates as:
+	\begin{equation}
+		\label{circle_gauss_delta_t}
+		t_2 - t_1 = \Delta t=\frac{\varphi}{2\pi}T
+	\end{equation}
+	\noindent
+	Equations \ref{circle_gauss_period} and \ref{circle_gauss_phi} can be inserted into $\ref{circle_gauss_delta_t}$ to form the following expression
+	
+	\begin{equation*}
+		\begin{aligned}
+			\frac{\arccos\left(\frac{r_1\cdot r_2}{|r_1|\cdot|r_2|}\right)}{2\pi}\cdot
+			\frac{2\pi}{\sqrt{\mu}}|r_1|^{\frac{3}{2}}=
+			\Delta t \Leftrightarrow \\
+			\arccos\left(\frac{r_1\cdot r_2}{|r_1|^2}\right)\cdot|r_1|^{\frac{3}{2}}=\Delta t\sqrt{\mu}
+		\end{aligned}
+	\end{equation*}
+	which yields the time condition subject to $\rho_1$ and $\rho_2$ formulated as:
+	\begin{equation}
+		\label{circle_gauss_time_condition}
+		\boxed{\arccos\left(\frac{(p_1+\rho_1v_1)\cdot (p_2+\rho_2v_2)}{|(p_1+\rho_1v_1)|^2}\right)\cdot|(p_1+\rho_1v_1)|^{\frac{3}{2}}=(t_2-t_1)\sqrt{\mu}}
+	\end{equation}
+	\noindent
+	With cirularity and time conditions established we can formulate a full orbit determination process as follows:
+	
+	\begin{enumerate}
+		\item Measure position vectors $p_1$, $p_2$ and view vectors $v_1$, $v_2$ of two time stamps $t_1$ and $t_2$. A crucial requirement for this algorithm to work is that $t_2 - t_1 \leq \frac{T}{2}$ meaning that observation arcs can not take longer than half the orbital period.
+		\item A real number solution for $\rho_1$ and $\rho_2$ must be computed which satifies the time condition \ref{circle_gauss_time_condition} constrained by the circularity condition \ref{circle_gauss_circle_condition}. This task can not be acomplished analytically. For this reason we propose the use of a sophisticated solver like scipy.optimize.root which allows for modeling more complex functions to be solved numerically \cite{scipy_roots}. This yields the two values $\rho_1$ and $\rho_2$.
+		\item Calculate $r_1$ and $r_2$ using expressions \ref{gauss_algo_r_vectors}. Obtain the plane normal vector $n$ using equation \ref{normal_plane}. The semi major axis $a$ equates radii vector magnitudes $a=|r_1|=|r_2|$.\newline
+		\textbf{Done.}
+	\end{enumerate}
+	\newpage
+	
 	
 	\begin{thebibliography}{9}
 		\setlength{\itemsep}{4pt}       % space between bibliography items
@@ -701,6 +759,16 @@
 		\bibitem{curtis_gauss_algo}
 		H.D. Curtis, "Gauss method of preliminary orbit determination", Orbital Mechanics for Engineering Students 2nd Edition, 2010, pp. 297-304, \url{https://shop.elsevier.com/books/orbital-mechanics-for-engineering-students/curtis/978-0-12-374778-5}\newline
 		Accessed 03.05.2026
+		
+		\bibitem{numpy_roots}
+		"numpy.roots" NumPy documentation, 2026,\newline
+		\url{https://numpy.org/doc/stable/reference/generated/numpy.roots.html}\newline
+		Accessed 30.08.2026
+		
+		\bibitem{scipy_roots}
+		"scipy.optimize.root" SciPy documentation, 2026,\newline
+		\url{https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.root.html}\newline
+		Accessed 30.08.2026
 		
 	\end{thebibliography}
 \end{document}
