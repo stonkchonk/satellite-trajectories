@@ -206,14 +206,14 @@ class WindowController:
 
 class SatelliteController:
     @staticmethod
-    def spawn_satellite(radius_km: float, semi_major_axis_km: float, eccentricity: float, inclination_deg: float,
-                        ascending_node_deg: float):
+    def spawn_satellite(radius_km: float, semi_major_axis_km: float, eccentricity: float,
+                        argument_periapsis_deg: float, inclination_deg: float, ascending_node_deg: float):
         """
         Running this script requires a restart of SpaceEngine to take effect.
         """
         spawn_artificial_satellite_script = Script.create_artificial_satellite(radius_km, semi_major_axis_km,
-                                                                               eccentricity, inclination_deg,
-                                                                               ascending_node_deg)
+                                                                               eccentricity, argument_periapsis_deg,
+                                                                               inclination_deg, ascending_node_deg)
         spawn_artificial_satellite_script.generate(save_dir=Params.addon_planets_dir,
                                                    file_ending=Params.celestial_ending)
 

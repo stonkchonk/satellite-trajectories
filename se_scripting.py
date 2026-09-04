@@ -65,7 +65,7 @@ Asteroid	"ArtificialSatellite"
 		Inclination     {inclination_deg}
 		//MeanAnomaly     135.27
 		AscendingNode   {ascending_node_deg}
-		//ArgOfPericen    318.15
+		ArgOfPericen    {argument_periapsis_deg}
 		//AscNodePreces   18.6		// years
 		//ArgOfPeriPreces 5.997		// years
 	}}
@@ -125,7 +125,7 @@ class Script:
 
     @classmethod
     def create_artificial_satellite(cls, radius_km: float, semi_major_axis_km: float, eccentricity: float,
-                                    inclination_deg: float, ascending_node_deg: float):
+                                    argument_periapsis_deg: float,inclination_deg: float, ascending_node_deg: float):
         return cls(
             Params.artificial_satellite_file,
             Templates.satellite.format(
@@ -133,7 +133,8 @@ class Script:
                 semi_major_axis_au=semi_major_axis_km * (1 / Params.astronomical_unit_km),
                 eccentricity=eccentricity,
                 inclination_deg=inclination_deg,
-                ascending_node_deg=ascending_node_deg
+                ascending_node_deg=ascending_node_deg,
+                argument_periapsis_deg=argument_periapsis_deg,
             ),
             Params.sleep_minimal
         )

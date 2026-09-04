@@ -1,9 +1,4 @@
-from copy import copy
 
-import numpy as np
-
-from algorithms import ParametricTrajectory, GaussAlgorithm, SimplifiedGaussAlgorithm
-from common import Code, Params
 from procedures import SingleFrameMeasurement, SingleFrameMeasurementSeries, DualFrameMeasurementSeries
 
 
@@ -44,21 +39,4 @@ for v in solution_vectors:
     print(np.linalg.norm(v))
 """
 
-A = np.array([
-    [ 0.74278135,  0.55708601,  0.37139068],
-    [-0.20628425,  0.92827912, -0.30942637],
-    [ 0.66666667, -0.33333333,  0.66666667]
-])
-B = np.array([
-    [1, 0, 0],
-    [0, -2, 0],
-    [0, 0, 0]
-])
-eigenvalues = np.linalg.eigvals(B)
-real_eigenvalues = eigenvalues[np.isclose(eigenvalues.imag, 0)].real
 
-#two_norm = max()
-print(A, real_eigenvalues, abs(real_eigenvalues), max(abs(real_eigenvalues)), B.shape)
-
-Code.append_measurement_list("test.json", [(1,2,3.435), (2.222, 1, 0)])
-print(Code.load_measurement_list("test.json"))

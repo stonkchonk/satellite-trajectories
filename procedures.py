@@ -25,6 +25,10 @@ class CameraCalibration:
         self.top_view_vector: UnitVector | None = None
         self.initial_time_stamp: UniversalTimeStamp | None = None
 
+        # store ecef position values for renewable calibration instance
+        self.ecef_lat_lon_deg: tuple[float, float] | None = None
+        self.ecef_sea_altitude_m: float | None = None
+
 
     def view_vector_calibration_procedure(self, return_matched_star_ids: bool = False) -> None | list[int]:
         WindowController.run_script(DefaultScripts.prepare_calibration_script)
@@ -100,7 +104,8 @@ class CameraCalibration:
 
     def position_vector_calibration_procedure(self, override_time_stamp: UniversalTimeStamp | None = None,
                                               override_lat_lon: tuple[float, float] | None = None,
-                                              override_sea_altitude: float | None = None):
+                                              override_sea_altitude: float | None = None,
+                                              perform_touchdown: bool = True):
         WindowController.run_script(DefaultScripts.default_visibilities_script)
         if override_time_stamp is None:
             print("Enter universal time in the format YYYY.MM.DD HH:MM:SS below:")
@@ -120,13 +125,16 @@ class CameraCalibration:
             latitude, longitude = self.parse_lat_lon(lat_lon_input)
         else:
             latitude, longitude = override_lat_lon
-        self.calibration_cam.touchdown_at_position(longitude, latitude)
+        self.ecef_lat_lon_deg = latitude, longitude
+        if perform_touchdown:
+            self.calibration_cam.touchdown_at_position(longitude, latitude)
         if override_sea_altitude is None:
             print("Enter sea altitude in [m] as seen in the HUD:")
             sea_altitude_m = float(input())
             #WindowController.simple_setup()
         else:
             sea_altitude_m = override_sea_altitude
+        self.ecef_sea_altitude_m = sea_altitude_m
         self.position_vector = EarthCenteredInertial.determine_eci_vector_from_lat_lon_alt(latitude, longitude,
                                                                                            sea_altitude_m / 1000,
                                                                                            self.initial_time_stamp)
@@ -135,10 +143,11 @@ class CameraCalibration:
     def full_camera_calibration_procedure(self, override_time_stamp: UniversalTimeStamp | None = None,
                                         override_lat_lon: tuple[float, float] | None = None,
                                         override_sea_altitude: float | None = None,
-                                        setup_calibration_camera: bool = False):
+                                        setup_calibration_camera: bool = False,
+                                        perform_touchdown: bool = True):
         WindowController.simple_setup()
         print("Starting full camera calibration procedure.")
-        self.position_vector_calibration_procedure(override_time_stamp, override_lat_lon, override_sea_altitude)
+        self.position_vector_calibration_procedure(override_time_stamp, override_lat_lon, override_sea_altitude, perform_touchdown)
         if setup_calibration_camera:
             self.calibration_cam.setup()
         WindowController.enter_command_procedure(f"{Params.select_cmd} {Params.satellite_name}")
@@ -196,7 +205,7 @@ class SingleFrameMeasurementSeries:
         WindowController.run_script(DefaultScripts.prepare_tracking_script)
         self.measurement_cam.setup()
         self.measurement_cam.update_star_magnitude_limit(7.0)
-        current_time_tamp = copy(self.calibration.initial_time_stamp)
+        current_time_stamp = copy(self.calibration.initial_time_stamp)
         if forward_second_steps is None:
             continue_taking_measurements = True
             while continue_taking_measurements:
@@ -207,30 +216,66 @@ class SingleFrameMeasurementSeries:
                     break
                 else:
                     WindowController.simple_setup()
-                    current_time_tamp.second += input_seconds
-                    self.measurement_cam.set_time(current_time_tamp)
-                    self.single_frame_measurements.append(self.create_single_frame_measurement(copy(current_time_tamp)))
+                    current_time_stamp.second += input_seconds
+                    self.measurement_cam.set_time(current_time_stamp)
+                    self.single_frame_measurements.append(self.create_single_frame_measurement(copy(current_time_stamp)))
         else:
             for step in forward_second_steps:
-                current_time_tamp.second += step
-                self.measurement_cam.set_time(current_time_tamp)
-                self.single_frame_measurements.append(self.create_single_frame_measurement(copy(current_time_tamp)))
+                current_time_stamp.second += step
+                self.measurement_cam.set_time(current_time_stamp)
+                self.single_frame_measurements.append(self.create_single_frame_measurement(copy(current_time_stamp)))
 
-        for m in self.single_frame_measurements:
-            #print(m.time_stamp)
-            #print(m.view_vector)
-            #print(m.position_vector)
-            #ra_rad, dec_rad = m.view_vector.to_radians
-            #print(Code.fancy_format_ra_dec((Code.rad_to_deg(ra_rad), Code.rad_to_deg(dec_rad))))
-            #print("-----")
-            pass
-        #vectors = [m.view_vector.value for m in self.single_frame_measurements]
-        #print(Code.format_to_geogebra_representation(vectors))
+
+    def create__measurement_series_with_camera_recalibration(self, forward_step_second: int):
+        assert forward_step_second > 0
+
+        if self.calibration is None:
+            self.calibration = CameraCalibration()
+            self.calibration.full_camera_calibration_procedure(setup_calibration_camera=True)
+
+        WindowController.simple_setup()
+        WindowController.run_script(DefaultScripts.prepare_tracking_script)
+        self.measurement_cam.setup()
+        self.measurement_cam.update_star_magnitude_limit(7.0)
+
+        current_time_stamp: UniversalTimeStamp = copy(self.calibration.initial_time_stamp)
+
+        continue_taking_measurements = True
+        while continue_taking_measurements:
+            # TODO: hiwe vernünftiges setup jedes mal ausführen
+            WindowController.simple_setup()
+            self.single_frame_measurements.append(self.create_single_frame_measurement(copy(current_time_stamp)))
+            current_time_stamp.second += forward_step_second
+            self.measurement_cam.set_time(current_time_stamp)
+
+            print("Continue: Satellite still in frame (y/n), End: (e)")
+            command = str(input()).strip().lower()
+            if command == "y": # continue without recalibration
+                continue
+            elif command == "n": # continue with recalibration
+                WindowController.simple_setup()
+                WindowController.run_script(DefaultScripts.prepare_calibration_script)
+                new_calib_instance = CameraCalibration()
+                new_calib_instance.full_camera_calibration_procedure(
+                    override_time_stamp=current_time_stamp,
+                    override_lat_lon=self.calibration.ecef_lat_lon_deg,
+                    override_sea_altitude=self.calibration.ecef_sea_altitude_m,
+                    setup_calibration_camera=True,
+                    perform_touchdown=False
+                )
+                self.calibration = new_calib_instance
+                continue
+            else: # end measurements
+                continue_taking_measurements = False
+                break
+
+
+
 
 
     def create_single_frame_measurement(self, time_stamp: UniversalTimeStamp) -> SingleFrameMeasurement | None:
         drift_angle_deg = EarthCenteredInertial.determine_angular_drift(self.calibration.initial_time_stamp, time_stamp)
-        view_vector_drifted = EarthCenteredInertial.rotate_eci_vector_around_earth_axis(
+        center_vector_drifted = EarthCenteredInertial.rotate_eci_vector_around_earth_axis(
             self.calibration.center_view_vector.value, drift_angle_deg)
         left_vector_drifted = EarthCenteredInertial.rotate_eci_vector_around_earth_axis(
             self.calibration.left_view_vector.value, drift_angle_deg)
@@ -244,7 +289,7 @@ class SingleFrameMeasurementSeries:
         observed_dots = self.star_imager.all_observable_stars_of_image(measurement_image)
         if len(observed_dots) >= 1:
             triangulated_view_vector = Code.triangulate_vector_from_image_point(
-                [view_vector_drifted, left_vector_drifted, top_vector_drifted],
+                [center_vector_drifted, left_vector_drifted, top_vector_drifted],
                 [Params.center_point, Params.left_edge_point, Params.top_edge_point],
                 observed_dots[0].position, Params.width_height[0], Code.deg_to_rad(self.measurement_cam.field_of_view)
             )
@@ -337,12 +382,4 @@ class DualFrameMeasurementSeries:
         l2 = p2 + s*v2
         l1_l2 = l2 - l1
         return l1 + 0.5 * l1_l2
-
-
-
-class OrbitalParameterDeterminer:
-
-    def __init__(self):
-        pass
-
 

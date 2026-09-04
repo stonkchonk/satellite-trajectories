@@ -110,7 +110,7 @@ class Params:
     se_log_file = se_dir + "system/se.log"
     se_catalogs_pak_file = se_dir + "data/catalogs/Catalogs.pak"
     scripts_dir = se_dir + "addons/scripts/"
-    addon_planets_dir = se_dir + "addons/catalogs/planets/"
+    addon_planets_dir = "C:/Users/Bububau Spielcasino/Documents/Cosmographic/SpaceEngine/addons/catalogs/planets/" #se_dir + "addons/catalogs/planets/"
     artificial_satellite_file = "ArtificialSatellite"
     # file endings
     script_ending = ".se"
@@ -149,9 +149,20 @@ class Params:
     ]
     sufficient_perceived_diameter = 0.45
 
+    # orbital parameter namings
+    semi_major_axis_km = "semi_major_axis_km"
+    eccentricity = "eccentricity"
+    argument_periapsis_deg = "argument_periapsis_deg"
+    argument_inclination_deg = "argument_inclination_deg"
+    argument_ascension_deg = "argument_ascension_deg"
+
+    # orbit groud truth file
+    orbit_ground_truth = "orbit_ground_truth.json"
+
 class Constants:
     earth_equatorial_rad_km = 6378.137
     earth_polar_rad_km = 6356.752
+    earth_mean_radius = (earth_equatorial_rad_km + earth_polar_rad_km) / 2
 
 
 class Code:
@@ -249,16 +260,23 @@ class Code:
             return file.read()
 
     @staticmethod
-    def load_measurement_list(filename: str) -> list[tuple]:
-        path = Params.experiments_dir + filename
+    def load_json_content(filename: str, directory: str = Params.experiments_dir) -> any:
+        path = directory + filename
         if not os.path.exists(path):
-            return []
+            print("File not found")
+            return None
 
         content = Code.read_text_file(filename)
         if not content.strip():
-            return []
+            print("No content found")
+            return None
 
-        data = json.loads(content)
+        return json.loads(content)
+
+
+    @staticmethod
+    def load_measurement_list(filename: str) -> list[tuple]:
+        data = Code.load_json_content(filename)
         return [tuple(entry) for entry in data]
 
     @staticmethod
