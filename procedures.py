@@ -226,24 +226,22 @@ class SingleFrameMeasurementSeries:
                 self.single_frame_measurements.append(self.create_single_frame_measurement(copy(current_time_stamp)))
 
 
-    def create__measurement_series_with_camera_recalibration(self, forward_step_second: int):
+    def create_measurement_series_with_camera_recalibration(self, forward_step_second: int):
         assert forward_step_second > 0
 
         if self.calibration is None:
             self.calibration = CameraCalibration()
             self.calibration.full_camera_calibration_procedure(setup_calibration_camera=True)
 
-        WindowController.simple_setup()
-        WindowController.run_script(DefaultScripts.prepare_tracking_script)
-        self.measurement_cam.setup()
-        self.measurement_cam.update_star_magnitude_limit(7.0)
-
         current_time_stamp: UniversalTimeStamp = copy(self.calibration.initial_time_stamp)
 
         continue_taking_measurements = True
         while continue_taking_measurements:
-            # TODO: hiwe vernünftiges setup jedes mal ausführen
             WindowController.simple_setup()
+            WindowController.run_script(DefaultScripts.prepare_tracking_script)
+            self.measurement_cam.setup(set_star_magnitude_limit=False)
+            self.measurement_cam.update_star_magnitude_limit(5.1)
+
             self.single_frame_measurements.append(self.create_single_frame_measurement(copy(current_time_stamp)))
             current_time_stamp.second += forward_step_second
             self.measurement_cam.set_time(current_time_stamp)
@@ -251,10 +249,11 @@ class SingleFrameMeasurementSeries:
             print("Continue: Satellite still in frame (y/n), End: (e)")
             command = str(input()).strip().lower()
             if command == "y": # continue without recalibration
-                continue
+                pass
             elif command == "n": # continue with recalibration
+                print("Initiating camera recalibration. Do not change position.")
                 WindowController.simple_setup()
-                WindowController.run_script(DefaultScripts.prepare_calibration_script)
+                WindowController.run_script(DefaultScripts.default_visibilities_script)
                 new_calib_instance = CameraCalibration()
                 new_calib_instance.full_camera_calibration_procedure(
                     override_time_stamp=current_time_stamp,
@@ -264,7 +263,6 @@ class SingleFrameMeasurementSeries:
                     perform_touchdown=False
                 )
                 self.calibration = new_calib_instance
-                continue
             else: # end measurements
                 continue_taking_measurements = False
                 break
@@ -295,6 +293,7 @@ class SingleFrameMeasurementSeries:
             )
             return SingleFrameMeasurement(time_stamp, UnitVector(triangulated_view_vector), position_vector_drifted)
         else:
+            print("Warning: More then one feasible candidates for satellite.")
             return None
 
 

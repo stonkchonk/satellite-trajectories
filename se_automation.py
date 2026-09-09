@@ -371,10 +371,11 @@ class VirtualCamera:
         WindowController.enter_command_procedure(
             f"{Params.set_cmd} {Params.photo_mode_var} {photo_mode_val}")
 
-    def setup(self):
+    def setup(self, set_star_magnitude_limit: bool = True):
         self._set_fov()
         self._set_exposure_comp()
-        self._set_star_magnitude_limit()
+        if set_star_magnitude_limit:
+            self._set_star_magnitude_limit()
         print(f"Setup of virtual camera \"{self.name}\" completed.")
 
 

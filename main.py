@@ -22,7 +22,7 @@ altitude_3 = 6460
 calibrator.full_camera_calibration_procedure(override_time_stamp=test_time_stamp, override_lat_lon=position_3, override_sea_altitude=altitude_3)
 
 series_3 = SingleFrameMeasurementSeries(calibrator)
-series_3.create__measurement_series_with_camera_recalibration(30)
+series_3.create_measurement_series_with_camera_recalibration(3)
 print(series_3)
 #series_1 = SingleFrameMeasurementSeries(calibrator)
 #series_1.create_measurement_series(forward_time_steps)
