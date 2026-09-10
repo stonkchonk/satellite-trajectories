@@ -285,8 +285,8 @@ class GaussAlgorithm:
         r2 = self.R2 + rho2 * self.pd2
         r3 = self.R3 + rho3 * self.pd3
 
-        print(np.linalg.norm(r1), np.linalg.norm(r2), np.linalg.norm(r3))
-        print(rho1, rho2, rho3, "<<rhos")
+        #print(np.linalg.norm(r1), np.linalg.norm(r2), np.linalg.norm(r3))
+        #print(rho1, rho2, rho3, "<<rhos")
 
         return [r1, r2, r3]
 

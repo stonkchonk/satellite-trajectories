@@ -102,10 +102,11 @@ class Params:
     ]
 
     # directories and files
-    assets_dir = "./assets/"
+    full_repository_dir_on_machine = "C:/Users/Bububau Spielcasino/Documents/Datenrettung/Studium/Masterthesis/satellite-trajectories/"
+    assets_dir = full_repository_dir_on_machine + "assets/"
     se_dir = "D:/SteamLibrary/steamapps/common/SpaceEngine/"
-    debug_images_dir = "./debug/"
-    experiments_dir = "./experiments/"
+    debug_images_dir = full_repository_dir_on_machine + "debug/"
+    experiments_dir = full_repository_dir_on_machine + "experiments/"
     screenshots_dir = "C:/Users/Bububau Spielcasino/Documents/Cosmographic/SpaceEngine/screenshots/"#se_dir + "screenshots/"
     se_log_file = se_dir + "system/se.log"
     se_catalogs_pak_file = se_dir + "data/catalogs/Catalogs.pak"

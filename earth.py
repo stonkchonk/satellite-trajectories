@@ -10,9 +10,9 @@ class UniversalTimeStamp:
         assert 1 <= month <= 12
         assert 1 <= day <= 31
         if restrain:
-            assert 1 <= hour <= 23
-            assert 1 <= minute <= 59
-            assert 1 <= second <= 59
+            assert 0 <= hour <= 23
+            assert 0 <= minute <= 59
+            assert 0 <= second <= 59
         self.year = year
         self.month = month
         self.day = day

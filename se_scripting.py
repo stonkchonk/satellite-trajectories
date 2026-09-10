@@ -73,6 +73,13 @@ Asteroid	"ArtificialSatellite"
     """
 
     prepare_star_calibration = """
+HideObject Sun
+HideObject Mercury
+HideObject Venus
+HideObject Mars
+HideObject Jupiter
+HideObject Saturn
+HideObject Moon
 Hide Clouds
 Hide Atmospheres
 Show Stars
@@ -85,6 +92,13 @@ Hide Aurora
     """
 
     prepare_satellite_tracking = """
+HideObject Sun
+HideObject Mercury
+HideObject Venus
+HideObject Mars
+HideObject Jupiter
+HideObject Saturn
+HideObject Moon
 Hide Clouds
 Hide Atmospheres
 Hide Stars
@@ -97,6 +111,13 @@ Hide Aurora
     """
 
     default_visibilities_script = """
+HideObject Sun
+HideObject Mercury
+HideObject Venus
+HideObject Mars
+HideObject Jupiter
+HideObject Saturn
+HideObject Moon
 Hide Clouds
 Hide Atmospheres
 Show Stars
