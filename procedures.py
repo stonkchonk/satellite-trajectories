@@ -2,7 +2,6 @@ import time
 from copy import copy
 
 import numpy as np
-from fontTools.subset import intersect
 
 from common import Params, Code
 from earth import UniversalTimeStamp, EarthCenteredInertial
@@ -165,6 +164,26 @@ class CameraCalibration:
         lat_str, lon_str = lat_lon_str.split()
         return float(lat_str), float(lon_str)
 
+class ObserverPosition:
+    def __init__(self, coordinates: tuple[float, float], altitude_m: float):
+        self.coordinates = coordinates
+        self.altitude_m = altitude_m
+
+    def to_dict(self) -> dict:
+        return {
+            "coordinates": {
+                "latitude": self.coordinates[0],
+                "longitude": self.coordinates[1]
+            },
+            "altitude_m": self.altitude_m
+        }
+
+    @classmethod
+    def from_dict(cls, d: dict) -> "ObserverPosition":
+        coordinates = d["coordinates"]
+        lat_lon_tuple = coordinates.get("latitude"), coordinates.get("longitude")
+        return cls(lat_lon_tuple, d["altitude_m"])
+
 
 class SingleFrameMeasurement:
     def __init__(self, time_stamp: UniversalTimeStamp, view_vector: UnitVector, position_vector: np.ndarray):
@@ -196,6 +215,8 @@ class SingleFrameMeasurementSeries:
         self.star_imager: StarImager | None = (
             StarImager(self.calibration.calibration_cam.field_of_view, save_debug_images=True)) \
             if self.calibration is not None else None
+        self.ground_truth_orbit: dict | None = None
+        self.observer_position: ObserverPosition | None = None
 
     def create_measurement_series(self, forward_second_steps: None | list[int] = None):
         if self.calibration is None:
@@ -245,6 +266,10 @@ class SingleFrameMeasurementSeries:
             self.single_frame_measurements.append(self.create_single_frame_measurement(copy(current_time_stamp)))
             current_time_stamp.second += forward_step_second
             self.measurement_cam.set_time(current_time_stamp)
+
+            print(f"Number of measurements: {len(self.single_frame_measurements)}")
+            print(f"Backup String: \n{self.__str__()}\n")
+            Code.write_text_file("series_backup.txt", self.__str__(), directory=Params.single_frame_measurement_series_captures_dir)
 
             print("Continue: Satellite still in frame (y/n), End: (e)")
             command = str(input()).strip().lower()
@@ -315,6 +340,22 @@ class SingleFrameMeasurementSeries:
         sfm_measurement_strings = sfms_string.split("|")
         new_sfms = cls(None)
         new_sfms.single_frame_measurements = [SingleFrameMeasurement.from_string(sfm_str) for sfm_str in sfm_measurement_strings]
+        return new_sfms
+
+    def flush_to_file(self, series_name: str):
+        series_dict_object = {
+            'ground_truth_orbit': self.ground_truth_orbit,
+            'observer_position': self.observer_position.to_dict(),
+            'captured_data': self.__str__()
+        }
+        Code.save_json_content(f"series_{series_name}.json", series_dict_object, directory=Params.single_frame_measurement_series_captures_dir)
+
+    @classmethod
+    def from_json(cls, series_name: str) -> "SingleFrameMeasurementSeries":
+        json_dict = Code.load_json_content(f"series_{series_name}.json", directory=Params.single_frame_measurement_series_captures_dir)
+        new_sfms = cls.from_string(json_dict['captured_data'])
+        new_sfms.ground_truth_orbit = json_dict['ground_truth_orbit']
+        new_sfms.observer_position = ObserverPosition.from_dict(json_dict['observer_position'])
         return new_sfms
 
 

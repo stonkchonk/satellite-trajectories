@@ -107,6 +107,7 @@ class Params:
     se_dir = "D:/SteamLibrary/steamapps/common/SpaceEngine/"
     debug_images_dir = full_repository_dir_on_machine + "debug/"
     experiments_dir = full_repository_dir_on_machine + "experiments/"
+    single_frame_measurement_series_captures_dir = experiments_dir + "single_frame_measurement_series_captures/"
     screenshots_dir = "C:/Users/Bububau Spielcasino/Documents/Cosmographic/SpaceEngine/screenshots/"#se_dir + "screenshots/"
     se_log_file = se_dir + "system/se.log"
     se_catalogs_pak_file = se_dir + "data/catalogs/Catalogs.pak"
@@ -250,14 +251,14 @@ class Code:
         return cv2.imread(Params.debug_images_dir + filename)
 
     @staticmethod
-    def write_text_file(filename: str, content: str, append: bool = False):
+    def write_text_file(filename: str, content: str, append: bool = False, directory: str = Params.experiments_dir):
         mode = "a" if append else "w"
-        with open(Params.experiments_dir + filename, mode, encoding="utf-8") as file:
+        with open(directory + filename, mode, encoding="utf-8") as file:
             file.write(content)
 
     @staticmethod
-    def read_text_file(filename: str) -> str:
-        with open(Params.experiments_dir + filename, "r", encoding="utf-8") as file:
+    def read_text_file(filename: str, directory: str = Params.experiments_dir) -> str:
+        with open(directory + filename, "r", encoding="utf-8") as file:
             return file.read()
 
     @staticmethod
@@ -267,12 +268,17 @@ class Code:
             print("File not found")
             return None
 
-        content = Code.read_text_file(filename)
+        content = Code.read_text_file(filename, directory)
         if not content.strip():
             print("No content found")
             return None
 
         return json.loads(content)
+
+    @staticmethod
+    def save_json_content(filename: str, content: any, directory: str = Params.experiments_dir) -> None:
+        json_content = json.dumps(content, indent=4)
+        Code.write_text_file(filename, json_content, directory=directory)
 
 
     @staticmethod
@@ -282,8 +288,7 @@ class Code:
 
     @staticmethod
     def save_measurement_list(filename: str, measurements: list[tuple]) -> None:
-        content = json.dumps(measurements, indent=4)
-        Code.write_text_file(filename, content)
+        Code.save_json_content(filename, measurements)
 
     @staticmethod
     def append_measurement_list(filename: str, new_measurements: list[tuple]) -> None:

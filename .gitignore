@@ -4,4 +4,6 @@ __pycache__/
 star_tracker/catalog_dict.py
 star_tracker/neighbors.py
 star_tracker/pairings.py
+experiments/single_frame_measurement_series_captures/series_backup.txt
+experiments/single_frame_measurement_series_captures/series_backup_2.txt
 debug/*

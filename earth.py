@@ -21,6 +21,7 @@ class UniversalTimeStamp:
         self.second = second
 
     def __str__(self):
+        self.normalize()
         return (
             f"{self.year:04d}.{self.month:02d}.{self.day:02d} "
             f"{self.hour:02d}:{self.minute:02d}:{self.second}"
@@ -60,6 +61,15 @@ class UniversalTimeStamp:
 
     def determine_ut_s(self) -> int:
         return self.hour * 3600 + self.minute * 60 + self.second
+
+    def normalize(self):
+        seconds_total = self.determine_ut_s()
+        self.hour = seconds_total // 3600
+        self.minute = (seconds_total % 3600) // 60
+        self.second = seconds_total % 60
+        assert self.determine_ut_s() == seconds_total
+
+
 
 
 
