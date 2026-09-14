@@ -9,25 +9,28 @@ from artificial_satellite_setup import get_orbit_ground_truth
 from star_tracker.catalog_parser import UnitVector
 
 if __name__ == "__main__":
-    measurement_series_name = "ag_an_1_30s"
+    measurement_series_name = "mt_pi_3_30s"
     ground_truth_orbit_dict, plane_normal_ground_truth = get_orbit_ground_truth()
     perform_measurements = True
 
     if perform_measurements:
         WindowController.initial_setup(cleanse_old_screenshots=True)
         calibrator = CameraCalibration(execute_camera_setup=True)
-        initial_time_stamp = UniversalTimeStamp.from_string("2026.09.04 19:22:30") #2026, 9, 4, 19, 28, 2
+        initial_time_stamp = UniversalTimeStamp.from_string("2026.09.04 19:26:30") #2026, 9, 4, 19, 28, 2
 
         observer_pos = ObserverPosition(
-            (-27.3276682,-68.071221),
-            5310
+            (-27.7000354,-68.8127988),
+            5870
         )
         # Locations in South America
         # Mt Pi 1: -27.68216667, -68.78558333, 6460
         # Mt Pi 2: -27.7231285,-68.8761221, 5310
+        # Mt Pi 3: -27.7000354,-68.8127988, 5870
         # Lag Neg 1: -27.628442, -68.590410, 4710
         # Ch An 1: -27.8206424,-69.1635205, 4450
         # Ag An 1: -27.3276682,-68.071221, 3980
+        # Ch An 2: -28.2343585,-70.290287, 1660
+        # Lag Sal 1: -25.3497047,-67.0389502, 3950
 
         calibrator.full_camera_calibration_procedure(override_time_stamp=initial_time_stamp,
                                                      override_lat_lon=observer_pos.coordinates,

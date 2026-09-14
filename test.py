@@ -1,4 +1,5 @@
-
+from common import Code
+from earth import EarthCenteredInertial
 from procedures import SingleFrameMeasurement, SingleFrameMeasurementSeries, DualFrameMeasurementSeries, \
     ObserverPosition
 from experiments.artificial_satellite_setup import get_orbit_ground_truth
@@ -11,11 +12,55 @@ observer_pos = ObserverPosition(
     6460
 )
 
+"""
 series_1.observer_position = observer_pos
 series_1.ground_truth_orbit = get_orbit_ground_truth()[0]
+altitude = 3980
+series = SingleFrameMeasurementSeries.from_json("ag_an_1_30s")
+print(3)
+for sfm in series.single_frame_measurements:
+    ts = sfm.time_stamp
+    alt = series.observer_position.altitude_m
+    lat, lon = series.observer_position.coordinates
+    new_pos_vector = EarthCenteredInertial.determine_eci_vector_from_lat_lon_alt(lat, lon,altitude/1000, ts)
+    print(new_pos_vector, sfm.position_vector)
+    sfm.position_vector = new_pos_vector
+    print(new_pos_vector, sfm.position_vector, "<--")
 
-series_1.flush_to_file("ein_test")
+for sfm in series.single_frame_measurements:
+    print(sfm.position_vector, "<-----")
 
-mt_pi_series = SingleFrameMeasurementSeries.from_json("mt_pi_short")
+series.flush_to_file("ag_an_1_30s_zzzzzz")
+"""
+# Locations in South America
+# Mt Pi 1: -27.68216667, -68.78558333, 6460
+# Mt Pi 2: -27.7231285,-68.8761221, 5310
+# Lag Neg 1: -27.628442, -68.590410, 4710
+# Ch An 1: -27.8206424,-69.1635205, 4450
+# Ag An 1: -27.3276682,-68.071221, 3980
+# Ch An 2: -28.2343585,-70.290287, 1660
+# Rio Sm 1: -26.3125282,-65.9406141, 1710
+
+series_names = [
+    "mt_pi_1_30s",
+    "mt_pi_2_30s",
+    "lag_neg_1_30s",
+    "ch_an_1_30s",
+    "ch_an_2_30s",
+    "ag_an_1_30s",
+    "lag_sal_1_30s",
+    "mt_pi_3_30s",
+]
+
+view_vectors = []
+for name in series_names:
+    series = SingleFrameMeasurementSeries.from_json(name)
+    view_vectors = []
+    for sfm in series.single_frame_measurements:
+        view_vectors.append(sfm.view_vector.value)
+    gg_str = Code.format_to_geogebra_representation(view_vectors)
+    print(name)
+    print(f"{gg_str}")
+    print("\n")
 
 
