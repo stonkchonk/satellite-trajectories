@@ -1,8 +1,11 @@
+import numpy as np
+
 from common import Code
 from earth import EarthCenteredInertial
 from procedures import SingleFrameMeasurement, SingleFrameMeasurementSeries, DualFrameMeasurementSeries, \
     ObserverPosition
 from experiments.artificial_satellite_setup import get_orbit_ground_truth
+from star_tracker.precession import Precession
 
 series_1 = SingleFrameMeasurementSeries.from_string("{2026.06.19 15:29:11; [-0.08651561261318731, 0.16680037829049002, -0.9821877023137249]; [963.4927582237676, -5543.4551002352, -2993.718114760807]}|{2026.06.19 15:29:36; [-0.03404263959647167, 0.17026876624520848, -0.9848094465076171]; [973.597030777788, -5541.689414351364, -2993.718114760807]}|{2026.06.19 15:29:61; [0.0193038638395505, 0.17444263813859337, -0.9844780987102313]; [983.6980676466454, -5539.905311030284, -2993.718114760807]}")
 series_2 = SingleFrameMeasurementSeries.from_string("{2026.06.19 15:29:11; [-0.3121113658618864, 0.13524532577201687, -0.940369713015391]; [1867.9416617218499, -5481.940794697743, -2663.7315448129057]}|{2026.06.19 15:29:36; [-0.2723007497227346, 0.1396787010583595, -0.9520200429460958]; [1877.9322890393673, -5478.526375399763, -2663.7315448129057]}|{2026.06.19 15:29:61; [-0.23109796334574442, 0.14495163721205792, -0.9620721148682113]; [1887.9166751734663, -5475.093748582709, -2663.7315448129057]}")
@@ -53,6 +56,7 @@ series_names = [
     "mt_pi_1_1s",
 ]
 
+"""
 view_vectors = []
 for name in series_names:
     series = SingleFrameMeasurementSeries.from_json(name)
@@ -63,5 +67,16 @@ for name in series_names:
     print(name)
     print(f"{gg_str}")
     print("\n")
+"""
+test_vec = np.array([1, 0, 0])
+vecs = []
+for i in range(50):
+    p = Precession(i)
+    precessed_vec = p.precess_vector_since_j2000(test_vec)
+    vecs.append(precessed_vec)
+print(Code.format_to_geogebra_representation(vecs))
+angle = Code.angular_separation_of_two_vectors_rad(test_vec, precessed_vec)
+print(test_vec, precessed_vec, Code.rad_to_deg(angle))
+
 
 

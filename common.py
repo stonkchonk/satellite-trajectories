@@ -157,6 +157,9 @@ class Params:
     argument_periapsis_deg = "argument_periapsis_deg"
     argument_inclination_deg = "argument_inclination_deg"
     argument_ascension_deg = "argument_ascension_deg"
+    pericenter_epoch = "pericenter_epoch"
+    mean_anomaly = "mean_anomaly"
+
 
     # orbit groud truth file
     orbit_ground_truth = "orbit_ground_truth.json"
@@ -165,6 +168,7 @@ class Constants:
     earth_equatorial_rad_km = 6378.137
     earth_polar_rad_km = 6356.752
     earth_mean_radius = (earth_equatorial_rad_km + earth_polar_rad_km) / 2
+    julian_centuries_since_j2000 = 0.0 # 0.266 # equals about 2026.75 must be adjusted according to observation time
 
 
 class Code:

@@ -3,5 +3,7 @@
     "eccentricity": 0,
     "argument_periapsis_deg": 0,
     "argument_inclination_deg": 52,
-    "argument_ascension_deg": 0
+    "argument_ascension_deg": 0,
+    "pericenter_epoch": 2451545.0,
+    "mean_anomaly": 0.0
 }

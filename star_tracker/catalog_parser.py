@@ -3,7 +3,8 @@ import math
 import numpy as np
 from math import sin, cos, pi
 
-from common import Code, Params
+from common import Code, Params, Constants
+from star_tracker.precession import Precession
 
 
 class UnitVector:
@@ -122,9 +123,10 @@ class Parser:
 
     catalog_dict_file = "catalog_dict.py"
 
-    def __init__(self):
+    def __init__(self, precession_corrector: Precession | None = None):
         self.catalog_file = "../assets/catalog"
         self.catalog_dict: dict[int, CatalogStar] | None = None
+        self.precession_corrector = precession_corrector
 
     def parse(self):
         valid_stars = []
@@ -168,6 +170,10 @@ class Parser:
             de_seconds = float(self.substr(line, self.Indices.de_seconds_start, self.Indices.de_seconds_end))
             position_vector = UnitVector.from_celestial_coordinate(ra_hours, ra_minutes, ra_seconds,
                                                                    de_sign, de_degrees, de_minutes, de_seconds)
+
+            if self.precession_corrector is not None:
+                position_vector = UnitVector(self.precession_corrector.precess_vector_since_j2000(position_vector.value))
+
             return CatalogStar(name, position_vector, visual_magnitude)
         except:
             # exception means that entry does not correspond to a star, rather a nebular, galaxy or cluster
@@ -179,7 +185,7 @@ class Parser:
 
 
 if __name__ == "__main__":
-    parser = Parser()
+    parser = Parser(Precession(Constants.julian_centuries_since_j2000))
     parser.parse()
     for star in parser.catalog_dict:
         print(star)

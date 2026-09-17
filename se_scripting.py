@@ -1,7 +1,7 @@
 import random
 import time
 
-from common import Params
+from common import Params, Code
 from typing import Literal
 
 
@@ -63,7 +63,8 @@ Asteroid	"ArtificialSatellite"
 		SemiMajorAxis   {semi_major_axis_au}
 		Eccentricity    {eccentricity}
 		Inclination     {inclination_deg}
-		//MeanAnomaly     135.27
+		PericenterEpoch 2451545.0
+		MeanAnomaly     0.0
 		AscendingNode   {ascending_node_deg}
 		ArgOfPericen    {argument_periapsis_deg}
 		//AscNodePreces   18.6		// years
@@ -151,7 +152,7 @@ class Script:
             Params.artificial_satellite_file,
             Templates.satellite.format(
                 radius_km=radius_km,
-                semi_major_axis_au=semi_major_axis_km * (1 / Params.astronomical_unit_km),
+                semi_major_axis_au=Code.km_to_au(semi_major_axis_km),
                 eccentricity=eccentricity,
                 inclination_deg=inclination_deg,
                 ascending_node_deg=ascending_node_deg,

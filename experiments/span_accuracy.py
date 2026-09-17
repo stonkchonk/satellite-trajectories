@@ -10,7 +10,7 @@ from star_tracker.catalog_parser import UnitVector
 
 if __name__ == "__main__":
     forward_seconds = 1
-    measurement_series_name = f"lag_sal_1_{forward_seconds}s"
+    measurement_series_name = f"mt_pi_3_{forward_seconds}s"
     ground_truth_orbit_dict, plane_normal_ground_truth = get_orbit_ground_truth()
     perform_measurements = True
     with_recalibration = False
@@ -19,10 +19,10 @@ if __name__ == "__main__":
     if perform_measurements:
         WindowController.initial_setup(cleanse_old_screenshots=True)
         calibrator = CameraCalibration(execute_camera_setup=True)
-        initial_time_stamp = UniversalTimeStamp.from_string("2026.09.04 19:28:00") #2026, 9, 4, 19, 28, 2
+        initial_time_stamp = UniversalTimeStamp.from_string("2001.04.02 13:32:22") #"2026.09.04 19:28:00"  "2000.01.01 20:02:00" "2001.04.02 13:31:42"
 
         observer_pos = ObserverPosition(
-            (-25.3497047,-67.0389502), 3950
+            (-27.7000354,-68.8127988), 5870
         )
         # Locations in South America
         # Mt Pi 1: (-27.68216667, -68.78558333), 6460
@@ -44,7 +44,7 @@ if __name__ == "__main__":
         if with_recalibration:
             series.create_measurement_series_with_camera_recalibration(forward_seconds)
         else:
-            steps = [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+            steps = [0, 1, 1, 1, 1, 1, 1, 1]
             series.create_measurement_series(steps)
 
         try:

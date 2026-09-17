@@ -6,15 +6,19 @@ from math import sin, cos
 from se_scripting import Script
 from se_automation import SatelliteController
 from common import Constants, Params, Code
+from star_tracker.precession import Precession
+
 
 def _plane_normal_from(inclination_deg: float, arg_ascending_deg: float) -> np.ndarray:
     inclination_rad = Code.deg_to_rad(inclination_deg)
     arg_ascending_rad = Code.deg_to_rad(arg_ascending_deg)
-    return np.array([
+    normal_vector = np.array([
         sin(inclination_rad) * sin(arg_ascending_rad),
         -sin(inclination_rad) * cos(arg_ascending_rad),
         cos(inclination_rad)
     ])
+    precession = Precession(Constants.julian_centuries_since_j2000)
+    return precession.precess_vector_since_j2000(normal_vector)
 
 def get_orbit_ground_truth() -> tuple[dict[str, float], np.ndarray]:
     ground_truth_dict = Code.load_json_content(Params.orbit_ground_truth)
@@ -27,6 +31,10 @@ if __name__ == "__main__":
     argument_periapsis_deg = 0
     argument_inclination_deg = 52
     argument_ascension_deg = 0
+
+    # fixed parameters for all arbits which must not be changed in order to maintain reproducibility
+    pericenter_epoch = 2451545.0 #J2000 -> 2000.01.01 12:00:00
+    mean_anomaly = 0.0 #
     SatelliteController.spawn_satellite(0.01, semi_major_axis_km, eccentricity, argument_periapsis_deg,
                                         argument_inclination_deg, argument_ascension_deg)
 
@@ -35,7 +43,9 @@ if __name__ == "__main__":
         Params.eccentricity: eccentricity,
         Params.argument_periapsis_deg: argument_periapsis_deg,
         Params.argument_inclination_deg: argument_inclination_deg,
-        Params.argument_ascension_deg: argument_ascension_deg
+        Params.argument_ascension_deg: argument_ascension_deg,
+        Params.pericenter_epoch: pericenter_epoch,
+        Params.mean_anomaly: mean_anomaly
     }
 
     Code.write_text_file(Params.orbit_ground_truth, json.dumps(ground_truth_dict, indent=4))
