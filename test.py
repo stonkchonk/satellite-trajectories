@@ -50,6 +50,7 @@ series_names = [
     "ag_an_1_30s",
     "lag_sal_1_30s",
     "mt_pi_3_30s",
+    "mt_pi_1_1s",
 ]
 
 view_vectors = []

@@ -225,7 +225,7 @@ class SingleFrameMeasurementSeries:
         WindowController.simple_setup()
         WindowController.run_script(DefaultScripts.prepare_tracking_script)
         self.measurement_cam.setup()
-        self.measurement_cam.update_star_magnitude_limit(7.0)
+        self.measurement_cam.update_star_magnitude_limit(5.1)
         current_time_stamp = copy(self.calibration.initial_time_stamp)
         if forward_second_steps is None:
             continue_taking_measurements = True
