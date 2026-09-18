@@ -74,14 +74,14 @@
 	
 	\begin{figure}[H]
 		\centering
-		\begin{minipage}{0.48\linewidth}
+		\begin{minipage}{0.46\linewidth}
 			\centering
 			\includegraphics[width=\linewidth]{images/ellipse_parametric.png}
 			\caption{Parametric curve of an elliptic obit.}
 			\label{fig:parametric_ellipse}
 		\end{minipage}
 		\hfill
-		\begin{minipage}{0.48\linewidth}
+		\begin{minipage}{0.46\linewidth}
 			\centering
 			\includegraphics[width=\linewidth]{images/hyperbola_parametric.png}
 			\caption{Parametric curve of a hyperbolic trajectory.}
@@ -96,11 +96,11 @@
 	
 	\subsection{Reference coordinate system}
 	\label{sec:reference_coordinate}
-	The reference coordinate system of our choice is the Earth Centered Inertial (ECI) coordinate system. This coordinate system is aligned to planet earth but not fixed to its surface. The Z-axis is aligned to earth's rotation axis, while the X-Y-plane is aligned to earth's equatorial plane, as visualized below. Both X-, and Y-axes are fixed in reference to the background stars. Each position can be described by a vector in $\mathbb{R}^3$.
+	The reference coordinate system of our choice is the Earth Centered Inertial (ECI) coordinate system. This coordinate system is aligned to planet earth but not fixed to its surface. The Z-axis is aligned to earth's rotation axis, while the X-Y-plane is aligned to earth's equatorial plane, as visualized below. Both X-, and Y-axes can be considered fixed in reference to the background stars when dealing with short time periods. For time periods in the range of months and years this is not the case due to precession, as elaborated in section \ref{sec:earth_axis_precession}. Each position can be described by a vector in $\mathbb{R}^3$.
 	
 	\begin{figure}[H]
 		\centering
-		\includegraphics[width=0.45\linewidth]{images/Earth_Centered_Inertial_Coordinate_System.png}
+		\includegraphics[width=0.40\linewidth]{images/Earth_Centered_Inertial_Coordinate_System.png}
 		\caption{Earth Centered Inertial coordinate system aligned to planet earth. \cite{reference_frames}}
 		\label{fig:eci}
 	\end{figure}
@@ -129,7 +129,7 @@
 	\begin{figure}[H]
 		\centering
 		\includegraphics[width=0.8\linewidth]{images/s_captures_moved.png}
-		\caption{Stars and a sattelite (encircled) are perceived as dots by cameras.}
+		\caption{Stars and a satellite (encircled) are perceived as dots by cameras.}
 		\label{fig:satelitte_appearance}
 	\end{figure}
 	\noindent
@@ -198,8 +198,8 @@
 		\end{equation}
 		constrained to $1901 \leq y \leq 2099$, $1 \leq m \leq 12$ and $1 \leq d \leq 31$.
 		
-		\item The determination of $T_0$ in the J2000 epoch:\newline
-		The J2000 Julian epoch starts noon (UT) on January 1st, 2000 and marks the number of days since the start of the Julian calendar, which is 2451545. This step consists of calculating the number of Julian centuries $T_0$ between the start of J2000 and the current observation date. This can be archieved with the following formula containing the result of the previous step:
+		\item The determination of $T_0$ since the J2000 epoch:\newline
+		The J2000 Julian epoch is defined as noon (UT) on January 1st, 2000 and marks the number of days since the start of the Julian calendar, which is 2451545. This step consists of calculating the number of Julian centuries $T_0$ between J2000 and the current observation date. This can be archieved with the following formula containing the result of the previous step:
 		\begin{equation}
 			T_0 = \frac{J_0-2451545}{36525}
 		\end{equation}
@@ -292,6 +292,54 @@
 	\end{equation}
 	Stated previously in section \ref{sec:determination_position}, earth rotates slightly more than 360° in 24 hours relative to the ECI coordinate system. With the difference $t_1-t_0$ we obtain the rotation angle $\alpha$ at which the observer location rotates relative to the Z-axis. That angle can be applied to $v_P$ using a rotation matrix which rotates the vector around the Z-axis as well.\newline
 	As the satellite dot shows up in a later image at $t_1$, we can now triangulate $v_A$ of $A$ using $v_C'$, $v_T'$ and $v_L'$ equivalently to the previously performed star calibration of $C$, $T$ and $L$.
+	
+	
+	\subsection{Factoring in axial precession of planet earth}
+	\label{sec:earth_axis_precession}
+	Defined previously in section \ref{sec:reference_coordinate}, the ECI coordinate system specifically the Z-axis is aligned with earth's rotation axis. Over longer time periods of several months to years this axis can not be considered to be fixed in space as it performs a slow tumbling motion. Over the course of around 26000 years the axis will complete a full precession period so that it is facing in its initial direction again \cite{precession_definition} as visualized below:
+	
+	\begin{figure}[H]
+		\centering
+		\includegraphics[width=0.40\linewidth]{images/precession.png}
+		\caption{Tumbling movement of earth's rotation axis \cite{precession_definition}.}
+		\label{fig:earth_axis_precession}
+	\end{figure}
+	\noindent
+	Ignoring other (outside the scope of this paper) long term gravitational effects of the sun, moon and earth's equatorial bulge, the orbits of near earth satellite's trajectories should remain fixed to the background stars, more specifically the plane normal vector $n$. These properties will cause the vector $n$ and background stars to perform an apparent precession movement in the ECI coordinate system which has to be accounted for when performing star based camera calibration or comparing measured orbital properties to ground truth values defined further in the past.\newline
+	Lieske provides a set of equations to formulate a rotation matrix with which ECI vectors can be multiplied with. It starts with the definition of the initial reference time $T$ and current time $t$ denoted in Julian centuries as follows:
+	
+	\begin{equation}
+		\label{eq:precession_time_params}
+		\begin{aligned}
+			T = \frac{JD(\varepsilon_F) - JD(J2000)}{36525}\\
+			t = \frac{JD(\varepsilon_D) - JD(\varepsilon_F)}{36525} 
+		\end{aligned}
+	\end{equation}
+	Hereby, $JD(\varepsilon_F)$ marks the number of Julian days since J2000 for an initial starting epoch $\varepsilon_F$, whereas $\varepsilon_D$ marks the current time epoch. Our implementation of the star calibration procedure uses the BSC5P bright star catalog which defines star view vectors at $\varepsilon_F = J2000$ \cite{star_catalog} resulting in a collapse of the initial reference time to $T=0$.\newline
+	With the time parameters established, three rotation angles $\zeta$, $z$ and $\sigma$ are defined by the following polynomials. Resulting angle values are denoted in arcseconds.
+	
+	\begin{equation}
+		\begin{aligned}
+			\zeta &= \left(2306.2181 + 1.39656\,T - 0.000139\,T^2\right) t
+			+ \left(0.30188 - 0.000344\,T\right) t^2
+			+ 0.017998\, t^3 \\[4pt]
+			z &= \left(2306.2181 + 1.39656\,T - 0.000139\,T^2\right) t
+			+ \left(1.09468 + 0.000066\,T\right) t^2
+			+ 0.018203\, t^3 \\[4pt]
+			\sigma &= \left(2004.3109 - 0.85330\,T - 0.000217\,T^2\right) t
+			- \left(0.42665 + 0.000217\,T\right) t^2
+			- 0.041833\, t^3
+		\end{aligned}
+	\end{equation}
+	\noindent
+	Next, let $R(\alpha)$ be the rotation matrix to rotate around the Z-axis by angle $\alpha$ and $Q(\alpha)$ the rotation matrix to rotate around the Y-axis by angle $\alpha$, the precession adjustment for any unprecessed ECI vector $v_0$ to obtain precessed $v$ is defined as follows:
+	
+	\begin{equation}
+		v = R(-z)\cdot Q(\sigma)\cdot R(-\zeta)\cdot v_0
+	\end{equation}
+	\cite{precession_correction}
+	\newline
+	This precession correction must be applied to plane normal vectors $n$ of ground truth orbits defined further in the past to make them comparable to measurements. Furthermore, all view vectors of stars listed in a star catalog used for calibration must be precessed similarly.dx  
 	
 	
 	\section{Orbit determination models}
@@ -452,7 +500,7 @@
 		\label{theta_3d}
 		\boxed{\theta_i=\atantwo(r_i\cdot(n\times x_0), r_i\cdot(n\times y_0))}
 	\end{equation}
-	which satisfies the requirement of $-\pi \leq \theta_i \leq \pi$. Henceforth, this adapion makes the parametric model usable in a three dimensional environment, as angles and magnitudes can now be determined from vectors for the two dimensional model.\newline
+	which satisfies the requirement of $-\pi \leq \theta_i \leq \pi$. Henceforth, this adaption makes the parametric model usable in a three dimensional environment, as angles and magnitudes can now be determined from vectors for the two dimensional model.\newline
 	Lastly, a method for determining the orthonormal plane vector $n$ has to be established. A measurement series of satellite positions $r_1, r_2, r_3,..., r_n$ may contain numerous entries. It must contain at least two entries so that the cross product between two vectors can be formed as follows:
 	\begin{equation}
 		\label{normal_plane}
@@ -472,7 +520,7 @@
 		\label{fig:two_camera_sat_pos_determination}
 	\end{figure}
 	\noindent
-	Hereby, two cameras in different locations take an image of the satellite simultaneously. Immediatly known are their position- and view vectors. These properties form two lines $l_1$ and $l_2$ defined as
+	Hereby, two cameras in different locations take an image of the satellite simultaneously. Immediately known are their position- and view vectors. These properties form two lines $l_1$ and $l_2$ defined as
 	
 	\begin{equation}
 		\begin{aligned}
@@ -589,7 +637,7 @@
 			x^8+ax^6+bx^3+c=0
 		\end{equation}
 		\noindent
-		Of this polynomial, a real number root $w$ larger than zero as solution for $x$  must be determined. If there is more than one solution $w$ it means that there is more than one physically feasible trajectory. The entire algorithm must be started over from step 1 exchanging one of the measurements for an additional one until a signle solution $w$ has been determined. For computation, Curtis proposes using Newton's method and plotting the polynomial as function to determine a proper initial estimate of $x$. We propose using a solver like NumPy roots which determines the roots of any polynomial \cite{numpy_roots} and works out of the box.
+		Of this polynomial, a real number root $w$ larger than zero as solution for $x$  must be determined. If there is more than one solution $w$ it means that there is more than one physically feasible trajectory. The entire algorithm must be started over from step 1 exchanging one of the measurements for an additional one until a single solution $w$ has been determined. For computation, Curtis proposes using Newton's method and plotting the polynomial as function to determine a proper initial estimate of $x$. We propose using a solver like NumPy roots which determines the roots of any polynomial \cite{numpy_roots} and works out of the box.
 		
 		\item Determine the unknown parameters $\rho_1$, $\rho_2$ and $\rho_3$ using $w$ with the following expressions:
 		\begin{equation}
@@ -640,7 +688,7 @@
 	\end{enumerate}
 	\cite{curtis_gauss_algo}
 	\newline
-	From here on onwards the Gauss algorithm as presented by Curtis contains three additional steps to establish orbital properties from $r_1$, $r_2$ and $r_3$ determined in step 10. However, we have already established a method to determine orbital properties which we reuse to formulate a sigle final step as follows:
+	From here on onward the Gauss algorithm as presented by Curtis contains three additional steps to establish orbital properties from $r_1$, $r_2$ and $r_3$ determined in step 10. However, we have already established a method to determine orbital properties which we reuse to formulate a single final step as follows:
 	
 	\begin{enumerate}
 		\setcounter{enumi}{10}
@@ -652,7 +700,7 @@
 	
 	\subsection{Simplified Gaussian method of orbit determination}
 	The previously presented Gaussian method determines viable parameters to form all types of parametric trajectories that fit observations to physical orbits. Due to orbits of satellites at lower altitudes above the earth being mostly circular we propose a method that always assumes a circular model. This way we only need to determine the plane normal vector $n$ and the semi major axis $a$. The aspect that we want to keep is the use of a single camera so that the setup is very much similar to figure \ref{fig:gauss_algo_idea}, except that one measurement less is needed. Known values are the position vectors $p_1$, $p_2$, the view vectors $v_1$, $v_2$, whereupon they are related similar to expression \ref{gauss_algo_r_vectors} so that $r_1$, $r_2$, $\rho_1$ and $\rho_2$ are unknowns. Furthermore, the time stamps $t_1$, $t_2$ of measurement recordings are supposed to be known.\newline
-	We start off with the circularity condition, meaning that all radii vectors $r_i$ must posess the same magnitude which formulates as follows: 
+	We start off with the circularity condition, meaning that all radii vectors $r_i$ must possess the same magnitude which formulates as follows: 
 	\begin{equation}
 		\label{circle_gauss_circle_condition}
 		\boxed{|r_1|=|r_2|\Leftrightarrow \sqrt{(p_1+\rho_1v_1)^2}=\sqrt{(p_2+\rho_2v_2)^2}}
@@ -745,6 +793,19 @@
 		for Lost-in-Space 3-Axis Attitude Acquisition, 2006,\newline
 		\url{https://www.sciencedirect.com/science/article/abs/pii/S1007021406702322}\newline
 		Accessed 23.08.2026
+		
+		\bibitem{precession_definition}
+		University of Rochester. Precession of the Earth's Rotation Axis, 
+		\newline{https://www.pas.rochester.edu/~blackman/ast104/precession.html}\newline
+		Accessed 18.09.2026
+		
+		\bibitem{precession_correction}
+		J.H. Lieske, Precession Matrix Based on IAU (1976) System of Astronomical Constants, 1978, \url{https://ui.adsabs.harvard.edu/scan/manifest/1979A&A....73..282L}\newline Accessed 18.09.2026
+		
+		\bibitem{star_catalog}
+		Browse Software Development Team. BSC5P - Bright Star Catalog, 2024,
+		\newline\url{https://heasarc.gsfc.nasa.gov/w3browse/star-catalog/bsc5p.html}\newline
+		Accessed 18.09.2026
 		
 		\bibitem{python_atan2}
 		"Trigonometric functions" The Python Standard Library, 2026,\newline

@@ -168,7 +168,7 @@ class Constants:
     earth_equatorial_rad_km = 6378.137
     earth_polar_rad_km = 6356.752
     earth_mean_radius = (earth_equatorial_rad_km + earth_polar_rad_km) / 2
-    julian_centuries_since_j2000 = 0.0 # 0.266 # equals about 2026.75 must be adjusted according to observation time
+    julian_centuries_since_j2000 = 0.266 # 0.266 # equals about 2026.75 must be adjusted according to observation time
 
 
 class Code:
