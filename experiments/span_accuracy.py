@@ -9,30 +9,35 @@ from artificial_satellite_setup import get_orbit_ground_truth
 from star_tracker.catalog_parser import UnitVector
 
 if __name__ == "__main__":
-    forward_seconds = 1
-    measurement_series_name = f"ch_an_1_{forward_seconds}s"
+    forward_seconds = 30
+    measurement_series_name = f"7_{forward_seconds}s"
     ground_truth_orbit_dict, plane_normal_ground_truth = get_orbit_ground_truth()
-    perform_measurements = True
-    with_recalibration = False
+    perform_measurements = False
+    with_recalibration = True
     calculate_orbits = True
 
     if perform_measurements:
         WindowController.initial_setup(cleanse_old_screenshots=True)
         calibrator = CameraCalibration(execute_camera_setup=True)
-        initial_time_stamp = UniversalTimeStamp.from_string("2026.09.04 19:28:00") #"2026.09.04 19:28:00"  "2000.01.01 20:02:00" "2001.04.02 13:31:42"
+        initial_time_stamp = UniversalTimeStamp.from_string("2000.01.01 20:00:30")
+        # Observation times
+        # start:    "2000.01.01 19:58:00"
+        # middle:   "2000.01.01 20:03:00"
+        # end:      "2000.01.01 20:08:00"
 
         observer_pos = ObserverPosition(
-            (-27.8206424,-69.1635205), 4450
+            (-29.646743, -57.958463), 64
         )
         # Locations in South America
-        # Mt Pi 1: (-27.68216667, -68.78558333), 6460
-        # Mt Pi 2: (-27.7231285,-68.8761221), 5310
-        # Mt Pi 3: (-27.7000354,-68.8127988), 5870
-        # Lag Neg 1: (-27.628442, -68.590410), 4710
-        # Ch An 1: (-27.8206424,-69.1635205), 4450
-        # Ag An 1: (-27.3276682,-68.071221), 3980
-        # Ch An 2: (-28.2343585,-70.290287), 1660
-        # Lag Sal 1: (-25.3497047,-67.0389502), 3950
+        # zenith / numeric failure: (-27.257356, -64.963269), 313
+        # 0: (-27.301281, -63.939256), 157
+        # 1: (-27.339896, -63.847839), 153
+        # 2: (-27.378452, -63.756358), 155
+        # 3: (-27.455384, -63.573205), 149
+        # 4: (-27.608528, -63.206133), 143
+        # 5: (-27.911902, -62.468913), 127
+        # 6: (-28.506740, -60.982091), 64
+        # 7: (-29.646743, -57.958463),
 
         calibrator.full_camera_calibration_procedure(override_time_stamp=initial_time_stamp,
                                                      override_lat_lon=observer_pos.coordinates,
@@ -58,7 +63,15 @@ if __name__ == "__main__":
 
 
     length = len(series.single_frame_measurements)
-    print("-->", length)
+    print("-->length: ", length)
+
+    position_vectors = [sfm.position_vector for sfm in series.single_frame_measurements]
+    view_vectors = [sfm.view_vector.value for sfm in series.single_frame_measurements]
+    print(Code.format_to_geogebra_representation(position_vectors))
+    print(Code.format_to_geogebra_representation(view_vectors))
+
+    print("\n\n\n\n\n\n\n")
+
 
     if calculate_orbits:
         for i in range(1, length):
@@ -79,7 +92,7 @@ if __name__ == "__main__":
             print(f"Measured sma: {np.linalg.norm(r_vectors[0])}km, Ground truth sma: {ground_truth_orbit_dict.get("semi_major_axis_km")}km")
             print(f"Measured plane normal: {plane_vector.value}, Ground truth plane normal: {plane_normal_ground_truth}")
             print(f"Measured vs ground truth plane angle: {Code.rad_to_deg(plane_vectors_angular_separation)}°")
-        """
+
         print("\n\n\n\n\n\n\n")
 
         for i in range(2, length):
@@ -92,6 +105,7 @@ if __name__ == "__main__":
                 first.position_vector, middle.position_vector, last.position_vector,
                 first.view_vector.value, middle.view_vector.value, last.view_vector.value
             )
+
 
             r_vectors = complex_gauss_orbit_model.gauss_algorithm_select_solution()
 
@@ -106,6 +120,8 @@ if __name__ == "__main__":
             print(f"Measured vs ground truth plane angle: {Code.rad_to_deg(plane_vectors_angular_separation)}°")
             print(f"Eccentricity: {pt.eccentricity}, Arg of peri: {pt.argument_of_periapsis}")
 
-        """
+
+
+        
 
 

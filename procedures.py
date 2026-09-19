@@ -143,12 +143,13 @@ class CameraCalibration:
                                         override_lat_lon: tuple[float, float] | None = None,
                                         override_sea_altitude: float | None = None,
                                         setup_calibration_camera: bool = False,
-                                        perform_touchdown: bool = True):
+                                        perform_touchdown: bool = True,
+                                        quick_cam_setup: bool = False):
         WindowController.simple_setup()
         print("Starting full camera calibration procedure.")
         self.position_vector_calibration_procedure(override_time_stamp, override_lat_lon, override_sea_altitude, perform_touchdown)
         if setup_calibration_camera:
-            self.calibration_cam.setup()
+            self.calibration_cam.setup(quick_cam_setup=quick_cam_setup)
         WindowController.enter_command_procedure(f"{Params.select_cmd} {Params.satellite_name}")
         print("Point camera towards satellite then press enter.")
         _ = input()
@@ -260,32 +261,29 @@ class SingleFrameMeasurementSeries:
         while continue_taking_measurements:
             WindowController.simple_setup()
             WindowController.run_script(DefaultScripts.prepare_tracking_script)
-            self.measurement_cam.setup(set_star_magnitude_limit=False)
+            self.measurement_cam.setup(set_star_magnitude_limit=False, quick_cam_setup=True)
             self.measurement_cam.update_star_magnitude_limit(5.1)
 
             self.single_frame_measurements.append(self.create_single_frame_measurement(copy(current_time_stamp)))
             current_time_stamp.second += forward_step_second
-            self.measurement_cam.set_time(current_time_stamp)
 
             print(f"Number of measurements: {len(self.single_frame_measurements)}")
             print(f"Backup String: \n{self.__str__()}\n")
             Code.write_text_file("series_backup.txt", self.__str__(), directory=Params.single_frame_measurement_series_captures_dir)
 
-            print("Continue: Satellite still in frame (y/n), End: (e)")
+            print("Continue: (press enter), End: (e)")
             command = str(input()).strip().lower()
-            if command == "y": # continue without recalibration
-                pass
-            elif command == "n": # continue with recalibration
+            if command == "": # continue with recalibration
                 print("Initiating camera recalibration. Do not change position.")
                 WindowController.simple_setup()
-                WindowController.run_script(DefaultScripts.default_visibilities_script)
-                new_calib_instance = CameraCalibration()
+                new_calib_instance = CameraCalibration(execute_camera_setup=False)
                 new_calib_instance.full_camera_calibration_procedure(
                     override_time_stamp=current_time_stamp,
                     override_lat_lon=self.calibration.ecef_lat_lon_deg,
                     override_sea_altitude=self.calibration.ecef_sea_altitude_m,
                     setup_calibration_camera=True,
-                    perform_touchdown=False
+                    perform_touchdown=False,
+                    quick_cam_setup=True
                 )
                 self.calibration = new_calib_instance
             else: # end measurements
