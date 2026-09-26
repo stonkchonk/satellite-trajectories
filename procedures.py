@@ -389,6 +389,16 @@ class DualFrameMeasurementSeries:
             intersection_vectors.append(self.intersection_center_point(p1, v1, p2, v2))
         return intersection_vectors
 
+    @property
+    def intersection_angles_deg(self) -> list[float]:
+        intersection_angles = []
+        for dual_frame_measurement in self.dual_frame_measurements:
+            first, second = dual_frame_measurement
+            intersection_angles.append(
+                float(Code.rad_to_deg(first.view_vector.angular_rad_separation(second.view_vector)))
+            )
+        return intersection_angles
+
     @staticmethod
     def closest_approach_two_lines(p1: np.ndarray, v1: np.ndarray, p2: np.ndarray, v2: np.ndarray) -> tuple[float, float]:
         """

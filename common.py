@@ -142,7 +142,7 @@ class Params:
     earth_mass_kg = 5.9722e24
     gravity_constant = 6.67430e-11
     mu_m = earth_mass_kg * gravity_constant #m³/s²
-    mu_km = 398600#mu_m / 1e9
+    mu_km = mu_m / 10e8#10e8
 
 
     # sun distance estimation camera fov settings
@@ -245,6 +245,10 @@ class Code:
         y = np.dot(eci_vector, e_y)
         return Code.normalize_angle(atan2(y, x))
 
+    @staticmethod
+    def orbital_period_s(semi_major_axis_km: float) -> float:
+        return 2 * math.pi * math.sqrt((semi_major_axis_km ** 3) / Params.mu_km)
+
 
     @staticmethod
     def save_debug_image(filename: str, image: np.ndarray):
@@ -309,13 +313,24 @@ class Code:
         return modified_list
 
     @staticmethod
-    def format_to_geogebra_representation(vectors: list[np.ndarray]) -> str:
+    def format_to_geogebra_representation_3d(vectors: list[np.ndarray]) -> str:
         geogebra_str = "{"
         for vector in vectors:
             assert vector.shape == (3,)
             geogebra_str += f"({vector[0]}, {vector[1]}, {vector[2]}),"
         geogebra_str = geogebra_str[:-1] + "}"
         return geogebra_str
+
+
+    @staticmethod
+    def format_to_geogebra_representation_2d(vectors: list[np.ndarray]) -> str:
+        geogebra_str = "{"
+        for vector in vectors:
+            assert vector.shape == (2,)
+            geogebra_str += f"({vector[0]}, {vector[1]}),"
+        geogebra_str = geogebra_str[:-1] + "}"
+        return geogebra_str
+
 
     @staticmethod
     def fancy_format_ra_dec(ra_dec_deg: tuple[float, float], opencv_friendly_text: bool = False):

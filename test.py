@@ -1,6 +1,9 @@
+import math
+
 import numpy as np
 
-from common import Code
+from algorithms import TrueAnomalyAndTime
+from common import Code, Params, Constants
 from earth import EarthCenteredInertial
 from procedures import SingleFrameMeasurement, SingleFrameMeasurementSeries, DualFrameMeasurementSeries, \
     ObserverPosition
@@ -68,15 +71,55 @@ for name in series_names:
     print(f"{gg_str}")
     print("\n")
 """
-test_vec = np.array([1, 0, 0])
-vecs = []
-for i in range(50):
-    p = Precession(i)
-    precessed_vec = p.precess_vector_since_j2000(test_vec)
-    vecs.append(precessed_vec)
-print(Code.format_to_geogebra_representation(vecs))
-angle = Code.angular_separation_of_two_vectors_rad(test_vec, precessed_vec)
-print(test_vec, precessed_vec, Code.rad_to_deg(angle))
+
+"""
+def delta_period(sma: float, delta: float) -> float:
+    return 3 * math.pi * math.sqrt(sma / Params.mu_km) * delta
+sma_km = 7067
+orbital_period = Code.orbital_period_s(sma_km)
+delta_km = 400
+orbital_period_less = Code.orbital_period_s(sma_km - delta_km)
+orbital_period_more = Code.orbital_period_s(sma_km + delta_km)
+delta_period_s = delta_period(sma_km, delta_km)
+print(orbital_period, delta_period_s)
+print(orbital_period_less, orbital_period - delta_period_s)
+print(orbital_period_more, orbital_period + delta_period_s)
+"""
+
+
+
+mean_anomalies = [(i / 20) * 2 * math.pi for i in range(0, 20+1)]
+eccentricities = [(i / 20) for i in range(0, 20)]
+
+#for m in mean_anomalies:
+#    for e in eccentricities:
+#        ecc_an = TrueAnomalyAndTime.eccentric_anomaly_from(m, e)
+#        print(m, e, ecc_an)
+pe = Constants.earth_mean_radius * 1.1
+ap = Constants.earth_mean_radius * 1.4
+sma = (pe + ap)/2
+ecc = (ap - pe)/(2*sma)
+period = Code.orbital_period_s(sma)
+print(sma, ecc)
+print(period, "s")
+true_anomaly = TrueAnomalyAndTime.true_anomaly_from_time_since_pe(sma, ecc, period)
+print(Code.rad_to_deg(true_anomaly))
+
+slices = 100
+times = [(i / slices) * period for i in range(0, slices)]
+print(times)
+
+steps = []
+
+for idx, time in enumerate(times):
+    steps.append(
+        np.array(
+            [idx, Code.rad_to_deg(TrueAnomalyAndTime.true_anomaly_from_time_since_pe(sma, ecc, time))]
+        )
+    )
+
+print(Code.format_to_geogebra_representation_2d(steps))
+print(TrueAnomalyAndTime.time_from_true_anomaly_since_pe(sma, ecc, TrueAnomalyAndTime.true_anomaly_from_time_since_pe(sma, ecc, 7003)))
 
 
 

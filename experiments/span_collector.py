@@ -37,7 +37,7 @@ if __name__ == "__main__":
         # 4: (-27.608528, -63.206133), 143
         # 5: (-27.911902, -62.468913), 127
         # 6: (-28.506740, -60.982091), 64
-        # 7: (-29.646743, -57.958463),
+        # 7: (-29.646743, -57.958463), 64
 
         calibrator.full_camera_calibration_procedure(override_time_stamp=initial_time_stamp,
                                                      override_lat_lon=observer_pos.coordinates,
@@ -67,8 +67,8 @@ if __name__ == "__main__":
 
     position_vectors = [sfm.position_vector for sfm in series.single_frame_measurements]
     view_vectors = [sfm.view_vector.value for sfm in series.single_frame_measurements]
-    print(Code.format_to_geogebra_representation(position_vectors))
-    print(Code.format_to_geogebra_representation(view_vectors))
+    print(Code.format_to_geogebra_representation_3d(position_vectors))
+    print(Code.format_to_geogebra_representation_3d(view_vectors))
 
     print("\n\n\n\n\n\n\n")
 

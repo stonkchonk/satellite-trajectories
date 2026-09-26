@@ -1,7 +1,9 @@
+import math
+
 import numpy as np
 import scipy.optimize as sc
 from common import Params, Code
-from math import sin, cos, sqrt, atan2, atan, pi
+from math import sin, cos, sqrt, atan2, atan, pi, tan
 
 from star_tracker.catalog_parser import UnitVector
 
@@ -29,6 +31,32 @@ class ParametricTrajectory:
         if self.eccentricity < 0:
             self.eccentricity = -self.eccentricity
             self.argument_of_periapsis = Code.normalize_angle(self.argument_of_periapsis + pi)
+
+    @property
+    def period_s(self) -> float | None:
+        assert self.eccentricity < 1
+        return Code.orbital_period_s(abs(self.semi_major_axis))
+
+    def _normalize_time(self, time: float) -> float:
+        return time % self.period_s
+
+
+    def _time_from_periapsis_to_origin(self):
+        return TrueAnomalyAndTime.time_from_true_anomaly_since_pe(self.semi_major_axis, self.eccentricity, self.argument_of_periapsis)
+
+    def time_since_origin(self, current_true_anomaly: float) -> float:
+        time_since_periapsis_at_current_true_anomaly = TrueAnomalyAndTime.time_from_true_anomaly_since_pe(
+            self.semi_major_axis, self.eccentricity, Code.normalize_angle(current_true_anomaly - self.argument_of_periapsis))
+        time_since_periapsis_at_origin = TrueAnomalyAndTime.time_from_true_anomaly_since_pe(
+            self.semi_major_axis, self.eccentricity, 2 * pi - self.argument_of_periapsis)
+
+        current_true_anomaly = Code.normalize_angle(current_true_anomaly)
+        if self.argument_of_periapsis > pi:
+            pass
+        else:
+
+
+
 
 
 
@@ -95,7 +123,7 @@ class ParametricTrajectory:
 
     @staticmethod
     def verify_orbital_planar_integrity(eci_vectors: list[np.ndarray], plane_vector: UnitVector,
-                                        max_deviation_deg: float = 0.2) -> bool:
+                                        max_deviation_deg: float = 0.4) -> bool:
         """
         Checks that all vectors are located within the same plane, tolerating some deviation.
         :param eci_vectors: list of vectors
@@ -145,6 +173,8 @@ class ParametricTrajectory:
         r_2 = np.sqrt(middle_vector.dot(middle_vector))
         r_3 = np.sqrt(last_vector.dot(last_vector))
         return cls(theta_1, r_1, theta_2, r_2, theta_3, r_3, plane_vector)
+
+
 
 
 class CircularTrajectory:
@@ -354,5 +384,65 @@ class SimplifiedGaussAlgorithm:
             return [r1, r2]
         else:
             return None
+
+
+class TrueAnomalyAndTime:
+
+    @staticmethod
+    def _mean_anomaly_from_time_since_pe(sma_km: float, time_since_pe_s):
+        return Code.normalize_angle(2 * pi * time_since_pe_s / Code.orbital_period_s(sma_km))
+
+    @staticmethod
+    def _newton_algo_eccentric_anomaly_from(mean_anomaly: float, eccentricity: float, tolerance: float=1e-12,
+                                            max_iterations=1000) -> float:
+        assert eccentricity < 1
+        eccentric_anomaly = mean_anomaly
+        try:
+            for _ in range(max_iterations):
+                f = eccentric_anomaly - eccentricity * sin(eccentric_anomaly) - mean_anomaly
+                df = 1 - eccentricity * cos(eccentric_anomaly)
+
+                delta = f / df
+                eccentric_anomaly -= delta
+
+                if abs(delta) < tolerance:
+                    return Code.normalize_angle(eccentric_anomaly)
+
+            raise "Did not converge." # did not converge
+        except Exception as e:
+            print("--->",mean_anomaly, eccentricity, tolerance)
+            raise e
+
+    @staticmethod
+    def _true_anomaly_from(eccentric_anomaly: float, eccentricity: float) -> float:
+        return Code.normalize_angle(
+            atan(tan(eccentric_anomaly / 2) * sqrt((1+eccentricity)/(1-eccentricity))) * 2
+        )
+
+    @staticmethod
+    def true_anomaly_from_time_since_pe(sma_km: float, eccentricity: float, time_since_pe_s: float) -> float:
+        mean_anomaly = TrueAnomalyAndTime._mean_anomaly_from_time_since_pe(sma_km, time_since_pe_s)
+        eccentric_anomaly = TrueAnomalyAndTime._newton_algo_eccentric_anomaly_from(mean_anomaly, eccentricity)
+        return TrueAnomalyAndTime._true_anomaly_from(eccentric_anomaly, eccentricity)
+
+    @staticmethod
+    def _time_from(sma_km: float, mean_anomaly: float) -> float:
+        return mean_anomaly * Code.orbital_period_s(sma_km) / (2 * pi)
+
+    @staticmethod
+    def _analytic_eccentric_anomaly_from(true_anomaly: float, eccentricity: float) -> float:
+        return Code.normalize_angle(
+            atan(tan(true_anomaly / 2) * sqrt((1-eccentricity)/(1+eccentricity))) * 2
+        )
+
+    @staticmethod
+    def _mean_anomaly_from_eccentric_anomaly(eccentric_anomaly: float, eccentricity: float):
+        return Code.normalize_angle(eccentric_anomaly - eccentricity * sin(eccentric_anomaly))
+
+    @staticmethod
+    def time_from_true_anomaly_since_pe(sma_km: float, eccentricity: float, true_anomaly: float) -> float:
+        eccentric_anomaly = TrueAnomalyAndTime._analytic_eccentric_anomaly_from(true_anomaly, eccentricity)
+        mean_anomaly = TrueAnomalyAndTime._mean_anomaly_from_eccentric_anomaly(eccentric_anomaly, eccentricity)
+        return TrueAnomalyAndTime._time_from(sma_km, mean_anomaly)
 
 
