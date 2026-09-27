@@ -2,50 +2,16 @@ import math
 
 import numpy as np
 
-from algorithms import TrueAnomalyAndTime
+from algorithms import TrueAnomalyAndTime, ParametricTrajectory
 from common import Code, Params, Constants
 from earth import EarthCenteredInertial
 from procedures import SingleFrameMeasurement, SingleFrameMeasurementSeries, DualFrameMeasurementSeries, \
     ObserverPosition
 from experiments.artificial_satellite_setup import get_orbit_ground_truth
+from star_tracker.catalog_parser import UnitVector
 from star_tracker.precession import Precession
 
-series_1 = SingleFrameMeasurementSeries.from_string("{2026.06.19 15:29:11; [-0.08651561261318731, 0.16680037829049002, -0.9821877023137249]; [963.4927582237676, -5543.4551002352, -2993.718114760807]}|{2026.06.19 15:29:36; [-0.03404263959647167, 0.17026876624520848, -0.9848094465076171]; [973.597030777788, -5541.689414351364, -2993.718114760807]}|{2026.06.19 15:29:61; [0.0193038638395505, 0.17444263813859337, -0.9844780987102313]; [983.6980676466454, -5539.905311030284, -2993.718114760807]}")
-series_2 = SingleFrameMeasurementSeries.from_string("{2026.06.19 15:29:11; [-0.3121113658618864, 0.13524532577201687, -0.940369713015391]; [1867.9416617218499, -5481.940794697743, -2663.7315448129057]}|{2026.06.19 15:29:36; [-0.2723007497227346, 0.1396787010583595, -0.9520200429460958]; [1877.9322890393673, -5478.526375399763, -2663.7315448129057]}|{2026.06.19 15:29:61; [-0.23109796334574442, 0.14495163721205792, -0.9620721148682113]; [1887.9166751734663, -5475.093748582709, -2663.7315448129057]}")
 
-observer_pos = ObserverPosition(
-    (-27.68216667, -68.78558333),
-    6460
-)
-
-"""
-series_1.observer_position = observer_pos
-series_1.ground_truth_orbit = get_orbit_ground_truth()[0]
-altitude = 3980
-series = SingleFrameMeasurementSeries.from_json("ag_an_1_30s")
-print(3)
-for sfm in series.single_frame_measurements:
-    ts = sfm.time_stamp
-    alt = series.observer_position.altitude_m
-    lat, lon = series.observer_position.coordinates
-    new_pos_vector = EarthCenteredInertial.determine_eci_vector_from_lat_lon_alt(lat, lon,altitude/1000, ts)
-    print(new_pos_vector, sfm.position_vector)
-    sfm.position_vector = new_pos_vector
-    print(new_pos_vector, sfm.position_vector, "<--")
-
-for sfm in series.single_frame_measurements:
-    print(sfm.position_vector, "<-----")
-
-series.flush_to_file("ag_an_1_30s_zzzzzz")
-"""
-# Locations in South America
-# Mt Pi 1: -27.68216667, -68.78558333, 6460
-# Mt Pi 2: -27.7231285,-68.8761221, 5310
-# Lag Neg 1: -27.628442, -68.590410, 4710
-# Ch An 1: -27.8206424,-69.1635205, 4450
-# Ag An 1: -27.3276682,-68.071221, 3980
-# Ch An 2: -28.2343585,-70.290287, 1660
-# Rio Sm 1: -26.3125282,-65.9406141, 1710
 
 series_names = [
     "mt_pi_1_30s",
@@ -58,68 +24,50 @@ series_names = [
     "mt_pi_3_30s",
     "mt_pi_1_1s",
 ]
+theta_1 = Code.deg_to_rad(50)
+theta_2 = Code.deg_to_rad(70)
+theta_3 = Code.deg_to_rad(90)
+r_1 = 7067
+r_2 = 7087
+r_3 = 7107
+plane_normal = UnitVector(np.array([0, 0, 1]))
 
-"""
-view_vectors = []
-for name in series_names:
-    series = SingleFrameMeasurementSeries.from_json(name)
-    view_vectors = []
-    for sfm in series.single_frame_measurements:
-        view_vectors.append(sfm.view_vector.value)
-    gg_str = Code.format_to_geogebra_representation(view_vectors)
-    print(name)
-    print(f"{gg_str}")
-    print("\n")
-"""
+pt = ParametricTrajectory(theta_1, r_1, theta_2, r_2, theta_3, r_3, plane_normal)
 
-"""
-def delta_period(sma: float, delta: float) -> float:
-    return 3 * math.pi * math.sqrt(sma / Params.mu_km) * delta
-sma_km = 7067
-orbital_period = Code.orbital_period_s(sma_km)
-delta_km = 400
-orbital_period_less = Code.orbital_period_s(sma_km - delta_km)
-orbital_period_more = Code.orbital_period_s(sma_km + delta_km)
-delta_period_s = delta_period(sma_km, delta_km)
-print(orbital_period, delta_period_s)
-print(orbital_period_less, orbital_period - delta_period_s)
-print(orbital_period_more, orbital_period + delta_period_s)
-"""
+pt.semi_major_axis = 7100
+pt.eccentricity = 0.3
+pt.argument_of_periapsis = Code.deg_to_rad(220)
 
+print(pt.semi_major_axis, pt.eccentricity, Code.rad_to_deg(pt.argument_of_periapsis))
+print(pt.period_s)
+print(pt._time_from_periapsis_to_origin())
 
+for w in range(36):
+    pt.argument_of_periapsis = Code.deg_to_rad(w*10)
+    times_since_origin = []
+    for i in range(36):
+        arr = np.array([i*10, pt.time_since_origin(Code.deg_to_rad(i*10))])
+        times_since_origin.append(arr)
+    print("\n----", w)
+    print(Code.format_to_geogebra_representation_2d(times_since_origin))
 
-mean_anomalies = [(i / 20) * 2 * math.pi for i in range(0, 20+1)]
-eccentricities = [(i / 20) for i in range(0, 20)]
+print("------------------")
+for w in range(36):
+    pt.argument_of_periapsis = Code.deg_to_rad(w * 10)
+    args_since_origin = []
+    for t in [(j/36) * pt.period_s for j in range(36)]:
+        arr = np.array([t, Code.rad_to_deg(pt.true_anomaly_since_origin(t))])
+        args_since_origin.append(arr)
+    print("\n----", w)
+    print(Code.format_to_geogebra_representation_2d(args_since_origin))
 
-#for m in mean_anomalies:
-#    for e in eccentricities:
-#        ecc_an = TrueAnomalyAndTime.eccentric_anomaly_from(m, e)
-#        print(m, e, ecc_an)
-pe = Constants.earth_mean_radius * 1.1
-ap = Constants.earth_mean_radius * 1.4
-sma = (pe + ap)/2
-ecc = (ap - pe)/(2*sma)
-period = Code.orbital_period_s(sma)
-print(sma, ecc)
-print(period, "s")
-true_anomaly = TrueAnomalyAndTime.true_anomaly_from_time_since_pe(sma, ecc, period)
-print(Code.rad_to_deg(true_anomaly))
+pt.plane_normal_vector = UnitVector.from_array([0.0, -0.78801075, 0.61566148])
+pt.argument_of_periapsis = Code.deg_to_rad(90)
+pt.semi_major_axis = 7100
+pt.eccentricity = 0.2
 
-slices = 100
-times = [(i / slices) * period for i in range(0, slices)]
-print(times)
-
-steps = []
-
-for idx, time in enumerate(times):
-    steps.append(
-        np.array(
-            [idx, Code.rad_to_deg(TrueAnomalyAndTime.true_anomaly_from_time_since_pe(sma, ecc, time))]
-        )
-    )
-
-print(Code.format_to_geogebra_representation_2d(steps))
-print(TrueAnomalyAndTime.time_from_true_anomaly_since_pe(sma, ecc, TrueAnomalyAndTime.true_anomaly_from_time_since_pe(sma, ecc, 7003)))
-
-
-
+eci_positions = []
+for true_anomaly in range(72):
+    eci_positions.append(pt.eci_position_from_true_anomaly(Code.deg_to_rad(true_anomaly*5)))
+print("\n\n\n\n---------")
+print(Code.format_to_geogebra_representation_3d(eci_positions))

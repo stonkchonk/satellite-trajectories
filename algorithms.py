@@ -41,19 +41,50 @@ class ParametricTrajectory:
         return time % self.period_s
 
 
-    def _time_from_periapsis_to_origin(self):
-        return TrueAnomalyAndTime.time_from_true_anomaly_since_pe(self.semi_major_axis, self.eccentricity, self.argument_of_periapsis)
+    def _time_from_periapsis_to_origin(self) -> float:
+        return TrueAnomalyAndTime.time_from_true_anomaly_since_pe(self.semi_major_axis, self.eccentricity, 2 * pi -  self.argument_of_periapsis)
 
-    def time_since_origin(self, current_true_anomaly: float) -> float:
-        time_since_periapsis_at_current_true_anomaly = TrueAnomalyAndTime.time_from_true_anomaly_since_pe(
-            self.semi_major_axis, self.eccentricity, Code.normalize_angle(current_true_anomaly - self.argument_of_periapsis))
-        time_since_periapsis_at_origin = TrueAnomalyAndTime.time_from_true_anomaly_since_pe(
-            self.semi_major_axis, self.eccentricity, 2 * pi - self.argument_of_periapsis)
+    def time_since_origin(self, arg_from_origin_rad: float) -> float:
+        arg_periapsis_to_origin = 2 * pi - self.argument_of_periapsis
+        return self._normalize_time(
+            TrueAnomalyAndTime.time_from_true_anomaly_since_pe(
+                self.semi_major_axis, self.eccentricity, arg_periapsis_to_origin + arg_from_origin_rad) -
+            self._time_from_periapsis_to_origin()
+        )
 
-        current_true_anomaly = Code.normalize_angle(current_true_anomaly)
-        if self.argument_of_periapsis > pi:
-            pass
-        else:
+    def true_anomaly_since_origin(self, time_since_origin_s: float) -> float:
+        arg_periapsis_to_origin = 2 * pi -  self.argument_of_periapsis
+        return Code.normalize_angle(
+            TrueAnomalyAndTime.true_anomaly_from_time_since_pe(
+                self.semi_major_axis, self.eccentricity, self._time_from_periapsis_to_origin() + time_since_origin_s)
+            - arg_periapsis_to_origin
+        )
+
+    def new_anomaly_from_time_and_current_anomaly(self, current_true_anomaly_rad: float, proceed_time_s: float) -> float:
+        time_since_origin = self.time_since_origin(current_true_anomaly_rad)
+        new_time_since_origin = self._normalize_time(time_since_origin + proceed_time_s)
+        return Code.normalize_angle(
+            self.true_anomaly_since_origin(new_time_since_origin)
+        )
+
+
+
+
+    def radius_from_true_anomaly(self, true_anomaly_rad: float) -> float:
+        return self.semi_major_axis * (1 - self.eccentricity**2) / (1 + self.eccentricity * cos(true_anomaly_rad - self.argument_of_periapsis))
+
+    def eci_position_from_true_anomaly(self, true_anomaly_rad: float) -> np.ndarray:
+        xy_plane_normal = UnitVector.from_array([0, 0, 1])
+        radius_length = self.radius_from_true_anomaly(true_anomaly_rad)
+        xy_plane_position = np.array([
+            radius_length * cos(true_anomaly_rad), radius_length * sin(true_anomaly_rad), 0
+        ])
+        rotation_axis = UnitVector.from_cross_product(xy_plane_normal, self.plane_normal_vector)
+        rotation_angle = Code.rad_to_deg(float(xy_plane_normal.angular_rad_separation(self.plane_normal_vector)))
+        rotated_unit_position = UnitVector.from_rodrigues_rotation(rotation_axis, UnitVector(xy_plane_position), rotation_angle)
+        return rotated_unit_position.value * radius_length
+
+        
 
 
 

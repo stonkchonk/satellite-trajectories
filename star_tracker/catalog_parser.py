@@ -59,15 +59,15 @@ class UnitVector:
     def from_array(cls, unit_vector_array: list[float]):
         return cls(np.array(unit_vector_array))
 
-    def dot_product(self, other_unit_vector: any) -> np.float64:
+    def dot_product(self, other_unit_vector: "UnitVector") -> np.float64:
         return np.dot(self.value, other_unit_vector.value)
 
     @classmethod
-    def from_cross_product(cls, first_unit_vector: any, second_unit_vector: any):
+    def from_cross_product(cls, first_unit_vector: "UnitVector", second_unit_vector: "UnitVector"):
         return cls(np.cross(first_unit_vector.value, second_unit_vector.value))
 
     @classmethod
-    def from_rodrigues_rotation(cls, axis_unit_vector: any, position_unit_vector: any, rotation_angle_deg: float,
+    def from_rodrigues_rotation(cls, axis_unit_vector: "UnitVector", position_unit_vector: "UnitVector", rotation_angle_deg: float,
                                 invert: bool = False):
         rotation_angle_deg = -rotation_angle_deg if invert else rotation_angle_deg
         theta = Code.deg_to_rad(rotation_angle_deg)
@@ -76,7 +76,7 @@ class UnitVector:
         v_rot = v * cos(theta) + np.cross(k, v) * sin(theta) + k * np.dot(k, v) * (1 - cos(theta))
         return cls(v_rot)
 
-    def angular_rad_separation(self, other_unit_vector: any) -> np.float64:
+    def angular_rad_separation(self, other_unit_vector: "UnitVector") -> np.float64:
         return np.arccos(self.dot_product(other_unit_vector))
 
     def __str__(self):
