@@ -1,4 +1,4 @@
 *.aux
 *.log
-preliminary.pdf
 *.synctex.gz
+*.out

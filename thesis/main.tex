@@ -1,0 +1,90 @@
+\documentclass[10pt,a4paper]{article}
+
+% Language setting
+% Replace `english' with e.g. `spanish' to change the document language
+\usepackage[english]{babel}
+
+% Set page size and margins
+% Replace `letterpaper' with `a4paper' for UK/EU standard size
+\usepackage[letterpaper,top=2cm,bottom=2cm,left=3cm,right=3cm,marginparwidth=1.75cm]{geometry}
+
+% Useful packages
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{url}
+\usepackage{float}
+\usepackage{siunitx}
+\usepackage[colorlinks=true, allcolors=black]{hyperref}
+% column spacing and edge width
+\geometry{margin=1.8cm}
+\setlength{\columnsep}{0.7cm}
+
+\begin{document}
+	\twocolumn[
+	\title{Performance Comparison of Single- and Dual-Camera Setups for Image-Based Satellite Orbit Determination}
+	\author{Frederic Heil \\
+		\texttt{frederic.heil@hs-weingarten.de}\\
+		\textbf{Ravensburg-Weingarten University of Applied Sciences} \\
+	}
+	
+	\maketitle
+	
+	\begin{abstract}
+		\centering
+		sss
+	\end{abstract}
+	\vspace{4em}
+	]
+	
+	\section{Introduction}\label{sec:introduction}
+	asdas
+	\section{Methods}\label{sec:methods}
+	\subsection{Single-Camera orbit determination}\label{sec:one_camera_determination}
+	\subsubsection{Gaussian Method}\label{sec:gauss_method}
+	The Gaussian method's approach is to numerically fit observations to a physically feasible orbit.
+	The algorithm yields parameters for full orbit characterization, namely semi major axis $a$, eccentricity $e$, argument of periapsis $\omega$ and plane normal vector $n$.\newline A single observer camera is required, whereas three measurements each consisting of position vector $p_i$, view vector $v_i$ and corresponding timestamp $t_i$ need to be recorded to determine a solution. \cite{curtis_gauss_algo}
+	\subsubsection{Simplified Gaussian Method}\label{sec:simplified_gauss_method}
+	The simplified Gaussian method is a self developed approach to numerically fit observations to a physically feasibly circular orbit. Its incentive stems from the condition that satellite orbits low above earth's surface possess very low eccentricities and can mostly be considered circular. The algorithm yields parameters for circle-orbit characterization, namely semi major axis $a$ and plane normal vector $n$. \newline Similar to the Gaussian method, a single observer camera is required, whereas only two measurements each consisting of position vector $p_i$, view vector $v_i$ and corresponding timestamp $t_i$ need to be recorded to determine a solution. Hereby, the solution consists of two scalar parameters $\rho_1$ and $\rho_2$ which must satisfy the radius equality condition as well as the arc of a circle condition stated as follows:
+	
+	\begin{equation}
+		\label{circle_gauss_circle_condition}
+		|r_1|=|r_2|\Leftrightarrow \sqrt{(p_1+\rho_1v_1)^2}=\sqrt{(p_2+\rho_2v_2)^2}
+	\end{equation}
+
+	
+	\begin{equation}
+		\label{circle_gauss_time_condition}
+		\begin{aligned}
+			&\arccos\left(\frac{(p_1+\rho_1v_1)\cdot (p_2+\rho_2v_2)}{|(p_1+\rho_1v_1)|^2}\right)\cdot|(p_1+\rho_1v_1)|^{\frac{3}{2}}=\\
+			&(t_2-t_1)\sqrt{\mu}
+		\end{aligned}
+	\end{equation}
+	
+	\subsection{Two camera trajectory determination}\label{sec:two_camera_determination}
+	\subsubsection{Full parametric trajectory}\label{sec:full_parametric_trajectory}
+	\subsubsection{Circular parametric trajectory}\label{sec:circular_parametric_trajectory}
+	\subsection{Observation setup}\label{sec:observation_setup}
+	\subsection{Parameter stability definition}\label{sec:param_stability_definition}
+	\subsection{Error propagation definition}\label{sec:error_propagation_definition}
+	\section{Results and Discussion}\label{sec:results_discussion}
+	\subsection{Parameter stability}\label{sec:param_stability_result}
+	\subsection{Error propagation}\label{sec:error_propagation_result}
+	\subsection{Lower altitude bound for feasible \\ trajectory determination}\label{sec:error_propagation_result}
+	\subsection{Stability of circular models applied to elliptical orbits}\label{sec:stability_circular}
+	\section{Conclusion}\label{sec:conclusion}
+	
+	\onecolumn
+	\begin{thebibliography}{9}
+		\setlength{\itemsep}{4pt}       % space between bibliography items
+		\setlength{\parskip}{0pt}       % space between paragraphs
+		\setlength{\parsep}{0pt}        % extra space within items
+		
+		\bibitem{curtis_gauss_algo}
+		H.D. Curtis, "Gauss method of preliminary orbit determination", Orbital Mechanics for Engineering Students 2nd Edition, 2010, pp. 297-304, \url{https://shop.elsevier.com/books/orbital-mechanics-for-engineering-students/curtis/978-0-12-374778-5}\newline
+		Accessed: 2026-05-03
+		
+		\bibitem{self_localization_in_space}
+		Frederic Heil "Determining attitude to the background stars", \emph{Image based self localization in interplanetary space}, 2025, pp. 9-11,\newline \url{https://github.com/stonkchonk/satellite-trajectories/blob/main/thesis/papers/heil_self_localization_2025.pdf}\newline
+		Accessed 2026-09-29
+	\end{thebibliography}
+\end{document}
