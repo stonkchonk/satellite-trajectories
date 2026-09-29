@@ -1,9 +1,12 @@
 import math
+from copy import copy
 
 import matplotlib.pyplot as plt
+import numpy as np
 
 from algorithms import ParametricTrajectory, GaussAlgorithm
 from common import Code
+from earth import UniversalTimeStamp
 from experiments.artificial_satellite_setup import get_orbit_ground_truth
 from procedures import SingleFrameMeasurementSeries, DualFrameMeasurementSeries, SingleFrameMeasurement
 from star_tracker.catalog_parser import UnitVector
@@ -13,10 +16,15 @@ class EvaluationResult:
     log_base = 10
 
     def __init__(self, sma_errors: list[list[float]], ecc_errors: list[list[float]], pln_errors: list[list[float]],
-                 x_axis_values: list[float], y_axis_values: list[float]):
+                 x_axis_values: list[float], y_axis_values: list[float],
+                 ground_truth_parametric_trajectory: ParametricTrajectory,
+                 measured_parametric_trajectories: list[list[ParametricTrajectory]]):
         self.sma_errors = sma_errors
         self.ecc_errors = ecc_errors
         self.pln_errors = pln_errors
+
+        self.ground_truth_parametric_trajectory = ground_truth_parametric_trajectory
+        self.measured_parametric_trajectories = measured_parametric_trajectories
 
         self.x_axis_values = x_axis_values
         self.y_axis_values = y_axis_values
@@ -43,9 +51,7 @@ class EvaluationResult:
 
     @staticmethod
     def plane_normal_deviation_deg(ground_truth_plane_normal: UnitVector, measured_plane_normal: UnitVector) -> float:
-        return math.log(Code.rad_to_deg(ground_truth_plane_normal.angular_rad_separation(measured_plane_normal)), EvaluationResult.log_base
-
-                        )
+        return math.log(Code.rad_to_deg(ground_truth_plane_normal.angular_rad_separation(measured_plane_normal)), EvaluationResult.log_base)
 
 
 
@@ -61,6 +67,12 @@ captured_30s_series = {
     7: "7_30s",
 }
 ground_truth_orbit_dict, plane_normal_ground_truth = get_orbit_ground_truth()
+gt_pt = ParametricTrajectory.without_valid_init()
+gt_pt.semi_major_axis = ground_truth_orbit_dict.get("semi_major_axis_km")
+gt_pt.eccentricity = ground_truth_orbit_dict.get("eccentricity")
+gt_pt.argument_of_periapsis = Code.deg_to_rad(ground_truth_orbit_dict.get("argument_periapsis_deg"))
+gt_pt.plane_normal_vector = UnitVector(plane_normal_ground_truth)
+
 
 def determine_sma_error(ground_truth_sma: float, measured_sma: float) -> float:
     return math.log(abs(ground_truth_sma - abs(measured_sma)) / ground_truth_sma, 10)
@@ -72,6 +84,8 @@ def plane_normal_deviation_deg(ground_truth_plane_normal: UnitVector, measured_p
     return math.log(Code.rad_to_deg(ground_truth_plane_normal.angular_rad_separation(measured_plane_normal)), 10)
 
 def make_plot(data: list[list[float]], title: str, x_labels: list, y_labels: list) -> None:
+    data = np.ma.masked_where(np.equal(data, None), data)
+
     plt.imshow(data, cmap="viridis", aspect="auto")
     plt.colorbar(label="Wert")
     plt.title(title)
@@ -97,12 +111,23 @@ def _span_angles(single_frame_measurements: list[SingleFrameMeasurement], defaul
     return spans
 
 
+def _propagation_error(gt_pt: ParametricTrajectory, measured_pt: ParametricTrajectory, orbit_propagation: float) -> float:
+
+    progress_s = gt_pt.period_s * orbit_propagation
+    start_true_anomaly = measured_pt.theta_1
+    propagated_true_anomaly_gt = gt_pt.new_anomaly_from_time_and_current_anomaly(start_true_anomaly, progress_s)
+    propagated_true_anomaly_mt = measured_pt.new_anomaly_from_time_and_current_anomaly(start_true_anomaly, progress_s)
+    propagated_eci_position_gt = gt_pt.eci_position_from_true_anomaly(propagated_true_anomaly_gt)
+    propagated_eci_position_mt = measured_pt.eci_position_from_true_anomaly(propagated_true_anomaly_mt)
+    raw_distance = float(np.linalg.norm(propagated_eci_position_gt - propagated_eci_position_mt))
+    return raw_distance / gt_pt.semi_major_axis
 
 
 def dfm_stereo_errors() -> EvaluationResult:#tuple[list[list[float]], list[list[float]], list[list[float]]]:
     sma_errors: list[list[float]] = []
     ecc_errors: list[list[float]] = []
     pln_errors: list[list[float]] = []
+    measured_trajectories: list[list[ParametricTrajectory]] = []
 
     s0 = SingleFrameMeasurementSeries.from_json(captured_30s_series.get(0))
 
@@ -120,6 +145,8 @@ def dfm_stereo_errors() -> EvaluationResult:#tuple[list[list[float]], list[list[
         sma_errors_i: list[float] = []
         ecc_errors_i: list[float] = []
         pln_errors_i: list[float] = []
+        measured_trajectories_i: list[ParametricTrajectory] = []
+
 
         for j in range(2, length):
             first = d0i.intersection_vectors[0]
@@ -146,6 +173,7 @@ def dfm_stereo_errors() -> EvaluationResult:#tuple[list[list[float]], list[list[
                 sma_errors_i.append(sma_error)
                 ecc_errors_i.append(ecc_error)
                 pln_errors_i.append(pln_error)
+                measured_trajectories_i.append(copy(pt))
             except Exception as e:
                 print(f"--------indices: {i} {j}")
                 print(f"Cannot determine trajectory: {e}")
@@ -153,7 +181,8 @@ def dfm_stereo_errors() -> EvaluationResult:#tuple[list[list[float]], list[list[
         pln_errors.append(pln_errors_i)
         ecc_errors.append(ecc_errors_i)
         sma_errors.append(sma_errors_i)
-    return EvaluationResult(sma_errors, ecc_errors, pln_errors, spans, avg_angles)#sma_errors, ecc_errors, pln_errors
+        measured_trajectories.append(measured_trajectories_i)
+    return EvaluationResult(sma_errors, ecc_errors, pln_errors, spans, avg_angles, copy(gt_pt), measured_trajectories)#sma_errors, ecc_errors, pln_errors
 
 
 
@@ -161,6 +190,7 @@ def sfm_gauss_errors() -> EvaluationResult:
     sma_errors: list[list[float]] = []
     ecc_errors: list[list[float]] = []
     pln_errors: list[list[float]] = []
+    measured_trajectories: list[list[ParametricTrajectory]] = []
 
     spans = _span_angles(SingleFrameMeasurementSeries.from_json(captured_30s_series.get(0)).single_frame_measurements)
     plane_offset_angles: list[float] = []
@@ -172,6 +202,7 @@ def sfm_gauss_errors() -> EvaluationResult:
         sma_errors_i: list[float] = []
         ecc_errors_i: list[float] = []
         pln_errors_i: list[float] = []
+        measured_trajectories_i: list[ParametricTrajectory] = []
 
         angle_between_observer_and_plane_mid_measurements = Code.rad_to_deg(
             abs(math.pi / 2 - Code.angular_separation_of_two_vectors_rad(
@@ -211,6 +242,7 @@ def sfm_gauss_errors() -> EvaluationResult:
                 sma_errors_i.append(sma_error)
                 ecc_errors_i.append(ecc_error)
                 pln_errors_i.append(pln_error)
+                measured_trajectories_i.append(copy(pt))
             except Exception as e:
                 print(f"--------indices: {i} {j}")
                 print(f"Cannot determine trajectory: {e}")
@@ -218,16 +250,54 @@ def sfm_gauss_errors() -> EvaluationResult:
         pln_errors.append(pln_errors_i)
         ecc_errors.append(ecc_errors_i)
         sma_errors.append(sma_errors_i)
-    return EvaluationResult(sma_errors, ecc_errors, pln_errors, spans, plane_offset_angles)
+        measured_trajectories.append(measured_trajectories_i)
+    return EvaluationResult(sma_errors, ecc_errors, pln_errors, spans, plane_offset_angles, copy(gt_pt), measured_trajectories)
+
+
+def propagation_error(ground_truth_trajectory: ParametricTrajectory,
+                      measured_trajectories: list[list[ParametricTrajectory]]) -> list[list[float]]:
+    propagation_errors: list[list[float]] = []
+    for measured_trajectories_i in measured_trajectories:
+        propagation_errors_i: list[float] = []
+        for measured_trajectory in measured_trajectories_i:
+            if measured_trajectory.eccentricity < 1:
+                propagation_errors_i.append(
+                    _propagation_error(ground_truth_trajectory, measured_trajectory, 1)
+                )
+            else:
+                propagation_errors_i.append(-1)
+        propagation_errors.append(propagation_errors_i)
+    return propagation_errors
 
 
 
-evaluator_result = sfm_gauss_errors()
-#evaluator_result = dfm_stereo_errors()
+
+#evaluator_result = sfm_gauss_errors()
+evaluator_result = dfm_stereo_errors()
 #print(evaluator_result.sma_errors)
 #print(ecc_errors)
 #print(pln_errors)
 print("pln gt",plane_normal_ground_truth)
-make_plot(evaluator_result.sma_errors, "sma_errors", evaluator_result.x_axis_values, evaluator_result.y_axis_values)
-make_plot(evaluator_result.ecc_errors, "ecc_errors", evaluator_result.x_axis_values, evaluator_result.y_axis_values)
-make_plot(evaluator_result.pln_errors, "plane normal deviation", evaluator_result.x_axis_values, evaluator_result.y_axis_values)
+
+measured_pt = ParametricTrajectory.without_valid_init()
+measured_pt.semi_major_axis = 7467
+measured_pt.eccentricity = 0.7
+measured_pt.argument_of_periapsis = Code.deg_to_rad(32)
+measured_pt.theta_1 = Code.deg_to_rad(69)
+measured_pt.plane_normal_vector = gt_pt.plane_normal_vector
+
+#make_plot(evaluator_result.sma_errors, "sma_errors", evaluator_result.x_axis_values, evaluator_result.y_axis_values)
+#make_plot(evaluator_result.ecc_errors, "ecc_errors", evaluator_result.x_axis_values, evaluator_result.y_axis_values)
+#make_plot(evaluator_result.pln_errors, "plane normal deviation", evaluator_result.x_axis_values, evaluator_result.y_axis_values)
+
+#propagations = [i/10 for i in range(100)]
+#errors = []
+#for p in propagations:
+#    error = _propagation_error(gt_pt, measured_pt, p)
+#    errors.append(np.array([p, error]))
+
+#print(Code.format_to_geogebra_representation_2d(errors))
+make_plot(propagation_error(evaluator_result.ground_truth_parametric_trajectory, evaluator_result.measured_parametric_trajectories), "propagation error", evaluator_result.x_axis_values, evaluator_result.y_axis_values)
+#print(propagation_error(evaluator_result.ground_truth_parametric_trajectory, evaluator_result.measured_parametric_trajectories))
+
+

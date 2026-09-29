@@ -205,6 +205,10 @@ class ParametricTrajectory:
         r_3 = np.sqrt(last_vector.dot(last_vector))
         return cls(theta_1, r_1, theta_2, r_2, theta_3, r_3, plane_vector)
 
+    @classmethod
+    def without_valid_init(cls):
+        return cls(1, 2, 3, 4, 5, 6, UnitVector.from_array([0, 0, 1]))
+
 
 
 
