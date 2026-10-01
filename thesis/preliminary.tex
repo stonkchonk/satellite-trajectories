@@ -136,7 +136,7 @@
 	\end{figure}
 	\noindent
 	Illustrated above in figure \ref{fig:satelitte_appearance} are three image frames, supposed to be taken at three time stamps $t_1$, $t_2$ and $t_3$ by a ground-fixed camera. In each frame, stars and a satellite (encircled) are visible. For one, the satellite would not be distinguishable from the background stars if it were not marked. Differentiation between satellites and stars may be automated, however we consider this issue not to be part of this research project.\newline
-	Next up, there are two relevant types of apparent movenents visible in the image series. As planet earth rotates, background stars move slowly in the image frame. The apparent movement of the satellite is caused mainly by its inherent movement along its trajectory and marginally by the rotation of planet earth. \newline
+	Next, there are two relevant types of apparent movenents visible in the image series. As planet earth rotates, background stars move slowly in the image frame. The apparent movement of the satellite is caused mainly by its inherent movement along its trajectory and marginally by the rotation of planet earth. \newline
 	These aspects have to be factored in especially during camera alignment and view vector determination procedures.
 	\subsection{Determination of position vectors}
 	\label{sec:determination_position}
@@ -188,7 +188,7 @@
 	\noindent
 	As illustrated above in figure \ref{fig:curtis_siderial_time}, the geometric context consists of several angles along the polar axis, which corresponds to the Z-axis in our ECI coordinate system, as illustrated in figure \ref{fig:eci}. The axis $\gamma$ corresponds to the X-axis. Time stamps in this context are defined as \emph{YYYY.MM.DD HH:MM:SS}, which consists of year, month, day, hours, minutes and seconds to date any observation in Universal Time (UT).\newline
 	The first relevant value is $\theta_{G0}$, which corresponds to ECI longitude angle at which Greenwhich (hereby short for the prime meridian of the ECEF coordinate system) is located on any day at 0hr UT, meaning \emph{YYYY.MM.DD 00:00:00}. \newline
-	Next up, we have $\theta_{G}$, the angular location of Greenwich at the time stamp of observation, meaning that hours, minutes and seconds in the time stamp are fully specified. \newline
+	Next, we have $\theta_{G}$, the angular location of Greenwich at the time stamp of observation, meaning that hours, minutes and seconds in the time stamp are fully specified. \newline
 	Finally we have $\Lambda$ and $\theta$ related by $\theta=\Lambda+\theta_{G}$, where $\Lambda$ describes the longitude angle between observer and Greenwich at time of observation and $\theta$ describes the longitude angle between observer and axis $\gamma$.
 	To determine these values, specifically starting with $\theta_{G0}$, a complex process is required which consists of several steps, outlined below:
 	\begin{enumerate}
@@ -364,7 +364,7 @@
 	\begin{equation}\label{halbachse}
 		\boxed{a=\frac{r_i(1+e\cdot\cos(\theta_i-\omega))}{1-e^2}}
 	\end{equation}
-	Next up, we obtain $e$ subject to $\omega$ by equating expression \ref{halbachse} with itself but with two different index values $i$ and $j$ with $j \in \{1,2,3\}$ and $i \neq j$ to use different radii and angles as follows:
+	Next, we obtain $e$ subject to $\omega$ by equating expression \ref{halbachse} with itself but with two different index values $i$ and $j$ with $j \in \{1,2,3\}$ and $i \neq j$ to use different radii and angles as follows:
 	
 	\begin{equation*}
 		\begin{aligned}
@@ -374,7 +374,7 @@
 		\end{aligned}
 	\end{equation*}
 	\noindent
-	Some simplications can be applied:\newline $C_{ij}\cdot\cos(\alpha_{ij}-\omega) = r_j\cdot\cos(\theta_j-\omega)-r_i\cdot\cos(\theta_i-\omega)$ and \newline
+	Some simplifications can be applied:\newline $C_{ij}\cdot\cos(\alpha_{ij}-\omega) = r_j\cdot\cos(\theta_j-\omega)-r_i\cdot\cos(\theta_i-\omega)$ and \newline
 	$\alpha_{ij}=\atantwo(B_{ij}, A_{ij})$ with \newline $C_{ij}=\sqrt{A_{ij}^2+B_{ij}^2}$ , $A_{ij}=\cos(\theta_j)r_j-\cos(\theta_i)r_i$ and $B_{ij}=\sin(\theta_j)r_j-\sin(\theta_i)r_i$.\newline
 	Hence:
 	\newline
@@ -388,7 +388,7 @@
 		\boxed{e=\frac{r_i-r_j}{C_{ij}\cdot\cos(\alpha_{ij}-\omega)}}
 	\end{equation}
 	\noindent
-	Next up, we obtain $\omega$ by equating expression \ref{excentritaet} with itself with two different index pairs $ij$ and $ik$ with $k \in \{1,2,3\}$ and $i \neq j \neq k$ as follows:
+	Next, we obtain $\omega$ by equating expression \ref{excentritaet} with itself with two different index pairs $ij$ and $ik$ with $k \in \{1,2,3\}$ and $i \neq j \neq k$ as follows:
 	
 	\begin{equation*}
 		\begin{aligned}
@@ -431,7 +431,7 @@
 		\boxed{p=r_i\cdot(1+\cos(\theta_i-\omega))}
 	\end{equation}
 	\noindent
-	Next up, we determine $\omega$ by inserting expression \ref{halbachse_parabel} with index $i$ into expression \ref{r_theta_parabolic} with $r_j$ and $\theta_j$ put into place for $j \in \{1, 2\}$ and $i\neq j$ as follows:
+	Next, we determine $\omega$ by inserting expression \ref{halbachse_parabel} with index $i$ into expression \ref{r_theta_parabolic} with $r_j$ and $\theta_j$ put into place for $j \in \{1, 2\}$ and $i\neq j$ as follows:
 	\begin{equation*}
 		\begin{aligned}
 			r_j=\frac{r_i(1+\cos(\theta_i-\omega))}{1+\cos(\theta_j-\omega)} \Leftrightarrow \\
@@ -490,7 +490,7 @@
 			y_p=n\times y_0
 		\end{aligned}
 	\end{equation}
-	These projected vectors can be seen as X- and Y-axis for the two dimensional parametric model. Next up, apply scalar products to $r_i$ to determine its fractions $x$ and $y$ relative to $x_p$ and $y_p$:
+	These projected vectors can be seen as X- and Y-axis for the two dimensional parametric model. Next, apply scalar products to $r_i$ to determine its fractions $x$ and $y$ relative to $x_p$ and $y_p$:
 	\begin{equation}
 		\begin{aligned}
 			x=r_i\cdot x_p \\

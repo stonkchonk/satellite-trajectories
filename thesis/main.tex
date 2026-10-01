@@ -14,6 +14,7 @@
 \usepackage{url}
 \usepackage{float}
 \usepackage{siunitx}
+\usepackage{booktabs}
 \usepackage[colorlinks=true, allcolors=black]{hyperref}
 % column spacing and edge width
 \geometry{margin=1.8cm}
@@ -59,17 +60,129 @@
 			&(t_2-t_1)\sqrt{\mu}
 		\end{aligned}
 	\end{equation}
+	\cite{orbit_determination_preliminary}
 	
 	\subsection{Two camera trajectory determination}\label{sec:two_camera_determination}
 	\subsubsection{Full parametric trajectory}\label{sec:full_parametric_trajectory}
-	\subsubsection{Circular parametric trajectory}\label{sec:circular_parametric_trajectory}
+	An orbital trajectory can be described as parametric curve lying in its orbital plane as follows: 
+	\begin{equation}
+		r(\theta)=\frac{a(1-e^2)}{1+e\cdot\cos(\theta-\omega)} \cdot \begin{pmatrix}
+			\cos(\theta) \\
+			\sin(\theta)
+		\end{pmatrix}
+	\end{equation}
+	\noindent
+	Given three positions in polar coordinates defined by radii $r_i$ and arguments $\theta_i$, the orbital properties $a$, $e$ and $\omega$ for eccentricities $e\neq 1$ and $e\neq 0$ are determined by:
+	
+	\begin{equation}
+		\omega=\alpha_{13}-\arctan(G)
+	\end{equation}
+	\begin{equation}
+		e=\frac{r_1-r_2}{C_{12}\cdot\cos(\alpha_{12}-\omega)}
+	\end{equation}
+	\begin{equation}
+		a=\frac{r_1(1+e\cdot\cos(\theta_1-\omega))}{1-e^2}
+	\end{equation}
+	\noindent
+	Hereby, $G$, $C_{12}$, $\alpha_{12}$ and $\alpha_{13}$ represent terms consisting of $r_1$, $r_2$, $r_3$, $\theta_1$, $\theta_2$ and $\theta_3$.\newline
+	Two observer cameras are required, utilizing means of stereo vision. Three position vectors of the satellite are obtained by three synchronous measurements which yield values for radii $r_i$, arguments $\theta_i$ and the plane normal vector $n$. \cite{orbit_determination_preliminary}
+
+	\subsubsection{Circular trajectory}\label{sec:circular_parametric_trajectory}
+	This method once again simplifies the orbit to a circular trajectory. Two observer cameras are required, utilizing means of stereo vision. Two position vectors of the satellite are obtained by two synchronous measurements which yield the semi major axis $a$ and the plane normal vector $n$. \cite{orbit_determination_preliminary}
+	
 	\subsection{Observation setup}\label{sec:observation_setup}
-	\subsection{Parameter stability definition}\label{sec:param_stability_definition}
+	The goal is to create a measurement setup which can generate data sets usable by all presented single- and dual-camera orbit determination models to evaluate performance under different circumstances. All measurement data is captured from the  simulation \emph{Space Engine}, which makes the data synthetic. Space Engine is a software that incorporates a virtual universe including the solar system and nearby, real stars among other things \cite{space_engine}.\newline
+	Identical virtual cameras are used in all observer locations and generate rectilinear images with the following properties:
+	\begin{table}[H]
+		\centering
+		\begin{tabular}{l|r}
+			Image Property & Value \\\hline
+			Image frame [pixels] & 1000 x 1000 \\
+			Field of view [°] & 17 x 17
+		\end{tabular}
+		\caption{\label{tab:sun_cam}Image properties of each observer camera}
+	\end{table}
+	\noindent
+	In addition, several cameras are placed in strategic locations, so that  orbit determination can be performed subject to variable properties.
+
+	\begin{figure}[H]
+		\centering
+		\includegraphics[width=1.0\linewidth]{images/observation_schematic.png}
+		\caption{Schematic of strategic camera placement}
+		\label{fig:curtis_siderial_time}
+	\end{figure}
+	\noindent
+	The schematic figure above shows the figurative placement of cameras as well as the planned synchronous recording of images. Starting at timestamp $t_0$ and proceeding with a fixed time interval, each camera takes a picture of the satellite at every time stamp until $t_n$. 
+	For each timestamp from $t_0$ until $t_n$ and for each observer camera, position vector $p_i$ and view vector $v_i$ are recorded with the Earth Centered Inertial (ECI) coordinate system as reference frame.
+	\newline
+	As single- and dual-camera orbit determination methods for full determination require only three measurements each and for circular methods only two measurements respectively, we gain some modifiable parameters, which can be altered to observe changes in performance and accuracy of the models.\newline
+	The first one, which is applicable to single- and dual-camera methods, being the alteration of observation time span $\Delta t$ which translates to the angular passage $\Delta \theta$ which the satellite passes in its orbit.\newline
+	Secondly, applicable to dual-camera methods, is the variation in distance between two observer cameras which translates to a variable angle between intersecting lines of sight in the context of stereo vision. Consequently, the observer cameras are placed in the following locations on planet Earth within the simulation software:
+	
+	
+	\begin{table}[htbp]
+		\centering
+		\caption{Observation locations}
+		\label{tab:observation_locations}
+		\begin{tabular}{llll}
+			\toprule
+			Location & Latitude & Longitude & Altitude \\
+			\midrule
+			$L_z$ & $-27.257356^\circ$ & $-64.963269^\circ$ & 313 m \\
+			$L_0$ & $-27.301281^\circ$ & $-63.939256^\circ$ & 157 m \\
+			$L_1$ & $-27.339896^\circ$ & $-63.847839^\circ$ & 153 m \\
+			$L_2$ & $-27.378452^\circ$ & $-63.756358^\circ$ & 155 m \\
+			$L_3$ & $-27.455384^\circ$ & $-63.573205^\circ$ & 149 m \\
+			$L_4$ & $-27.608528^\circ$ & $-63.206133^\circ$ & 143 m \\
+			$L_5$ & $-27.911902^\circ$ & $-62.468913^\circ$ & 127 m \\
+			$L_6$ & $-28.506740^\circ$ & $-60.982091^\circ$ & 64 m \\
+			$L_7$ & $-29.646743^\circ$ & $-57.958463^\circ$ & 64 m \\
+			\bottomrule
+		\end{tabular}
+	\end{table}
+	\noindent
+	Hereby, it must be noted that given altitude values may deviate from real ones because these were measured within the simulation software. Cameras in locations from $L_0$ to $L_7$ are placed in a straight line, whereas the distance on the ground between location $L_i$ and $L_0$ doubles for each further location. The distance between $L_1$ and $L_0$ equates to 10km, between $L_2$ and $L_0$ to 20km and so on up until the distance between $L_7$ and $L_0$ equating to 640km. The purpose of location $L_z$ is to observe the satellite passing in the observer's zenith at timestamp $t_z$. It is not located on line $L_0L_7$.\newline
+	Thirdly, applicable to single-camera methods, is the variation in distance to the orbital plane. Excluding special cases, the distance between observer locations and the orbital plane is constantly changing due to Earth's rotation. However, if the satellite is traversing quick enough from the observer's perspective, an average distance value can be used.
+	Then, a ground truth orbit must be defined, applicable to all presented orbit determination models with the following properties:
+	
+	\begin{table}[H]
+		\centering
+		\begin{tabular}{l|r}
+			Ground Truth Orbit Property & Value \\\hline
+			Semi major axis [km] & 7067.445 \\
+			Eccentricity & 0 \\
+			Inclination [°] & 52 \\
+			Ascending Node [°] & 0 \\
+			Reference epoch & J2000 \\
+			Initial mean anomaly $\theta_0$ [°] & 0
+		\end{tabular}
+		\caption{\label{tab:ground_truth_orbit}Ground truth orbit properties}
+	\end{table}
+	\noindent
+	Consequently, the orbit should be circular. It is tilted against the equatorial, whereat the plane normal vector derives from \emph{inclination} and \emph{ascending node} as $n=(0.0, -0.78801075, 0.61566148)$.\newline
+	Lastly, it is noted that location $L_z$ was chosen for the predefined timestamp $t_z = \text{2000.01.01 20:03:00}$ [UT], so that the satellite passes in the observer's zenith with given ground truth properties.
+	
+	\subsection{Parameter error definition}\label{sec:param_stability_definition}
+	All presented orbit determination methods yield values for semi major axis $a$ and plane normal vector $n$. Additionally, methods not assuming a circular orbit, yield values for eccentricity $e$ and argument of periapsis $\omega$. The goal is to compare measured (denoted $m$) with ground truth (denoted $g$) properties in a generalized form independent of units. For this reason, we define error metrics $f_a$, $f_e$, $f_{\omega}$ and $f_n$ for $a$, $e$, $\omega$ and $n$ as follows::\newline
+	\begin{equation}\label{eq:error_sma}
+		f_a=\frac{|a_g-a_m|}{a_g}
+	\end{equation}
+	\begin{equation}\label{eq:error_ecc}
+		f_e=|e_g-e_m|
+	\end{equation}
+	\begin{equation}\label{eq:error_omega}
+		f_\omega=|\omega_g-\omega_m|
+	\end{equation}
+	\begin{equation}\label{eq:error_n}
+		f_n=\arccos\left(\frac{n_g\cdot n_m}{|n_g|\cdot|n_m|}\right)=\arccos(n_g\cdot n_m)
+	\end{equation}
+	Hereby, specifically for metric \ref{eq:error_omega}, it must be noted that this expression is undefined if ground truth or measured orbit has an eccentricity of $e=0$.
+	
 	\subsection{Error propagation definition}\label{sec:error_propagation_definition}
 	\section{Results and Discussion}\label{sec:results_discussion}
-	\subsection{Parameter stability}\label{sec:param_stability_result}
+	\subsection{Parameter error}\label{sec:param_stability_result}
 	\subsection{Error propagation}\label{sec:error_propagation_result}
-	\subsection{Lower altitude bound for feasible \\ trajectory determination}\label{sec:error_propagation_result}
+	\subsection{Lower altitude bound for feasible \\ trajectory determination}\label{sec:lower_bound}
 	\subsection{Stability of circular models applied to elliptical orbits}\label{sec:stability_circular}
 	\section{Conclusion}\label{sec:conclusion}
 	
@@ -83,8 +196,13 @@
 		H.D. Curtis, "Gauss method of preliminary orbit determination", Orbital Mechanics for Engineering Students 2nd Edition, 2010, pp. 297-304, \url{https://shop.elsevier.com/books/orbital-mechanics-for-engineering-students/curtis/978-0-12-374778-5}\newline
 		Accessed: 2026-05-03
 		
-		\bibitem{self_localization_in_space}
-		Frederic Heil "Determining attitude to the background stars", \emph{Image based self localization in interplanetary space}, 2025, pp. 9-11,\newline \url{https://github.com/stonkchonk/satellite-trajectories/blob/main/thesis/papers/heil_self_localization_2025.pdf}\newline
-		Accessed 2026-09-29
+		\bibitem{orbit_determination_preliminary}
+		F. Heil, Image based trajectory determination of artificial satellites, 2026, \newline \url{https://github.com/stonkchonk/satellite-trajectories/blob/main/thesis/preliminary.pdf}\newline
+		Accessed: 2026-09-29
+		
+		\bibitem{space_engine}
+		"About" \emph{Space Engine}, Cosmographic Software LLC, 2026,\newline
+		\url{https://spaceengine.org/manual/making-addons/scenario-scripts/}.\newline
+		Accessed: 2026-09-29
 	\end{thebibliography}
 \end{document}
