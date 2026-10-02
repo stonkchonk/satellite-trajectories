@@ -209,13 +209,24 @@ class ParametricTrajectory:
     def without_valid_init(cls):
         return cls(1, 2, 3, 4, 5, 6, UnitVector.from_array([0, 0, 1]))
 
+    @classmethod
+    def from_circular_trajectory(cls, circular_trajectory: "CircularTrajectory") -> "ParametricTrajectory":
+        parametric_trajectory = cls.without_valid_init()
+        parametric_trajectory.semi_major_axis = circular_trajectory.semi_major_axis
+        parametric_trajectory.plane_normal_vector = circular_trajectory.plane_normal_vector
+        parametric_trajectory.eccentricity = 0
+        parametric_trajectory.theta_1 = 0
+        parametric_trajectory.theta_3 = circular_trajectory.span
+        return parametric_trajectory
+
 
 
 
 class CircularTrajectory:
-    def __init__(self, r: float, plane_normal_vector: UnitVector):
-        self.r = r
+    def __init__(self, semi_major_axis: float, plane_normal_vector: UnitVector):
+        self.semi_major_axis = semi_major_axis
         self.plane_normal_vector = plane_normal_vector
+        self.span: float = 0
 
     @classmethod
     def from_eci_measurements(cls, measured_eci_vectors: list[np.ndarray]) -> "CircularTrajectory":
@@ -232,7 +243,9 @@ class CircularTrajectory:
         magnitude_avg = float((magnitude_first + magnitude_last) / 2)
         if abs(magnitude_first - magnitude_last) / magnitude_avg > 0.005:
             print("Warning: Orbit might not be too circular, proceeding anyway.")
-        return cls(magnitude_avg, plane_vector)
+        ct = cls(magnitude_avg, plane_vector)
+        ct.span = Code.angular_separation_of_two_vectors_rad(first_vector, last_vector)
+        return ct
 
 
 

@@ -9,24 +9,24 @@ from artificial_satellite_setup import get_orbit_ground_truth
 from star_tracker.catalog_parser import UnitVector
 
 if __name__ == "__main__":
-    forward_seconds = 30
-    measurement_series_name = f"7_{forward_seconds}s"
+    forward_seconds = 1
+    measurement_series_name = f"zenith_failure_{forward_seconds}s"
     ground_truth_orbit_dict, plane_normal_ground_truth = get_orbit_ground_truth()
-    perform_measurements = False
-    with_recalibration = True
+    perform_measurements = True
+    with_recalibration = False
     calculate_orbits = True
 
     if perform_measurements:
         WindowController.initial_setup(cleanse_old_screenshots=True)
         calibrator = CameraCalibration(execute_camera_setup=True)
-        initial_time_stamp = UniversalTimeStamp.from_string("2000.01.01 20:00:30")
+        initial_time_stamp = UniversalTimeStamp.from_string("2000.01.01 20:03:00")
         # Observation times
         # start:    "2000.01.01 19:58:00"
         # middle:   "2000.01.01 20:03:00"
         # end:      "2000.01.01 20:08:00"
 
         observer_pos = ObserverPosition(
-            (-29.646743, -57.958463), 64
+            (-27.257356, -64.963269), 313
         )
         # Locations in South America
         # zenith / numeric failure: (-27.257356, -64.963269), 313
@@ -49,7 +49,7 @@ if __name__ == "__main__":
         if with_recalibration:
             series.create_measurement_series_with_camera_recalibration(forward_seconds)
         else:
-            steps = [0, 1, 1, 1, 1, 1, 1, 1]
+            steps = [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
             series.create_measurement_series(steps)
 
         try:
@@ -93,6 +93,7 @@ if __name__ == "__main__":
             print(f"Measured plane normal: {plane_vector.value}, Ground truth plane normal: {plane_normal_ground_truth}")
             print(f"Measured vs ground truth plane angle: {Code.rad_to_deg(plane_vectors_angular_separation)}°")
 
+        """
         print("\n\n\n\n\n\n\n")
 
         for i in range(2, length):
@@ -119,7 +120,7 @@ if __name__ == "__main__":
             print(f"Measured plane normal: {pt.plane_normal_vector.value}, Ground truth plane normal: {plane_normal_ground_truth}")
             print(f"Measured vs ground truth plane angle: {Code.rad_to_deg(plane_vectors_angular_separation)}°")
             print(f"Eccentricity: {pt.eccentricity}, Arg of peri: {pt.argument_of_periapsis}")
-
+        """
 
 
         
