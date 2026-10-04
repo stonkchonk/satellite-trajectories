@@ -19,16 +19,16 @@
 	\maketitle
 	\section{Introduction}
 	\label{sec:introduction}
-	Image based trajectory determination of artificial satellites using ground based cameras is a multi-stage procedure that, in order to be implemented sucessfully, requires several problems to be solved. A thorough understanding of the underlying geometry and reference frames is needed. Once that has been established, methods for obtaining visual data can be defined, specifically for position and view vectors. These serve as an essential input for trajectory determinantion algorithms which will be used to determine the properties of a Keplarian orbit and its dedicated orbital plane.\newline
-	The scope of this paper is limited to ground based observations, specifically systems using one or two cameas which are not supposed to change their location on earth for the process of imaging. No additional technologies, such as radar or laser measurements are to be used. Camera calibration in this context, specifically the process of determining view vectors, initially uses a star based calibration procedure, which limits the field-of-view range of cameras to certain values, which will be elaborated in section \ref{sec:determine_view_vecs}. Furthermore, the automated distinction between stars and satellites in measurement images could be considered as an additional problem to be solved, but is not part of the scope.\newline
-	Trajectory-model-wise, the scope of this paper is limited to Keplarian orbits, which solve the 2-body problem with point masses. For the obsevable objects, namely artificial satellites, the main focus lies in the region of low earth orbit. Planet earth is the main gravitationally dominating force, observation arcs are rather short and because of this, more complicated orbital models are simply unfeasible, thus not part of the scope.
+	Image based trajectory determination of artificial satellites using ground based cameras is a multi-stage procedure that, in order to be implemented successfully, requires several problems to be solved. A thorough understanding of the underlying geometry and reference frames is needed. Once that has been established, methods for obtaining visual data can be defined, specifically for position and view vectors. These serve as an essential input for trajectory determination algorithms which will be used to determine the properties of a Keplerian orbit and its dedicated orbital plane.\newline
+	The scope of this paper is limited to ground based observations, specifically systems using one or two cameras which are not supposed to change their location on Earth for the process of imaging. No additional technologies, such as radar or laser measurements are to be used. Camera calibration in this context, specifically the process of determining view vectors, initially uses a star-based calibration procedure, which limits the field-of-view range of cameras to certain values, to be elaborated in section \ref{sec:determine_view_vecs}. Furthermore, the automated distinction between stars and satellites in measurement images could be considered as an additional problem to be solved, but is not part of the scope.\newline
+	Trajectory-model-wise, the scope of this paper is limited to Keplerian orbits, which solve the 2-body problem with point masses. For the observable objects, namely artificial satellites, the main focus lies in the region of low Earth orbit. Planet Earth is the main gravitationally dominating force, observation arcs are rather short and because of this, more complicated orbital models in terms of n-body-physics are simply infeasible, thus not part of the scope.
 
 
 	\section{Geometry}
 	\subsection{The Keplerian orbit}
 	\label{sec:kepler_orbit}
-	Geometrically, the shape of a Keplarian orbit can be described as an intersection between a plane and a cone, which carries some implications. Firstly, the shape of an orbit is either a circle, an ellipse, a parabola or a hyperbola. Secodly, as the intersection implies, the orbit lies within a plane. \cite{orbit_equation} \newline
-	The current orbital radius $r$, which represents the current distance of an orbiting object (a satellite) from a gravitational center (planet earth) can be desrcibed with the following formula for circles and ellipses in a polar coordinate system, as provided by Weber \cite{elliptical_orbits} and modified to account for argument of periapsis $\omega$: 
+	Geometrically, the shape of a Keplerian orbit can be described as an intersection between plane and cone, which carries some implications. Firstly, the shape of an orbit is either a circle, an ellipse, a parabola or a hyperbola. Secondly, as the intersection implies, the orbit lies within a plane. \cite{orbit_equation} \newline
+	The current orbital radius $r$, which represents the current distance of an orbiting object (a satellite) from a gravitational center (planet Earth) can be described with the following formula for circles and ellipses in a polar coordinate system, as provided by Weber \cite{elliptical_orbits} and modified to account for argument of periapsis $\omega$: 
 	
 	\begin{equation}\label{r_theta}
 		r(\theta)=\frac{a(1-e^2)}{1+e\cdot\cos(\theta-\omega)}
@@ -39,14 +39,14 @@
 		a = \frac{r_p + r_a}{2}
 	\end{equation}
 	\noindent
-	The parameter $e$ represents the eccentricity, an inherent property of conic sections. For circles it is $e=0$, so that equation \ref{r_theta} collapses to $r(\theta)=a$. For ellipses it is $0 < e < 1$, for parabolas $e = 1$ and for hyperbolas $1 < e$. The parameter $\theta$ represents the so called true anomaly, which simply corrensponds to the parameter angle in a polar coordinate system. \cite{orbital_nomenclature} \newline
-	The angle $\omega$ corrensponds to the argument of periapsis, which marks the closest distance (periapsis) in the polar coordinate system.\newline
+	The parameter $e$ represents the eccentricity, an inherent property of conic sections. For circles it is $e=0$, so that equation \ref{r_theta} collapses to $r(\theta)=a$. For ellipses it is $0 < e < 1$, for parabolas $e = 1$ and for hyperbolas $1 < e$. The parameter $\theta$ represents the so called true anomaly, which simply corresponds to the parameter angle in a polar coordinate system. \cite{orbital_nomenclature} \newline
+	The angle $\omega$ corresponds to the argument of periapsis, which marks the closest distance (periapsis) in the polar coordinate system.\newline
 	For hyperbolas, equation \ref{r_theta} is to be slightly modified, such that the sign of the dividend changes, which leads to: 
 	\begin{equation}\label{r_theta_hyperbola}
 		r(\theta)=\frac{-a(1-e^2)}{1+e\cdot\cos(\theta-\omega)} = \frac{a(e^2-1)}{1+e\cdot\cos(\theta-\omega)}
 	\end{equation}
 	\cite{hyperbolic_orbits} \newline
-	This type of trajectories posess an asymptote, as visualized in \ref{fig:parametric_hyperbola}, which is never reached by the moving satellite. The asymptote, which the sattelite moves along, is the one with the gravitational center in its focal point. The semi major axis $a$ can also be defined by equation \ref{semi_major_axis}, however the apoapsis is located on the unreachable asymptote closest to the gravitational center, as illustrated in figure \ref{fig:parametric_hyperbola}.
+	These type of trajectories posses an asymptote, as visualized in \ref{fig:parametric_hyperbola}, which is never physically reachable by the moving satellite, rather being a mathematical property of the function. The asymptote, which the satellite moves along, is the one with the gravitational center in its focal point. The semi major axis $a$ can also be defined by equation \ref{semi_major_axis}, however the apoapsis is located on the unreachable asymptote, as illustrated in figure \ref{fig:parametric_hyperbola}.
 	\newline
 	As apparent from equation \ref{r_theta}, it does not hold up for an eccentricity value of $e = 1$ for parabolas. In case of $e = 1$ a modified equation is provided as follows:
 	
@@ -92,13 +92,13 @@
 		
 	\end{figure}
 	\noindent
-	This covers the different types of Keplarian trajectories as well as their properties in two dimensions.\newline
-	Stated above, geometrically, each trajectory can be defined as an intersection between a cone and a plane in three dimensions. This leaves the property of the orbital plane to be defined. This plane always contains the point of the gravitational center. Also, the gravitational center shall be defined as the origin of the coordinate system, as elaborated below in section \ref{sec:reference_coordinate}.
-	Hence, the plane can be sufficiently defined by a normal vector.
+	This covers the different types of Keplerian trajectories as well as their properties in two dimensions.\newline
+	Stated above, geometrically, each trajectory can be defined as intersection between cone and plane in three dimensions. This leaves the property of the orbital plane to be defined. This plane always contains the point of the gravitational center. Also, the gravitational center shall be defined as the origin of the coordinate system, as elaborated below in section \ref{sec:reference_coordinate}.
+	Hence, the plane can be sufficiently defined by a normal vector $n$.
 	
 	\subsection{Reference coordinate system}
 	\label{sec:reference_coordinate}
-	The reference coordinate system of our choice is the Earth Centered Inertial (ECI) coordinate system. This coordinate system is aligned to planet earth but not fixed to its surface. The Z-axis is aligned to earth's rotation axis, while the X-Y-plane is aligned to earth's equatorial plane, as visualized below. Both X-, and Y-axes can be considered fixed in reference to the background stars when dealing with short time periods. For time periods in the range of months and years this is not the case due to precession, as elaborated in section \ref{sec:earth_axis_precession}. Each position can be described by a vector in $\mathbb{R}^3$.
+	The reference coordinate system of our choice is the Earth Centered Inertial (ECI) coordinate system. This coordinate system is aligned to planet earth but not fixed to its surface. The Z-axis is aligned to Earth's rotation axis, while the X-Y-plane is aligned to Earth's equatorial plane, as visualized below. Both X-, and Y-axes can be considered fixed in reference to the background stars when dealing with short time periods. For time periods in the range of months and years this is not the case due to precession, as elaborated in section \ref{sec:earth_axis_precession}. Each position can be described by a vector in $\mathbb{R}^3$.
 	
 	\begin{figure}[H]
 		\centering
@@ -107,27 +107,27 @@
 		\label{fig:eci}
 	\end{figure}
 	\noindent
-	In this reference frame, when stationed at a fixed loction on planet earth, the position vector changes over time. This is different from the Earth Centered Earth Fixed (ECEF) coordinate system, which is fixed to earth's surface, such that position vectors in a fixed position do not change over time. \cite{reference_frames}
+	In this reference frame, when stationed at a fixed location on planet earth, the position vector changes over time. This is different from the Earth Centered Earth Fixed (ECEF) coordinate system, which is fixed to Earth's surface, such that position vectors in a fixed position do not change over time. \cite{reference_frames}
 		
 	\section{Data acquisition}
 	\subsection{Earth bound camera based observation}
 	\label{sec:eath_bound_observation}
-	Before setting up mathematical models and implemanting trajectory determination algorithms, we need to take a look at what kind of data is readily available, what is unavailable (to be determined by algorithms later on) and how observed images look like. This serves as the basis on how we have to define models and what problems need to be solved. For this purpose, we define the geometric model of a stationary observer / camera on the surface of planet earth using the following figure:
+	Before setting up mathematical models and implementing trajectory determination algorithms, we need to take a look at what kind of data is readily available, what is unavailable (to be determined by algorithms later on) and how observed images look like. This serves as the basis on how we have to define models and what problems need to be solved. For this purpose, we define the geometric model of a stationary observer / camera on the surface of planet earth using the following figure:
 	
 	\begin{figure}[H]
 		\centering
 		\includegraphics[width=0.8\linewidth]{images/knowns_and_unknowns.png}
-		\caption{Initially known and unknown properties of earth bound camera based satellite observation depicted in a two dimensional represention.}
+		\caption{Initially known and unknown properties of earth bound camera based satellite observation depicted in a two dimensional representation.}
 		\label{fig:knowns_and_unknowns}
 	\end{figure}
 	\noindent
 	Hereby, all variables are annotated with an index $i$. That is, because these values change over time and are only valid for a certain time stamp $i$, which is a known property.\newline
-	The first readily available propery apart from the time stamp is the position vector $p_i \in \mathbb{R}^3$, which describes the stationary position of the observer on planet earth in ECI coordinates. The determination of this property is elaborated in section \ref{sec:determination_position}.\newline
-	Secondly, we have the view vector $v_i \in \mathbb{R}^3$. This vector marks the visual direction of the satellite as seen from the observer's position in ECI coordinates. The magnitude of this vector does not match the distance between the observer and the satellite, as this property is yet to be determined. Because of this, the value if the vector is normed to unit length.
+	The first readily available property apart from the time stamp is the position vector $p_i \in \mathbb{R}^3$, which describes the stationary position of the observer on planet earth in ECI coordinates. The determination of this property is elaborated in section \ref{sec:determination_position}.\newline
+	Secondly, we have the view vector $v_i \in \mathbb{R}^3$. This vector marks the visual direction of the satellite as seen from the observer's position in ECI coordinates. The magnitude of this vector does not match the distance between observer and satellite, as this property is yet to be determined. Because of this, the value if the vector is normed to unit length.
 	Further known or readily determinable properties are camera properties. For one, the camera's field of view is a fixed value. Moreover, the cameras alignment / rotation is readily determinable, so that each pixel can be assigned to a view vector $v_i$. The process of view vector determination and camera alignment is elaborated in section \ref{sec:determine_view_vecs}.\newline
-	This sums up all readiliy available or readily determinable properties of earth bound camera based satellite observation. The unknown properties of this model comprise of the absolute position vector of the satellite $r_i \in \mathbb{R}^3$ and the distance vector $d_i \in \mathbb{R}^3$ which marks the distance between observer and satelitte, of which only the direction is known as $v_i$. The vectors are related to one another as they form the sum $r_i = p_i + d_i$. \newline
+	This sums up all readily available or readily determinable properties of earth bound camera based satellite observation. The unknown properties of this model comprise of the absolute position vector of the satellite $r_i \in \mathbb{R}^3$ and the distance vector $d_i \in \mathbb{R}^3$ which marks the distance between observer and satellite, of which only the direction is known as $v_i$. The vectors are related to one another as they form the sum $r_i = p_i + d_i$. \newline
 	Now, that available and unavailable parameters have been established, we can examine the visual data that is captured as images and what the appearance of satellites will be. \newline
-	As visible from the ground, satellites appear as more or less bright dots similar to stars, even so that they may be observable to the naked eye. Their movement appears smoothly and their brightness does not change drastically, as they do not posess flashing lights like aircraft. They are illuminated by the sun, until they enter earth's shadow at whicht they become invisible. \cite{satellites_at_night}
+	As visible from the ground, satellites appear as more or less bright dots similar to stars, even so that they may be observable to the naked eye. Their movement appears smoothly and their brightness does not change drastically, as they do not posses flashing lights like aircraft. They are illuminated by the sun, until they enter Earth's shadow at which they become invisible. \cite{satellites_at_night}
 	\begin{figure}[H]
 		\centering
 		\includegraphics[width=0.8\linewidth]{images/s_captures_moved.png}
@@ -135,14 +135,14 @@
 		\label{fig:satelitte_appearance}
 	\end{figure}
 	\noindent
-	Illustrated above in figure \ref{fig:satelitte_appearance} are three image frames, supposed to be taken at three time stamps $t_1$, $t_2$ and $t_3$ by a ground-fixed camera. In each frame, stars and a satellite (encircled) are visible. For one, the satellite would not be distinguishable from the background stars if it were not marked. Differentiation between satellites and stars may be automated, however we consider this issue not to be part of this research project.\newline
-	Next, there are two relevant types of apparent movenents visible in the image series. As planet earth rotates, background stars move slowly in the image frame. The apparent movement of the satellite is caused mainly by its inherent movement along its trajectory and marginally by the rotation of planet earth. \newline
+	Illustrated above in figure \ref{fig:satelitte_appearance} are three schematic image frames, supposed to be taken at three time stamps $t_1$, $t_2$ and $t_3$ by a ground-fixed camera. In each frame, stars and a satellite (encircled) are visible. For one, the satellite would not be distinguishable from the background stars if it were not marked. Differentiation between satellites and stars may be automated, however we consider this issue not to be part of the research project.\newline
+	Next, there are two relevant types of apparent movements visible in the image series. As planet earth rotates, background stars move slowly in the image frame. The apparent movement of the satellite is caused mainly by its inherent movement along its trajectory and marginally by the rotation of planet earth. \newline
 	These aspects have to be factored in especially during camera alignment and view vector determination procedures.
 	\subsection{Determination of position vectors}
 	\label{sec:determination_position}
 	As stated previously in section \ref{sec:eath_bound_observation}, the position vector $p_i$ in ECI coordinates is a readily available value. The actual vector values are initially unknown and have to be derived from known values of the observer. These known values are latitude, longitude and height on earth and the current time stamp. From these four values, the $p_i$ vector can be sufficiently derived.
 	First of all, we have to factor in the shape of planet earth, which is ellipsoidal, rather than perfectly spherical. Sanz Subirana et. al. provide a set of equations to perform a transformation from latitude, longitude and height to a $\mathbb{R}^3$ vector in ECEF coordinates, which can be transformed to ECI coordinates later on.\newline
-	As follows, we define latitude as $\varphi$, longitude as $\lambda$ and height above ellipsoid as $h$. Further known general values are earth's equatorial radius $a$ and polar radius $b$. The geometric context is illustrated in figure \ref{fig:cartesian_ellipsoidal} below:
+	As follows, we define latitude as $\varphi$, longitude as $\lambda$ and height above ellipsoid as $h$. Further known general values are Earth's equatorial radius $a$ and polar radius $b$. The geometric context is illustrated in figure \ref{fig:cartesian_ellipsoidal} below:
 	
 	\begin{figure}[H]
 		\centering
@@ -151,7 +151,7 @@
 		\label{fig:cartesian_ellipsoidal}
 	\end{figure}
 	\noindent
-	As the shape of earth is ellipsoidal, an ellipse can be defined as a section of the ellipsoid along the Z-axis, for example in the YZ-plane. This ellipse, just as the orbital ellipses posesses an eccentricity $e$ which is defined as follows:
+	As the shape of earth is ellipsoidal on large scale, an ellipse can be defined as a section of the ellipsoid along the Z-axis, for example in the YZ-plane. This ellipse, just as the orbital ellipses, possesses an eccentricity $e$ which is defined as follows:
 	\begin{equation}
 		\label{ellipsoid_e}
 		e^2=\frac{a^2 - b^2}{a^2}
@@ -177,7 +177,7 @@
 		\end{pmatrix}
 	\end{equation}
 	\cite{esa_cartesian_ellipsoidal}\newline
-	In the ECEF coordinate system, the longitude value $\lambda$ is always fixed. In the ECI coordinate system, earth rotates around the Z-axis, as such that of the parameters latitude, longitude and height only longitude in reference to the ECI coordinate origin changes as time progresses. To determine longitude subject to time, Curtis provides a set of equations and a process to solve this issue. To elaborate the following process, some underlying geometric elements must be defined beforehand.
+	In the ECEF coordinate system, the longitude value $\lambda$ is always fixed. In the ECI coordinate system, Earth rotates around the Z-axis, as such that of the parameters latitude, longitude and height only longitude in reference to the ECI coordinate origin changes as time progresses. To determine longitude subject to time, Curtis provides a set of equations and a process to solve this issue. To elaborate the following process, some underlying geometric elements must be defined beforehand.
 	
 	\begin{figure}[H]
 		\centering
@@ -187,7 +187,7 @@
 	\end{figure}
 	\noindent
 	As illustrated above in figure \ref{fig:curtis_siderial_time}, the geometric context consists of several angles along the polar axis, which corresponds to the Z-axis in our ECI coordinate system, as illustrated in figure \ref{fig:eci}. The axis $\gamma$ corresponds to the X-axis. Time stamps in this context are defined as \emph{YYYY.MM.DD HH:MM:SS}, which consists of year, month, day, hours, minutes and seconds to date any observation in Universal Time (UT).\newline
-	The first relevant value is $\theta_{G0}$, which corresponds to ECI longitude angle at which Greenwhich (hereby short for the prime meridian of the ECEF coordinate system) is located on any day at 0hr UT, meaning \emph{YYYY.MM.DD 00:00:00}. \newline
+	The first relevant value is $\theta_{G0}$, which corresponds to ECI longitude angle at which Greenwich (hereby short for the prime meridian of the ECEF coordinate system) is located on any day at 0hr UT, meaning \emph{YYYY.MM.DD 00:00:00}. \newline
 	Next, we have $\theta_{G}$, the angular location of Greenwich at the time stamp of observation, meaning that hours, minutes and seconds in the time stamp are fully specified. \newline
 	Finally we have $\Lambda$ and $\theta$ related by $\theta=\Lambda+\theta_{G}$, where $\Lambda$ describes the longitude angle between observer and Greenwich at time of observation and $\theta$ describes the longitude angle between observer and axis $\gamma$.
 	To determine these values, specifically starting with $\theta_{G0}$, a complex process is required which consists of several steps, outlined below:
@@ -201,13 +201,13 @@
 		constrained to $1901 \leq y \leq 2099$, $1 \leq m \leq 12$ and $1 \leq d \leq 31$.
 		
 		\item The determination of $T_0$ since the J2000 epoch:\newline
-		The J2000 Julian epoch is defined as noon (UT) on January 1st, 2000 and marks the number of days since the start of the Julian calendar, which is 2451545. This step consists of calculating the number of Julian centuries $T_0$ between J2000 and the current observation date. This can be archieved with the following formula containing the result of the previous step:
+		The J2000 Julian epoch is defined as noon (UT) on January 1st, 2000 and marks the number of days since the start of the Julian calendar, which is 2451545. This step consists of calculating the number of Julian centuries $T_0$ between J2000 and the current observation date. This can be archived with the following formula containing the result of the previous step:
 		\begin{equation}
 			T_0 = \frac{J_0-2451545}{36525}
 		\end{equation}
 		
 		\item The determination of $\theta_{G0}$: \newline
-		With the result $T_0$ of the previus step, we can now determine the angle $\theta_{G0}$ with the following polynomial, which yields the value in degrees:
+		With the result $T_0$ of the previous step, we can now determine the angle $\theta_{G0}$ with the following polynomial, which yields the value in degrees:
 		\begin{equation}
 			\theta_{G0} = 100.4606184 + 36000.77004\cdot T_0 + 0.000387933\cdot T_0^2 -2.583(10^{-8})\cdot T_0^3
 		\end{equation}
@@ -217,7 +217,7 @@
 		\begin{equation}
 			\theta_{G} = \theta_{G0} + 360.98564724^\circ\cdot\frac{UT[\mathrm{hr}]}{24[\mathrm{hr}]}
 		\end{equation}
-		Hereby $UT$ corresponds to the current time of the day as floating point number (e.g. the time value 09:41:22 corresponds to 9.68944 [hr]). The angular value slightly above 360° stems from the fact, that the rotation of earth against the background stars, a siderial rotation, is slightly shorter than 24 hours. With $\theta_{G}$ determined and known $\Lambda$ value, $\theta$ arised from the geometric context as $\theta=\Lambda+\theta_{G}$.
+		Hereby $UT$ corresponds to the current time of the day as floating point number (e.g. the time value 09:41:22 corresponds to 9.68944 [hr]). The angular value slightly above 360° stems from the fact, that the rotation of earth against the background stars, a sidereal rotation, is slightly shorter than 24 hours. With $\theta_{G}$ determined and known $\Lambda$ value, $\theta$ arises from the geometric context as $\theta=\Lambda+\theta_{G}$.
 	\end{enumerate}
 	\cite{curtis_siderial_time}
 	\newpage\noindent
@@ -251,14 +251,14 @@
 		\end{minipage}
 	\end{figure}
 	\noindent
-	First, we need to determine alignment which constitutes to the calibration of the camera. Illustrated in figure \ref{fig:cam_calib_blank} are visual components of an image, taken at a certain time stamp, which are necessary for calibration. Within the image frame, we define three key points: $C$ (located in the center), $T$ (centered on the top edge) and $L$ (centered on the left edge). Visible within the image are dots, which correspond to at least three known stars ($S1$, $S2$ and $S3$) and (initially optional) the artificial satellite $A$. The assignment of three dots to actual known stars requires a star matching algorithm to be carried out. Such an algorithm has been established in a previous work \cite{self_localization_in_space} which constitutes to a modified version of the brightness independent 4-Star matching algorithm presented by Ying et. al. \cite{four_stars_algo}.\newline
+	First, we need to determine alignment which constitutes to the calibration of the camera. Illustrated in figure \ref{fig:cam_calib_blank} are visual components of an image, taken at a certain time stamp, which are necessary for calibration. Within the image frame, we define three key points: $C$ (located in the center), $T$ (centered on the top edge) and $L$ (centered on the left edge). Visible within the image are dots, which correspond to at least three known stars ($S1$, $S2$ and $S3$) and (initially optional) the artificial satellite $A$. The assignment of three dots to actual known stars requires a star matching algorithm to be carried out. Such an algorithm has been established in previous work \cite{self_localization_in_space} which constitutes to a modified version of the brightness independent 4-Star matching algorithm presented by Ying et. al. \cite{four_stars_algo}.\newline
 	Once three stars have been identified, three view vectors (in ECI coordinates) $v_{S1}$, $v_{S2}$ and $v_{S3}$ can be assigned to the three dots $S1$, $S2$ and $S3$.\newline
 	Figure \ref{fig:cam_calib_points} illustrates the triangulation of the key points $C$, $T$ and $L$, a process that yields three corresponding view vectors $v_C$, $v_T$ and $v_L$. To triangulate any pixel point $P$, as in to determine $v_P$, we have to determine the angular distances between the stars dots and $P$ first using the following formula:
 	\begin{equation}
 		\label{img_angular_dist}
 		\gamma_i = \delta \cdot \frac{d_i}{w}= \delta \cdot \frac{|S_i-P|}{w}
 	\end{equation}
-	It is assumed that the image is rectilinear and square with a fixed pixel width $w$ and a corresponding agular diameter $\delta$. The value $\gamma_{i}$ represents the angular distance between a star point $S_i$ and $P$, whereas their pixel distance is expressed as $d_i$. These $\gamma$ values are to be determined between any $P$ and each of the three stars and are plugged in to the next equation:
+	It is assumed that the image is rectilinear and square with a fixed pixel width $w$ and a corresponding angular diameter $\delta$. The value $\gamma_{i}$ represents the angular distance between a star point $S_i$ and $P$, whereas their pixel distance is expressed as $d_i$. These $\gamma$ values are to be determined between any $P$ and each of the three stars and are plugged in to the next equation:
 	
 	\begin{equation}
 		\label{img_lgs}
@@ -276,8 +276,8 @@
 			\cos(\gamma_{3}) \\
 		\end{bmatrix}
 	\end{equation}
-	Solving this equation vor $v_P$ yields the corresponding vector value (in ECI coordinates) for any point $P$ on the image. \cite{self_localization_in_space}\newline
-	If the artificial satellite $A$ is visible in the same image, $v_A$ can be determined similarly using equations \ref{img_angular_dist} and \ref{img_lgs} using the same process. A more generalized approach however is to determine $v_A$ of $A$ by triangulating it with the previously triangulated points $C$, $T$ and $L$, as shown in figure \ref{fig:cam_calib_sat}. Initially after calibration the satellite might not be visible in the camera's field of view, but at a later point in time. Stated previously, the camera is fixed to the ground, meaning that the observation frame moves as earth rotates. This means, that the determined image calibration vectors $v_C$, $v_T$ and $v_L$ which are fixed to the image also move with earth's rotation. Supposing that $v_C$, $v_T$ and $v_L$ have been determined at time stamp $t_0$, we can determine $v_C'$, $v_T'$ and $v_L'$ at $t_1$ using the following rotation angle and formula:
+	Solving this equation for $v_P$ yields the corresponding vector value (in ECI coordinates) for any point $P$ on the image. \cite{self_localization_in_space}\newline
+	If the artificial satellite $A$ is visible in the same image, $v_A$ can be determined similarly using equations \ref{img_angular_dist} and \ref{img_lgs} using the same process. A more generalized approach however is to determine $v_A$ of $A$ by triangulating it with the previously triangulated points $C$, $T$ and $L$, as shown in figure \ref{fig:cam_calib_sat}. Initially after calibration the satellite might not be visible in the camera's field of view, but at a later point in time. Stated previously, the camera is fixed to the ground, meaning that the observation frame moves as earth rotates. This means, that the determined image calibration vectors $v_C$, $v_T$ and $v_L$ which are fixed to the image also move with earth's rotation. Supposing that $v_C$, $v_T$ and $v_L$ have been determined at time stamp $t_0$, we can determine $v_C'$, $v_T'$ and $v_L'$ at $t_1$ using the following rotation angle and matrix:
 	
 	\begin{equation}
 		\label{vector_rotation}
@@ -296,14 +296,14 @@
 	As the satellite dot shows up in a later image at $t_1$, we can now triangulate $v_A$ of $A$ using $v_C'$, $v_T'$ and $v_L'$ equivalently to the previously performed star calibration of $C$, $T$ and $L$.
 	
 	
-	\subsection{Factoring in axial precession of planet earth}
+	\subsection{Accounting for axial precession of planet Earth}
 	\label{sec:earth_axis_precession}
-	Defined previously in section \ref{sec:reference_coordinate}, the ECI coordinate system specifically the Z-axis is aligned with earth's rotation axis. Over longer time periods of several months to years this axis can not be considered to be fixed in space as it performs a slow tumbling motion. Over the course of around 26000 years the axis will complete a full precession period so that it is facing in its initial direction again \cite{precession_definition} as visualized below:
+	Defined previously in section \ref{sec:reference_coordinate}, the ECI coordinate system specifically the Z-axis is aligned with Earth's rotation axis. Over longer time periods of several months to years this axis can not be considered to be fixed in space as it performs a slow tumbling motion. Over the course of around 26000 years the axis will complete a full precession period so that it is facing in its initial direction again \cite{precession_definition} as visualized below:
 	
 	\begin{figure}[H]
 		\centering
 		\includegraphics[width=0.40\linewidth]{images/precession.png}
-		\caption{Tumbling movement of earth's rotation axis \cite{precession_definition}.}
+		\caption{Tumbling movement of Earth's rotation axis \cite{precession_definition}.}
 		\label{fig:earth_axis_precession}
 	\end{figure}
 	\noindent
@@ -341,7 +341,7 @@
 	\end{equation}
 	\cite{precession_correction}
 	\newline
-	This precession correction must be applied to plane normal vectors $n$ of ground truth orbits defined further in the past to make them comparable to measurements. Furthermore, all view vectors of stars listed in a star catalog used for calibration must be precessed similarly.dx  
+	This precession correction must be applied to plane normal vectors $n$ of ground truth orbits defined further in the past to make them comparable to measurements. Furthermore, all view vectors of stars listed in a star catalog used for calibration must be precessed similarly.  
 	
 	
 	\section{Orbit determination models}
@@ -413,14 +413,14 @@
 		\boxed{\omega=\alpha_{ik}-\arctan(G)}
 	\end{equation}
 	\noindent
-	As a result, the characteristical parameters $a$, $e$ and $\omega$ of elliptical and hyperbolic trajectories can simply be determined starting with $\omega$ from equation \ref{argument_periapsis} then putting that result into equation \ref{excentritaet} to determine $e$ and finally putting both values into equation \ref{halbachse} to determine $a$.\newline
-	This mathematical model can be used to characterize ellipses and hyperbolas however there are two special cases where it does not work, namely circular orbits and parabolic trajectories. In the special case of a circular orbit with $e=0$, all three measured radii posess the same value $r_1=r_2=r_3$. This causes the definition of $F=\frac{C_{ik}(r_i-r_j)}{C_{ij}(r_i-r_k)}$ to be undefined due to zero division, which causes $\omega$ to be undefined. Incidentally, no argument of periapsis $\omega$ can be defined for a circle as there is no closest point to the center. A circular orbit can simply be expressed using its semi major axis as $r(\theta)=a$. With one known radius value $r_i$ the semi major axis is already sufficiently defined:
+	As a result, the characteristic parameters $a$, $e$ and $\omega$ of elliptical and hyperbolic trajectories can simply be determined starting with $\omega$ from equation \ref{argument_periapsis} then putting that result into equation \ref{excentritaet} to determine $e$ and finally putting both values into equation \ref{halbachse} to determine $a$.\newline
+	This mathematical model can be used to characterize ellipses and hyperbolas, however there are two special cases where it does not work, namely circular orbits and parabolic trajectories. In the special case of a circular orbit with $e=0$, all three measured radii posses the same value $r_1=r_2=r_3$. This causes the definition of $F=\frac{C_{ik}(r_i-r_j)}{C_{ij}(r_i-r_k)}$ to be undefined due to zero division, which causes $\omega$ to be undefined. Incidentally, no argument of periapsis $\omega$ can be defined for a circle as there is no closest point to the center. A circular orbit can simply be expressed using its semi major axis as $r(\theta)=a$. With one known radius value $r_i$ the semi major axis is already sufficiently defined:
 	\begin{equation}
 		\label{ein_langweiliger_kreis}
 		\boxed{a=r_i}
 	\end{equation}
 	For an orbit to be circular it is necessary that all radii measurements $r_1$, $r_2$ and $r_3$ are exactly the same value wise.\newline
-	In the special case of parabolic trajectories with $e=1$ multiple expressions (e.g. \ref{derivation_basis} and \ref{halbachse}) with $e$ in the denominator do not hold up due zero division. Mentioned previously in section \ref{sec:kepler_orbit}, parabolas can be modeled with equation \ref{r_theta_parabolic} which is characterized by $p$ and $\omega$. For determining these parameters, we only need two distinct measurements where two radii $r_i$ for $i \in \{1,2\}$ and two angles $\theta_i$ for $i \in \{1,2\}$ are known. The derivation starts off by putting values of $r_i$ and $\theta_i$ into equation \ref{r_theta_parabolic}, which can be rearranged to obtain $p$ subject to $\omega$:
+	In the special case of parabolic trajectories with $e=1$ multiple expressions (e.g. \ref{derivation_basis} and \ref{halbachse}) with $e$ in the denominator do not hold up due zero division. Mentioned previously in section \ref{sec:kepler_orbit}, parabolas can be modeled with equation \ref{r_theta_parabolic} which is characterized by $p$ and $\omega$. For determining these parameters we only need two distinct measurements where two radii $r_i$ for $i \in \{1,2\}$ and two angles $\theta_i$ for $i \in \{1,2\}$ are known. The derivation starts off by putting values of $r_i$ and $\theta_i$ into equation \ref{r_theta_parabolic}, which can be rearranged to obtain $p$ subject to $\omega$:
 	\begin{equation*}
 		\begin{aligned}
 			r_i=\frac{p}{1+\cos(\theta_i-\omega)} \Leftrightarrow \\
@@ -457,8 +457,8 @@
 		\boxed{\omega=\arccos(J)-\beta}
 	\end{equation}
 	\noindent
-	As a result, the characteristical parameters $p$ and $\omega$ of parabolic trajectories can simply be determined starting with $\omega$ from equation \ref{arg_peri_parabola} then putting that result into equation \ref{halbachse_parabel} to determine $p$.\newline
-	Now, that mathematical models for determining elliptical, hyperbolic, circular and parabolic trajectories have been established, we can define a generalized process which determines a parametric trajectory from three measurements without the prior knowledge which type of trajectory and thus model it is going to be. \newline Before doing so it should be noted that some expressions in these models contain singularities which could cause problems due to zero division. In the ellipse/hyperbola model these are conatined within equation \ref{excentritaet} and expressions for $F$ and $G$. In the parabolic model it occurs within the expression for $J$. These singularities only appear if certain values are exactly identical. Due to the application of these models in a physical rather than purely mathematical setting and because of their input values which posess a large mantissa and are obtained by camera systems with limited accuracies singularities are very unlikely to occur. For this reason we simply chose to ignore them as they will have no stake in the average use case. If a sigularity were to appear during calculation, it may be averted by permutating indices of measurements and performing a recalculation. \newline
+	As a result, the characteristic parameters $p$ and $\omega$ of parabolic trajectories can simply be determined starting with $\omega$ from equation \ref{arg_peri_parabola} then putting that result into equation \ref{halbachse_parabel} to determine $p$.\newline
+	Now, that mathematical models for determining elliptical, hyperbolic, circular and parabolic trajectories have been established, we can define a generalized process which determines a parametric trajectory from three measurements without the prior knowledge which type of trajectory and thus model it is going to be. \newline Before doing so it should be noted that some expressions in these models contain singularities which could cause problems due to zero division. In the ellipse/hyperbola model these are contained within equation \ref{excentritaet} and expressions for $F$ and $G$. In the parabolic model it occurs within the expression for $J$. These singularities only appear if certain values are exactly identical. Due to the application of these models in a physical rather than purely mathematical setting and because of their input values which possess a large mantissa and are obtained by camera systems with limited accuracies singularities are very unlikely to occur. For this reason we simply chose to ignore them as they will have no stake in the average use case. If a singularity were to appear during calculation, it may be averted by permutating indices of measurements and performing a recalculation. \newline
 	Once again we start off with three radii $r_1$, $r_2$ and $r_3$ and their corresponding angles $\theta_1$, $\theta_2$ and $\theta_3$ as a basis for the following steps:
 	\begin{enumerate}
 		\item Check if $r_1=r_2=r_3$. If yes, assume a circular trajectory and proceed with step 5.
@@ -470,9 +470,9 @@
 		\item Determine $p$ subject to $\omega$ using equation \ref{halbachse_parabel}. A \textbf{parabolic} trajectory is now sufficiently defined. \newline\textbf{Done.}
 	\end{enumerate}
 	
-	\subsection{Tranfering the parametric model into three dimensions}
+	\subsection{Transferring the parametric model into three dimensions}
 	\label{sec:parametric_in_3d}
-	The previously established model describes trajectories in a two dimensional plane. Positions are simply referred to as radius or magnitude $r_i$ (a real number) and $\theta_i$ (the angle between the radius line and the X-axis). The goal of this section is to expand this parametric model into a three dimensial environment to be applicable in reality. For this purpose, we define and elaborate a three dimensional geometrical context.
+	The previously established model describes trajectories in a two dimensional plane. Positions are simply referred to as radius or magnitude $r_i$ (a real number) and $\theta_i$ (the angle between the radius line and the X-axis). The goal of this section is to expand this parametric model into a three dimensional environment to be applicable in reality. For this purpose, we define and elaborate a three dimensional geometrical context.
 	
 	\begin{figure}[H]
 		\centering
@@ -531,7 +531,7 @@
 		\end{aligned}
 	\end{equation}
 	\noindent
-	which should intersect each other in a mathematical setting. However in a physical setting where cameras are limited in accuracy an exact intersection is unlikely to occur. A feasible guess for satellite location would be the closest approach between the two lines, more specifically the point in the middle of $l_1$ and $l_2$ where they approach each other the closest. \newline
+	which should intersect each other in a mathematical setting. However, in a physical setting where cameras are limited in accuracy an exact intersection is unlikely to occur. A feasible guess for satellite location would be the closest approach between the two lines, more specifically the point in the middle of $l_1$ and $l_2$ where they approach each other the closest. \newline
 	Fitzpatrick presents a readily available solution. At their points of closest approach $l_2(s)-l_1(t)$ is minimal in magnitude and perpendicular both to $v_1$ and $v_2$ meaning that scalar products between view vectors and $l_2(s)-l_1(t)$ should be zero:
 	\begin{equation}
 		\label{sysm_of_linear_eqs}
@@ -541,7 +541,7 @@
 		\end{aligned}
 	\end{equation}
 	This expression can be rearranged into a system of linear equations yielding solutions for $t$ and $s$ hereby defined as $t_{min}$ and $s_{min}$ where the distance between the lines is at their minimum.\cite{lines_closest_approach}\newline
-	As there is no intersection the satellite position $r_i$ can not be determined exactly. However as feasible value we define $r_i $ as the point located in the middle between $l_1$ and $l_2$ at their minimum distance as follows:
+	As there is no intersection the satellite position $r_i$ can not be determined exactly. However, as feasible value we define $r_i $ as the point located in the middle between $l_1$ and $l_2$ at their minimum distance as follows:
 	\begin{equation}
 		\label{sat_position_2cams}
 		\boxed{r_i = l_1(t_{min})+\frac{1}{2}(l_2(s_{min})-l_1(t_{min}))}
@@ -552,8 +552,8 @@
 		\item Measure position vectors $p_i$ and $v_i$ of two observing cameras for three points in time resulting in six measured vectors total.
 		\item Determine three radii vectors $r_1$, $r_2$ and $r_3$ using equation \ref{sat_position_2cams}. The system of linear equations resulting from expression \ref{sysm_of_linear_eqs} needs to be solved beforehand to obtain $t_{min}$ and $s_{min}$ for each observation.
 		\item Chose two radii vectors and determine the plane normal vector $n$ using equation \ref{normal_plane}.
-		\item With $n$ established, determine the angle $\theta_i$ for each radii vecto $r_i$ using equation \ref{theta_3d}.
-		\item The values of $r_i$ will now be referred to as magnitudes of their corresponging radii vectors. Magnitudes $r_i$ and angles $\theta_i$ serve as input for the process defined in section \ref{sec:parametric_trajectory} which yields a parametric model.\newline \textbf{Done.}
+		\item With $n$ established, determine the angle $\theta_i$ for each radii vector $r_i$ using equation \ref{theta_3d}.
+		\item The values of $r_i$ will now be referred to as magnitudes of their corresponding radii vectors. Magnitudes $r_i$ and angles $\theta_i$ serve as input for the process defined in section \ref{sec:parametric_trajectory} which yields a parametric model.\newline \textbf{Done.}
 	\end{enumerate}
 	
 	
@@ -564,7 +564,7 @@
 	\begin{figure}[H]
 		\centering
 		\includegraphics[width=0.6\linewidth]{images/gauss_known_and_unknown.png}
-		\caption{Initially known and unknown properties of Gaussian orbit determination depicted in a two dimensional represention.}
+		\caption{Initially known and unknown properties of Gaussian orbit determination depicted in a two dimensional representation.}
 		\label{fig:gauss_algo_idea}
 	\end{figure}
 	\noindent
@@ -575,7 +575,7 @@
 		r_1=p_1+\rho_1v_1 \qquad r_2=p_2+\rho_2v_2 \qquad r_3=p_3+\rho_3v_3
 	\end{equation}
 	\noindent
-	with $\rho_i \in \mathbb{R}$ for $i \in \{1,2,3\}$. Through this we reduce the unknown parameters to three real numbers. The goal of this algorithm is to determine fitting solutions for the unknowns so that the observations match a physical orbit around planet earth considering gravitational parameters. This solution can be calculated using the following procedure as elaborated by Curtis:
+	with $\rho_i \in \mathbb{R}$ for $i \in \{1,2,3\}$. Through this, we reduce the unknown parameters to three real numbers. The goal of this algorithm is to determine fitting solutions for the unknowns so that the observations match a physical orbit around planet earth considering gravitational parameters. This solution can be calculated using the following procedure as elaborated by Curtis:
 	
 	\begin{enumerate}
 		\item Determine time intervals $\tau_1$, $\tau_3$ and $\tau$ from $t_1$, $t_2$ and $t_3$ as follows: 
@@ -602,7 +602,7 @@
 			\end{aligned}
 		\end{equation}
 		
-		\item Calculate real number parameters $A$ and $B$ with the following expressions:
+		\item Calculate real number parameters $A$ and $B$ using the following expressions:
 		\begin{equation}
 			\begin{aligned}
 				A = \frac{1}{D_0}
