@@ -9,7 +9,7 @@
 
 \DeclareMathOperator{\atantwo}{atan2}
 
-\title{Image based trajectory determination of artificial satellites \\\large Preliminary outline on geometry, data acquisition and determination models}
+\title{Image-based Trajectory Determination of Artificial Satellites \\\large Preliminary outline on geometry, data acquisition and determination models}
 \author{Frederic Heil\\
 	\texttt{frederic.heil@hs-weingarten.de}\\
 	\textbf{Ravensburg-Weingarten University of Applied Sciences}
@@ -21,7 +21,7 @@
 	\label{sec:introduction}
 	Image based trajectory determination of artificial satellites using ground based cameras is a multi-stage procedure that, in order to be implemented successfully, requires several problems to be solved. A thorough understanding of the underlying geometry and reference frames is needed. Once that has been established, methods for obtaining visual data can be defined, specifically for position and view vectors. These serve as an essential input for trajectory determination algorithms which will be used to determine the properties of a Keplerian orbit and its dedicated orbital plane.\newline
 	The scope of this paper is limited to ground based observations, specifically systems using one or two cameras which are not supposed to change their location on Earth for the process of imaging. No additional technologies, such as radar or laser measurements are to be used. Camera calibration in this context, specifically the process of determining view vectors, initially uses a star-based calibration procedure, which limits the field-of-view range of cameras to certain values, to be elaborated in section \ref{sec:determine_view_vecs}. Furthermore, the automated distinction between stars and satellites in measurement images could be considered as an additional problem to be solved, but is not part of the scope.\newline
-	Trajectory-model-wise, the scope of this paper is limited to Keplerian orbits, which solve the 2-body problem with point masses. For the observable objects, namely artificial satellites, the main focus lies in the region of low Earth orbit. Planet Earth is the main gravitationally dominating force, observation arcs are rather short and because of this, more complicated orbital models in terms of n-body-physics are simply infeasible, thus not part of the scope.
+	Trajectory-model-wise, the scope of this paper is limited to Keplerian orbits, which solve the 2-body problem with point masses. For the observable objects, namely artificial satellites, the main focus lies in the region of low Earth orbit. Planet Earth is the main gravitational dominating force, observation arcs are rather short and because of this, more complicated orbital models in terms of n-body-physics are simply infeasible, thus not part of the scope.
 
 
 	\section{Geometry}
@@ -625,21 +625,21 @@
 			E=p_2 \cdot v_2 \qquad p_2^2=p_2\cdot p_2
 		\end{equation}
 		
-		\item Determine the real number parameters $a$, $b$ and $c$ with the following expressions:
+		\item Determine the real number parameters $a$, $b$ and $c$ using the following expressions:
 		\begin{equation}
 			\begin{aligned}
 				a = -\left(A^2 + 2AE + p_2^2\right) \qquad b = -2\mu B(A + E) \qquad c = -\mu^2 B^2
 			\end{aligned}
 		\end{equation}
 		\noindent
-		Hereby, $\mu$ represents the gravitational parameter, the product of earth's mass and the universal gravity constant.
+		Hereby, $\mu$ represents the gravitational parameter, the product of Earth's mass and the universal gravity constant.
 		
 		\item An eighth degree polynomial equation containing the parameters $a$, $b$ and $c$ is defined as follows:
 		\begin{equation}
 			x^8+ax^6+bx^3+c=0
 		\end{equation}
 		\noindent
-		Of this polynomial, a real number root $w$ larger than zero as solution for $x$  must be determined. If there is more than one solution $w$ it means that there is more than one physically feasible trajectory. The entire algorithm must be started over from step 1 exchanging one of the measurements for an additional one until a single solution $w$ has been determined. For computation, Curtis proposes using Newton's method and plotting the polynomial as function to determine a proper initial estimate of $x$. We propose using a solver like NumPy roots which determines the roots of any polynomial \cite{numpy_roots} and works out of the box.
+		Of this polynomial, a real number root $w$ larger than zero as solution for $x$  must be determined. If there is more than one solution $w$ it means that there is more than one physically feasible trajectory. The entire algorithm must be started over from step 1 exchanging one of the measurements for an additional one until a single solution $w$ has been determined. For computation, Curtis proposes using Newton's method and plotting the polynomial as function to determine a proper initial estimate of $x$. We propose using a solver like NumPy-roots which determines the roots of any polynomial \cite{numpy_roots} and works out of the box.
 		
 		\item Determine the unknown parameters $\rho_1$, $\rho_2$ and $\rho_3$ using $w$ with the following expressions:
 		\begin{equation}
@@ -720,7 +720,7 @@
 		\varphi = \arccos\left(\frac{r_1\cdot r_2}{|r_1|\cdot|r_2|}\right)
 	\end{equation}
 	\noindent
-	This angle describes the arc of the circlular orbit which the satellite traverses between time stamps $t_1$ and $t_2$ under the condition that $t_2 - t_1 \leq \frac{T}{2}$. This restriction needs to be in place, because the output range of $\arccos$ does not cover a full circle. This relation between time stamps and arc formulates as:
+	This angle describes the arc of the circular orbit which the satellite traverses between time stamps $t_1$ and $t_2$ under the condition that $t_2 - t_1 \leq \frac{T}{2}$. This restriction needs to be in place, because the output range of $\arccos$ does not cover a full circle. This relation between time stamps and arc formulates as:
 	\begin{equation}
 		\label{circle_gauss_delta_t}
 		t_2 - t_1 = \Delta t=\frac{\varphi}{2\pi}T
@@ -742,11 +742,11 @@
 		\boxed{\arccos\left(\frac{(p_1+\rho_1v_1)\cdot (p_2+\rho_2v_2)}{|(p_1+\rho_1v_1)|^2}\right)\cdot|(p_1+\rho_1v_1)|^{\frac{3}{2}}=(t_2-t_1)\sqrt{\mu}}
 	\end{equation}
 	\noindent
-	With cirularity and time conditions established we can formulate a full orbit determination process as follows:
+	With circularity and time conditions established we can formulate a full orbit determination process as follows:
 	
 	\begin{enumerate}
 		\item Measure position vectors $p_1$, $p_2$ and view vectors $v_1$, $v_2$ of two time stamps $t_1$ and $t_2$. A crucial requirement for this algorithm to work is that $t_2 - t_1 \leq \frac{T}{2}$ meaning that observation arcs can not take longer than half the orbital period.
-		\item A real number solution for $\rho_1$ and $\rho_2$ must be computed which satifies the time condition \ref{circle_gauss_time_condition} constrained by the circularity condition \ref{circle_gauss_circle_condition}. This task can not be acomplished analytically. For this reason we propose the use of a sophisticated solver like scipy.optimize.root which allows for modeling more complex functions to be solved numerically \cite{scipy_roots}. This yields the two values $\rho_1$ and $\rho_2$.
+		\item A real number solution for $\rho_1$ and $\rho_2$ must be computed which satisfies the time condition \ref{circle_gauss_time_condition} constrained by the circularity condition \ref{circle_gauss_circle_condition}. This task can not be accomplished analytically. For this reason we propose the use of a sophisticated solver like scipy.optimize.root which allows for modeling more complex functions to be solved numerically \cite{scipy_roots}. This yields the two values $\rho_1$ and $\rho_2$.
 		\item Calculate $r_1$ and $r_2$ using expressions \ref{gauss_algo_r_vectors}. Obtain the plane normal vector $n$ using equation \ref{normal_plane}. The semi major axis $a$ equates radii vector magnitudes $a=|r_1|=|r_2|$.\newline
 		\textbf{Done.}
 	\end{enumerate}
@@ -759,79 +759,115 @@
 		\setlength{\parsep}{0pt}        % extra space within items
 		
 		\bibitem{orbit_equation}
-		Orbital Mechanics \& Astrodynamics \emph{The Orbit Equation}, Bryan Weber, \url{https://orbital-mechanics.space/the-orbit-equation/the-orbit-equation.html}. \newline Accessed 09.08.2026
+		Weber, B. (n.d.): \emph{The Orbit Equation}. Orbital Mechanics \& Astrodynamics.\newline
+		\url{https://orbital-mechanics.space/the-orbit-equation/the-orbit-equation.html}.\newline
+		Accessed: 2026-08-09.
 		
 		\bibitem{orbital_nomenclature}
-		Orbital Mechanics \& Astrodynamics \emph{Orbital Nomenclature}, Bryan Weber, \url{https://orbital-mechanics.space/the-orbit-equation/orbital-nomenclature.html}. \newline Accessed 09.08.2026
+		Weber, B. (n.d.): \emph{Orbital Nomenclature}. Orbital Mechanics \& Astrodynamics.\newline
+		\url{https://orbital-mechanics.space/the-orbit-equation/orbital-nomenclature.html}.\newline
+		Accessed: 2026-08-09.
 		
 		\bibitem{elliptical_orbits}
-		Orbital Mechanics \& Astrodynamics \emph{Elliptical Orbits}, Bryan Weber, \url{https://orbital-mechanics.space/the-orbit-equation/elliptical-orbits.html}. \newline Accessed 09.08.2026
+		Weber, B. (n.d.): \emph{Elliptical Orbits}. Orbital Mechanics \& Astrodynamics.\newline
+		\url{https://orbital-mechanics.space/the-orbit-equation/elliptical-orbits.html}.\newline
+		Accessed: 2026-08-09.
 		
 		\bibitem{hyperbolic_orbits}
-		Orbital Mechanics \& Astrodynamics \emph{Hyperbolic Trajectories}, Bryan Weber, \url{https://orbital-mechanics.space/the-orbit-equation/hyperbolic-trajectories.html}. \newline Accessed 09.08.2026
+		Weber, B. (n.d.): \emph{Hyperbolic Trajectories}. Orbital Mechanics \& Astrodynamics.\newline
+		\url{https://orbital-mechanics.space/the-orbit-equation/hyperbolic-trajectories.html}.\newline
+		Accessed: 2026-08-09.
 		
 		\bibitem{parabolic_orbits}
-		Orbital Mechanics \& Astrodynamics \emph{Parabolic Trajectories}, Bryan Weber, \url{https://orbital-mechanics.space/the-orbit-equation/parabolic-trajectories.html}. \newline Accessed 09.08.2026
+		Weber, B. (n.d.): \emph{Parabolic Trajectories}. Orbital Mechanics \& Astrodynamics.\newline
+		\url{https://orbital-mechanics.space/the-orbit-equation/parabolic-trajectories.html}.\newline
+		Accessed: 2026-08-09.
 		
 		\bibitem{reference_frames}
-		Orbital Mechanics \& Astrodynamics \emph{Reference Frames}, Bryan Weber, \url{https://orbital-mechanics.space/intro/reference-frames.html}. \newline Accessed 09.08.2026
+		Weber, B. (n.d.): \emph{Reference Frames}. Orbital Mechanics \& Astrodynamics.\newline
+		\url{https://orbital-mechanics.space/intro/reference-frames.html}.\newline
+		Accessed: 2026-08-09.
 		
 		\bibitem{satellites_at_night}
-		Can You See Satellites At Night? How Do You Spot Them?, 	Visnja Radosavljevic, Optics Mag, 2025, \url{https://opticsmag.com/can-you-see-satellites-at-night/}. \newline Accessed 13.08.2026
+		Radosavljevic, V. (2025): \emph{Can You See Satellites At Night? How Do You Spot Them?}.
+		Optics Mag.
+		\url{https://opticsmag.com/can-you-see-satellites-at-night/}.\newline
+		Accessed: 2026-08-13.
 		
 		\bibitem{esa_cartesian_ellipsoidal}
-		J. Sanz Subirana, J.M. Juan Zornoza and M. Hernández-Pajares, "Coordinate Conversions", Gnss Data Processing Volume I: Fundamentals and Algorithms, 2013, p. 185, \url{https://gssc.esa.int/navipedia/GNSS_Book/ESA_GNSS-Book_TM-23_Vol_I.pdf}. \newline Accessed 14.08.2026
+		Sanz Subirana, J., Juan Zornoza, J.M. and Hernández-Pajares, M. (2013):
+		\emph{Coordinate Conversions}. In: \emph{GNSS Data Processing Volume I:
+			Fundamentals and Algorithms}, p. 185.
+		\url{https://gssc.esa.int/navipedia/GNSS_Book/ESA_GNSS-Book_TM-23_Vol_I.pdf}.\newline
+		Accessed: 2026-08-14.
 		
 		\bibitem{curtis_siderial_time}
-		H.D. Curtis, "Siderial Time", Orbital Mechanics for Engineering Students 2nd Edition, 2010, pp. 275-280, \url{https://shop.elsevier.com/books/orbital-mechanics-for-engineering-students/curtis/978-0-12-374778-5}\newline
-		Accessed 03.05.2026
+		Curtis, H.D. (2010): \emph{Sidereal Time}. In:
+		\emph{Orbital Mechanics for Engineering Students}, 2nd ed., pp. 275--280.\newline
+		\url{https://shop.elsevier.com/books/orbital-mechanics-for-engineering-students/curtis/978-0-12-374778-5}.\newline
+		Accessed: 2026-05-03.
 		
 		\bibitem{self_localization_in_space}
-		Frederic Heil "Determining attitude to the background stars", \emph{Image based self localization in interplanetary space}, 2025, pp. 9-11,\newline \url{https://github.com/stonkchonk/satellite-trajectories/blob/main/thesis/papers/heil_self_localization_2025.pdf}\newline
-		Accessed 23.08.2026
+		Heil, F. (2025): \emph{Determining attitude to the background stars}.
+		In: \emph{Image based self localization in interplanetary space}, pp. 9--11.\newline
+		\url{https://github.com/stonkchonk/satellite-trajectories/blob/main/thesis/papers/heil_self_localization_2025.pdf}.\newline
+		Accessed: 2026-08-23.
 		
 		\bibitem{four_stars_algo}
-		Dong Ying, Xing Fei, You Zheng. Brightness Independent 4-Star Matching Algorithm
-		for Lost-in-Space 3-Axis Attitude Acquisition, 2006,\newline
-		\url{https://www.sciencedirect.com/science/article/abs/pii/S1007021406702322}\newline
-		Accessed 23.08.2026
+		Dong, Y., Xing, F. and You, Z. (2006):
+		\emph{Brightness Independent 4-Star Matching Algorithm for Lost-in-Space
+			3-Axis Attitude Acquisition}.\newline
+		\url{https://www.sciencedirect.com/science/article/abs/pii/S1007021406702322}.\newline
+		Accessed: 2026-08-23.
+		
+		\newpage
 		
 		\bibitem{precession_definition}
-		University of Rochester. Precession of the Earth's Rotation Axis, 
-		\newline{https://www.pas.rochester.edu/~blackman/ast104/precession.html}\newline
-		Accessed 18.09.2026
+		University of Rochester (n.d.): \emph{Precession of the Earth's Rotation Axis}.\newline
+		\url{https://www.pas.rochester.edu/~blackman/ast104/precession.html}.\newline
+		Accessed: 2026-09-18.
 		
 		\bibitem{precession_correction}
-		J.H. Lieske, Precession Matrix Based on IAU (1976) System of Astronomical Constants, 1978, \url{https://ui.adsabs.harvard.edu/scan/manifest/1979A&A....73..282L}\newline Accessed 18.09.2026
+		Lieske, J.H. (1979): \emph{Precession Matrix Based on IAU (1976) System
+			of Astronomical Constants}.
+		\emph{Astronomy and Astrophysics}, 73, pp. 282--284.\newline
+		\url{https://ui.adsabs.harvard.edu/scan/manifest/1979A&A....73..282L}.\newline
+		Accessed: 2026-09-18.
 		
 		\bibitem{star_catalog}
-		Browse Software Development Team. BSC5P - Bright Star Catalog, 2024,
-		\newline\url{https://heasarc.gsfc.nasa.gov/w3browse/star-catalog/bsc5p.html}\newline
-		Accessed 18.09.2026
+		Browse Software Development Team (2024): \emph{BSC5P -- Bright Star Catalog}.
+		HEASARC.\newline
+		\url{https://heasarc.gsfc.nasa.gov/w3browse/star-catalog/bsc5p.html}.\newline
+		Accessed: 2026-09-18.
 		
 		\bibitem{python_atan2}
-		"Trigonometric functions" The Python Standard Library, 2026,\newline
-		\url{https://docs.python.org/3/library/math.html#math.atan2}\newline
-		Accessed 28.08.2026
+		Python Software Foundation (2026): \emph{Trigonometric functions}.
+		The Python Standard Library.\newline
+		\url{https://docs.python.org/3/library/math.html#math.atan2}.\newline
+		Accessed: 2026-08-28.
 		
 		\bibitem{lines_closest_approach}
-		Sean Fitzpatrick, "Finding the closest points on skew lines." Elementary Linear Algebra: For University of Lethbridge Math 1410, \newline
-		\url{https://opentext.uleth.ca/Math1410/sec-lines.html}\newline
-		Accessed 29.08.2026
+		Fitzpatrick, S. (n.d.): \emph{Finding the closest points on skew lines}.
+		Elementary Linear Algebra: For University of Lethbridge Math 1410.\newline
+		\url{https://opentext.uleth.ca/Math1410/sec-lines.html}.\newline
+		Accessed: 2026-08-29.
 		
 		\bibitem{curtis_gauss_algo}
-		H.D. Curtis, "Gauss method of preliminary orbit determination", Orbital Mechanics for Engineering Students 2nd Edition, 2010, pp. 297-304, \url{https://shop.elsevier.com/books/orbital-mechanics-for-engineering-students/curtis/978-0-12-374778-5}\newline
-		Accessed 03.05.2026
+		Curtis, H.D. (2010): \emph{Gauss method of preliminary orbit determination}.
+		In: \emph{Orbital Mechanics for Engineering Students}, 2nd ed.,
+		pp. 297--304.\newline
+		\url{https://shop.elsevier.com/books/orbital-mechanics-for-engineering-students/curtis/978-0-12-374778-5}.\newline
+		Accessed: 2026-05-03.
 		
 		\bibitem{numpy_roots}
-		"numpy.roots" NumPy documentation, 2026,\newline
-		\url{https://numpy.org/doc/stable/reference/generated/numpy.roots.html}\newline
-		Accessed 30.08.2026
+		NumPy Developers (2026): \emph{numpy.roots}. NumPy documentation.\newline
+		\url{https://numpy.org/doc/stable/reference/generated/numpy.roots.html}.\newline
+		Accessed: 2026-08-30.
 		
 		\bibitem{scipy_roots}
-		"scipy.optimize.root" SciPy documentation, 2026,\newline
-		\url{https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.root.html}\newline
-		Accessed 30.08.2026
+		SciPy Developers (2026): \emph{scipy.optimize.root}. SciPy documentation.\newline
+		\url{https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.root.html}.\newline
+		Accessed: 2026-08-30.
 		
 	\end{thebibliography}
 \end{document}

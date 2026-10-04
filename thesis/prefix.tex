@@ -1,0 +1,123 @@
+\documentclass[12pt,a4paper]{article}
+
+% ------------------------------------------------------------
+% Packages
+% ------------------------------------------------------------
+\usepackage[ngerman]{babel}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx}
+\usepackage[a4paper,margin=2.5cm]{geometry}
+\usepackage{array}
+\usepackage{url}
+\usepackage{lmodern}
+
+\pagestyle{empty}
+\setlength{\parindent}{0pt}
+
+\begin{document}
+
+\begin{titlepage}
+\thispagestyle{empty}
+
+\begin{center}
+    {\Large \textbf{Hochschule Ravensburg-Weingarten}}\\[0.35cm]
+    {\large Institut für Künstliche Intelligenz}\\[0.2cm]
+    {\large Masterstudiengang Informatik}
+
+    \vspace{1.4cm}
+
+
+    \includegraphics[width=0.5\textwidth]{images/rwulogo.pdf}
+    \vspace{1.5cm}
+
+    {\large \textbf{Masterarbeit zum Thema:}}\\[0.6cm]
+    {\LARGE \textbf{Image-based Trajectory Determination of Artificial Satellites}}
+\end{center}
+
+\vfill
+
+\begin{flushleft}
+    \begin{tabular}{@{}>{\bfseries}p{4.0cm}p{10.0cm}@{}}
+        Vorgelegt von: & Frederic Heil \\
+        E-Mail:        & frederic.heil@hs-weingarten.de \\
+        Matrikelnummer:& 28742953 \\
+        Abgabedatum:   & 2026-10-15 \\
+        \multicolumn{2}{c}{} \\
+        Erstgutachter:  & Prof. Dr. rer. nat. Stefan Elser \\
+        Zweitgutachter: & Prof. Dr. rer. nat. Markus Schneider \\
+    \end{tabular}
+\end{flushleft}
+
+\end{titlepage}
+
+
+
+\section*{Umfang}
+Diese Masterarbeit besteht aus drei separaten Texten in englischer Sprache, die im Folgenden beigefügt sind. Begonnen wird mit einem Vortext, der die geometrischen Grundlagen sowie die verwendeten Algorithmen zur Trajektorienbestimmung im Detail vorstellt. Fortgesetzt wird die Arbeit mit einem Research Paper, in welchem untersucht wird, wie sich die Algorithmen zur Trajektorienbestimmung in einer Testumgebung verhalten und mit welcher Genauigkeit sie die Parameter einer Satellitenbahn bestimmen können. Abschließend wird der aktuelle Stand der Technik vorgestellt, sodass gewonnene Erkenntnisse in den bestehenden Forschungsstand eingeordnet werden können.
+Sämtlicher Text, Quellcode und Messdaten sind in diesem Repository hinterlegt:\newline
+\url{https://github.com/stonkchonk/satellite-trajectories}
+
+\section*{Eidesstattliche Versicherung}
+Heil, Frederic:\newline\newline
+
+Hiermit versichere ich, dass ich die vorliegende Arbeit selbstständig verfasst und keine anderen als die
+angegebenen Quellen und Hilfsmittel verwendet habe und dass die Arbeit in gleicher oder ähnlicher Form keiner
+anderen Prüfungsbehörde vorgelegt wurde. Alle Ausführungen, die wörtlich oder sinngemäß übernommen wurden,
+sind als solche gekennzeichnet.\newline
+\textbf{Zusatz}: Auf der folgenden Seite habe ich dargelegt, welche KI-
+Werkzeuge ich genutzt habe, für welchen Zweck ich diese verwendet habe und auf welche Weise die Nutzung
+stattfand.
+\vspace{2cm}
+
+\noindent
+\begin{minipage}[t]{0.45\textwidth}
+	\rule{\textwidth}{0.4pt}\\
+	Ort, Datum
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.45\textwidth}
+	\rule{\textwidth}{0.4pt}\\
+	Unterschrift
+\end{minipage}
+\newpage
+
+\section*{Dokumentation der Verwendung von KI-Werkzeugen}
+In meiner Masterarbeit habe ich KI-Werkzeuge wie im Folgenden beschrieben eingesetzt:
+
+\begin{table}[ht]
+	\centering
+	\renewcommand{\arraystretch}{1.4}
+	\begin{tabular}{|p{0.27\textwidth}|p{0.25\textwidth}|p{0.38\textwidth}|}
+		\hline
+		\textbf{Zweck der \newline Verwendung} &
+		\textbf{Eingesetztes \newline KI-Werkzeug} &
+		\textbf{Verwendungsweise bzw. -ort} \\
+		\hline
+		
+		% Beispielzeile – später ersetzen
+		Generierung von LaTeX code &
+		ChatGPT &
+		Generierung von Dokumentenvorlagen, Layout-Elementen und Hilfestellung bei mathematischen Ausdrücken. \\
+		\hline
+		
+		Generierung von\newline Python code &
+		ChatGPT \newline Claude Code &
+		Generierung einzelner Code Snippets und Hilfsfunktionen. Überführung von vorhandener mathematischer Algorithmen-Definition in Python Klasse. \\
+		\hline
+		
+		Debugging und \newline Konsultierung &
+		Claude Code &
+		Hilfestellung in Form von Debugging und Konsultierung im Fehlerfall. Überprüfung von handgeschriebenen Algorithmen auf Richtigkeit. \\
+		\hline
+		
+		Formulierung &
+		ChatGPT &
+		Vorschlag alternativer Formulierungen und stilistischer Überarbeitungen an ausgewählten \newline Stellen. \\
+		\hline
+		
+	\end{tabular}
+\end{table}
+
+
+\end{document}
