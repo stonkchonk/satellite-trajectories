@@ -70,7 +70,7 @@ class AttitudeDeterminer:
 
         print(f"Number of Quadruples in frame: {len(observed_viable_quadruples)}")
         multi_matcher = MultiMatcher(observed_viable_quadruples)
-        matching_result = multi_matcher.determine_match_from_multiple_quadruples()
+        matching_result = multi_matcher.determine_single_match_from_multiple_quadruples()
 
         # if no match is possible return None
         if matching_result is None:

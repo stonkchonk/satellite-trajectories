@@ -1,6 +1,7 @@
 import time
 from copy import copy
 
+import cv2
 import numpy as np
 
 from common import Params, Code
@@ -13,8 +14,11 @@ from star_tracker.attitude_determiner import AttitudeDeterminer
 
 
 class CameraCalibration:
+
+    default_calibration_cam = VirtualCamera("calibration cam", field_of_view=17.0, exposure_comp=1.5, star_magnitude_limit=4.6)
+
     def __init__(self, execute_camera_setup: bool = True):
-        self.calibration_cam = VirtualCamera("calibration cam", field_of_view=17.0, exposure_comp=1.5, star_magnitude_limit=4.6)
+        self.calibration_cam = self.default_calibration_cam
         if execute_camera_setup:
             self.calibration_cam.setup()
         self.attitude_determiner = AttitudeDeterminer(self.calibration_cam.field_of_view)
@@ -29,23 +33,29 @@ class CameraCalibration:
         self.ecef_sea_altitude_m: float | None = None
 
 
-    def view_vector_calibration_procedure(self, return_matched_star_ids: bool = False) -> None | list[int]:
-        WindowController.run_script(DefaultScripts.prepare_calibration_script)
-        star_calibration_image = self.calibration_cam.take_screenshot("star_calibration")
-        star_imager = StarImager(self.calibration_cam.field_of_view, True)
-        observed_viable_quadruples = star_imager.determine_viable_quadruples(star_calibration_image)
+    def view_vector_calibration_procedure(self, return_matched_star_ids: bool = False,
+                                          predefined_matching_result: tuple[dict[int, int], dict[int, ObservedStar]] | None = None,
+                                          any_setup_needed: bool = True) -> None | list[int]:
+        if any_setup_needed:
+            WindowController.run_script(DefaultScripts.prepare_calibration_script)
+        if predefined_matching_result is None:
+            star_calibration_image = self.calibration_cam.take_screenshot("star_calibration")
+            star_imager = StarImager(self.calibration_cam.field_of_view, True)
+            observed_viable_quadruples = star_imager.determine_viable_quadruples(star_calibration_image)
 
-        # not enough stars in frame
-        if observed_viable_quadruples is None:
-            raise Exception("Could not match any stars within this frame.")
+            # not enough stars in frame
+            if observed_viable_quadruples is None:
+                raise Exception("Could not match any stars within this frame.")
 
-        print(f"Number of Quadruples in frame: {len(observed_viable_quadruples)}")
-        multi_matcher = MultiMatcher(observed_viable_quadruples)
-        matching_result = multi_matcher.determine_match_from_multiple_quadruples()
+            print(f"Number of Quadruples in frame: {len(observed_viable_quadruples)}")
+            multi_matcher = MultiMatcher(observed_viable_quadruples)
+            matching_result = multi_matcher.determine_single_match_from_multiple_quadruples()
 
-        # if no match is possible return None
-        if matching_result is None:
-            raise Exception("Could not match any stars within this frame.")
+            # if no match is possible return None
+            if matching_result is None:
+                raise Exception("Could not match any stars within this frame.")
+        else:
+            matching_result = predefined_matching_result
 
         # unpack matched stars and observed stars
         matching_quadruple_ids, observed_stars_dict = matching_result
@@ -58,7 +68,7 @@ class CameraCalibration:
         print("View vector calibration completed. Do not move camera.")
 
         if return_matched_star_ids:
-            return list(matching_quadruple_ids.values())
+            return three_matched_stars#list(matching_quadruple_ids.values())
         else:
             return None
 
@@ -104,8 +114,10 @@ class CameraCalibration:
     def position_vector_calibration_procedure(self, override_time_stamp: UniversalTimeStamp | None = None,
                                               override_lat_lon: tuple[float, float] | None = None,
                                               override_sea_altitude: float | None = None,
-                                              perform_touchdown: bool = True):
-        WindowController.run_script(DefaultScripts.default_visibilities_script)
+                                              perform_touchdown: bool = True,
+                                              any_setup_needed: bool = True):
+        if any_setup_needed:
+            WindowController.run_script(DefaultScripts.default_visibilities_script)
         if override_time_stamp is None:
             print("Enter universal time in the format YYYY.MM.DD HH:MM:SS below:")
             time_input_str = input()
@@ -114,8 +126,9 @@ class CameraCalibration:
             self.initial_time_stamp = UniversalTimeStamp.from_string(time_input_str)
         else:
             self.initial_time_stamp = override_time_stamp
-        self.calibration_cam.set_time(self.initial_time_stamp)
-        print(f"Initial time is {self.initial_time_stamp}")
+        if any_setup_needed:
+            self.calibration_cam.set_time(self.initial_time_stamp)
+            print(f"Initial time is {self.initial_time_stamp}")
 
         if override_lat_lon is None:
             print("Enter latitude and longitude in decimal degrees as LAT LON below:")
@@ -144,19 +157,28 @@ class CameraCalibration:
                                         override_sea_altitude: float | None = None,
                                         setup_calibration_camera: bool = False,
                                         perform_touchdown: bool = True,
-                                        quick_cam_setup: bool = False):
-        WindowController.simple_setup()
-        print("Starting full camera calibration procedure.")
-        self.position_vector_calibration_procedure(override_time_stamp, override_lat_lon, override_sea_altitude, perform_touchdown)
+                                        quick_cam_setup: bool = False,
+                                        predefined_matching_result: tuple[dict[int, int], dict[int, ObservedStar]] | None = None,
+                                        any_setup_needed: bool = True,
+                                        return_calibration_star_ids: bool = False) -> None | list[int]:
+        if any_setup_needed:
+            WindowController.simple_setup()
+            print("Starting full camera calibration procedure.")
+        self.position_vector_calibration_procedure(override_time_stamp, override_lat_lon, override_sea_altitude, perform_touchdown,
+                                                   any_setup_needed=any_setup_needed)
         if setup_calibration_camera:
             self.calibration_cam.setup(quick_cam_setup=quick_cam_setup)
-        WindowController.enter_command_procedure(f"{Params.select_cmd} {Params.satellite_name}")
-        print("Point camera towards satellite then press enter.")
-        _ = input()
-        time.sleep(Params.sleep_quick)
-        WindowController.simple_setup()
-        self.view_vector_calibration_procedure()
+        if any_setup_needed:
+            WindowController.enter_command_procedure(f"{Params.select_cmd} {Params.satellite_name}")
+            print("Point camera towards satellite then press enter.")
+            _ = input()
+            time.sleep(Params.sleep_quick)
+            WindowController.simple_setup()
+        star_ids = self.view_vector_calibration_procedure(predefined_matching_result=predefined_matching_result,
+                                               any_setup_needed=any_setup_needed,
+                                               return_matched_star_ids=return_calibration_star_ids)
         print(f"Camera calibration completed. {self.center_view_vector}, {self.position_vector}")
+        return star_ids
 
 
     @staticmethod
@@ -355,6 +377,102 @@ class SingleFrameMeasurementSeries:
         new_sfms.ground_truth_orbit = json_dict['ground_truth_orbit']
         new_sfms.observer_position = ObserverPosition.from_dict(json_dict['observer_position'])
         return new_sfms
+
+class SingleFrameMeasurementSeriesMultiCalib:
+    def __init__(self, initial_time_stamp: UniversalTimeStamp, observer_pos: ObserverPosition, max_num_of_calibs: int = 5):
+        self.star_imager = StarImager(CameraCalibration.default_calibration_cam.field_of_view, save_debug_images=True)
+        self.measurement_cam = CameraCalibration.default_calibration_cam
+        self.initial_time_stamp = initial_time_stamp
+        self.observer_pos = observer_pos
+        self.max_num_of_calibs = max_num_of_calibs
+        self.calibration_instances: dict[int, CameraCalibration] = {}
+        self.calibration_star_ids: dict[int, list[int]] = {}
+        self.measurement_series: dict[int, list[SingleFrameMeasurement]] = {}
+        self._perform_pre_calibration()
+
+    def _perform_pre_calibration(self):
+        WindowController.initial_setup()
+        pre_calibration = CameraCalibration(execute_camera_setup=True)
+        pre_calibration.full_camera_calibration_procedure(override_time_stamp=self.initial_time_stamp,
+                                                          override_lat_lon=self.observer_pos.coordinates,
+                                                          override_sea_altitude=self.observer_pos.altitude_m)
+        WindowController.simple_setup()
+        WindowController.run_script(DefaultScripts.prepare_calibration_script)
+        print("Initial pre-calibration completed.")
+        print("Once again, point camera towards satellite, then press enter.")
+        _ = input()
+        time.sleep(Params.sleep_quick)
+        WindowController.simple_setup()
+        star_calibration_image = pre_calibration.calibration_cam.take_screenshot("star_calibration")
+        star_imager = StarImager(pre_calibration.calibration_cam.field_of_view, True)
+        observed_viable_quadruples = star_imager.determine_viable_quadruples(star_calibration_image,
+                                                                             max_quadruples=self.max_num_of_calibs)
+        if observed_viable_quadruples is None:
+            raise Exception("No viable quadruples found")
+        else:
+            multi_matcher = MultiMatcher(observed_viable_quadruples)
+            all_matching_results = multi_matcher.determine_all_matches_from_multiple_quadruples()
+            for idx, matching_result in enumerate(all_matching_results):
+                new_calib_instance = CameraCalibration(execute_camera_setup=False)
+                star_ids = new_calib_instance.full_camera_calibration_procedure(override_time_stamp=self.initial_time_stamp,
+                                                                     override_lat_lon=self.observer_pos.coordinates,
+                                                                     override_sea_altitude=self.observer_pos.altitude_m,
+                                                                     perform_touchdown=False,
+                                                                     predefined_matching_result=matching_result,
+                                                                     any_setup_needed=False,
+                                                                     return_calibration_star_ids=True)
+                self.calibration_instances[idx] = copy(new_calib_instance)
+                self.calibration_star_ids[idx] = star_ids
+
+    def create_measurement_series(self, forward_second_steps: list[int]):
+        WindowController.simple_setup()
+        WindowController.run_script(DefaultScripts.prepare_tracking_script)
+        self.measurement_cam.update_star_magnitude_limit(5.1)
+        current_time_stamp = copy(self.calibration_instances[0].initial_time_stamp)
+
+        for step in forward_second_steps:
+            current_time_stamp.second += step
+            WindowController.simple_setup()
+            self.measurement_cam.set_time(current_time_stamp)
+            measurement_image = self.measurement_cam.take_screenshot("measurement")
+
+            for calib_instance_id in self.calibration_instances.keys():
+                entry_empty = self.measurement_series.get(calib_instance_id, None) is None
+                if entry_empty:
+                    self.measurement_series[calib_instance_id] = []
+
+                self.measurement_series[calib_instance_id].append(
+                    self.create_single_frame_measurement(calib_instance_id, copy(current_time_stamp), measurement_image)
+                )
+
+    def create_single_frame_measurement(self, calibration_instance_id: int,
+                                        time_stamp: UniversalTimeStamp,
+                                        measurement_image: cv2.typing.MatLike) -> SingleFrameMeasurement | None:
+        calibration_instance = self.calibration_instances.get(calibration_instance_id)
+
+        drift_angle_deg = EarthCenteredInertial.determine_angular_drift(calibration_instance.initial_time_stamp, time_stamp)
+        center_vector_drifted = EarthCenteredInertial.rotate_eci_vector_around_earth_axis(
+            calibration_instance.center_view_vector.value, drift_angle_deg)
+        left_vector_drifted = EarthCenteredInertial.rotate_eci_vector_around_earth_axis(
+            calibration_instance.left_view_vector.value, drift_angle_deg)
+        top_vector_drifted = EarthCenteredInertial.rotate_eci_vector_around_earth_axis(
+            calibration_instance.top_view_vector.value, drift_angle_deg)
+        position_vector_drifted = EarthCenteredInertial.rotate_eci_vector_around_earth_axis(
+            calibration_instance.position_vector, drift_angle_deg)
+        WindowController.simple_setup()
+        observed_dots = self.star_imager.all_observable_stars_of_image(measurement_image)
+        if len(observed_dots) >= 1:
+            triangulated_view_vector = Code.triangulate_vector_from_image_point(
+                [center_vector_drifted, left_vector_drifted, top_vector_drifted],
+                [Params.center_point, Params.left_edge_point, Params.top_edge_point],
+                observed_dots[0].position, Params.width_height[0], Code.deg_to_rad(CameraCalibration.default_calibration_cam.field_of_view)
+            )
+            return SingleFrameMeasurement(time_stamp, UnitVector(triangulated_view_vector), position_vector_drifted)
+        else:
+            print("Warning: More then one feasible candidates for satellite.")
+            return None
+
+
 
 
 class DualFrameMeasurementSeries:

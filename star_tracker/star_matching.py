@@ -216,7 +216,7 @@ class MultiMatcher:
     def __init__(self, observed_quadruples: list[ObservedQuadruple]):
         self.observed_quadruples = observed_quadruples
 
-    def determine_match_from_multiple_quadruples(self) -> tuple[dict[int, int], dict[int, ObservedStar]] | None:
+    def determine_single_match_from_multiple_quadruples(self) -> tuple[dict[int, int], dict[int, ObservedStar]] | None:
         """
         Returns matched star ids as dictionary as well as the corresponding observed stars.
         :return:
@@ -231,6 +231,24 @@ class MultiMatcher:
             except:
                 print(f"Could not match with quadruple {idx+1} of {num_of_quadruples}.")
         return None
+
+
+    def determine_all_matches_from_multiple_quadruples(self) -> list[tuple[dict[int, int], dict[int, ObservedStar]]]:
+        """
+        Returns list of all possible matched star ids as dictionary as well as the corresponding observed stars.
+        """
+        all_matches_list: list[tuple[dict[int, int], dict[int, ObservedStar]]] = []
+        num_of_quadruples = len(self.observed_quadruples)
+        for idx, observed_quadruple in enumerate(self.observed_quadruples):
+            try:
+                print(f"Try with quadruple {idx + 1 } of {num_of_quadruples}.")
+                matcher = StarMatcher(observed_quadruple)
+                matching_quadruple_ids = matcher.determine_matching_quadruple()
+                if matching_quadruple_ids is not None:
+                    all_matches_list.append( (matching_quadruple_ids, observed_quadruple.observed_stars_dict) )
+            except:
+                print(f"Could not match with quadruple {idx+1} of {num_of_quadruples}.")
+        return all_matches_list
 
 
 
@@ -255,7 +273,7 @@ if __name__ == "__main__":
 
     print(f"Number of Quadruples in frame: {len(observed_viable_quadruples)}")
     multi_matcher = MultiMatcher(observed_viable_quadruples)
-    matching_result = multi_matcher.determine_match_from_multiple_quadruples()
+    matching_result = multi_matcher.determine_single_match_from_multiple_quadruples()
 
     # if no match is possible return None
     if matching_result is None:
