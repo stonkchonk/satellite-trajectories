@@ -108,6 +108,7 @@ class Params:
     debug_images_dir = full_repository_dir_on_machine + "debug/"
     experiments_dir = full_repository_dir_on_machine + "experiments/"
     single_frame_measurement_series_captures_dir = experiments_dir + "single_frame_measurement_series_captures/"
+    single_frame_multi_calib_series_captures_dir = experiments_dir + "single_frame_multi_calib_series_captures/"
     screenshots_dir = "C:/Users/Bububau Spielcasino/Documents/Cosmographic/SpaceEngine/screenshots/"#se_dir + "screenshots/"
     se_log_file = se_dir + "system/se.log"
     se_catalogs_pak_file = se_dir + "data/catalogs/Catalogs.pak"

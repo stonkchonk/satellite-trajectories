@@ -1,12 +1,13 @@
 import math
 from copy import copy
+from enum import Enum
 
 import matplotlib.pyplot as plt
 import numpy as np
 from PIL.ImageChops import difference
 
 from algorithms import ParametricTrajectory, GaussAlgorithm, CircularTrajectory, SimplifiedGaussAlgorithm
-from common import Code
+from common import Code, Constants
 from earth import UniversalTimeStamp
 from experiments.artificial_satellite_setup import get_orbit_ground_truth
 from procedures import SingleFrameMeasurementSeries, DualFrameMeasurementSeries, SingleFrameMeasurement
@@ -15,6 +16,7 @@ from star_tracker.catalog_parser import UnitVector
 class EvaluationResult:
 
     log_base = 10
+    plot_exclusion_number = 1234
 
     def __init__(self, sma_errors: list[list[float]], ecc_errors: list[list[float]] | None, pln_errors: list[list[float]],
                  x_axis_values: list[float], y_axis_values: list[float],
@@ -62,6 +64,13 @@ class EvaluationResult:
         return Code.rad_to_deg(ground_truth_plane_normal.angular_rad_separation(measured_plane_normal))
 
 
+class PlotType(Enum):
+    sma = "a"
+    ecc = "e"
+    pln = "n"
+    prp = "p"
+
+
 
 captured_30s_series = {
     -1: "zenith_failure_30s",
@@ -96,18 +105,55 @@ gt_pt.argument_of_periapsis = Code.deg_to_rad(ground_truth_orbit_dict.get("argum
 gt_pt.plane_normal_vector = UnitVector(plane_normal_ground_truth)
 
 
-def make_plot(data: list[list[float]], title: str, x_labels: list, y_labels: list) -> None:
-    data = np.ma.masked_where(np.equal(data, None), data)
+def make_plot(data: list[list[float]], title: str, x_labels: list, y_labels: list, plot_type: PlotType, single_or_dual_camera: bool) -> None:
+
+    data = np.ma.masked_where(np.equal(data, EvaluationResult.plot_exclusion_number), data)
 
     plt.imshow(data, cmap="viridis", aspect="auto")
-    plt.colorbar(label="Wert")
-    plt.title(title)
 
-    plt.xlabel("X")
-    plt.ylabel("Y")
+    for i in range(data.shape[0]):
+        for j in range(data.shape[1]):
+            value = data[i, j]
+            if not np.ma.is_masked(value):
+                decimals = max(0, 3 - len(str(int(abs(value)))))
+                plt.text(
+                    j,
+                    i,
+                    f"{value:.{decimals}f}",
+                    ha="center",
+                    va="center",
+                    color="white" if value < np.mean(data) else "black"
+                )
 
-    plt.xticks(range(len(x_labels)), x_labels)
-    plt.yticks(range(len(y_labels)), y_labels)
+    if plot_type == PlotType.prp:
+        colorbar_label = r"$f_p\quad[a_g]$"
+    elif plot_type == PlotType.pln:
+        colorbar_label = r"$f_n\quad[°]$"
+    elif plot_type == PlotType.sma:
+        colorbar_label = r"$\log_{10}(f_a)\quad[a_g]$"
+    elif plot_type == PlotType.ecc:
+        colorbar_label = r"$\log_{10}(f_e)\quad[\Delta e]$"
+    else:
+        colorbar_label = "unknown plot type"
+
+    plt.colorbar(label=colorbar_label)
+    plt.title(title + fr" $f_{plot_type.value}$")
+
+    plt.xlabel(xlabel=r"$\Delta \theta \quad[°]$")
+    #plt.ylabel("Y")
+    y_label = ("Single" if single_or_dual_camera else "Dual") + " Observer"
+    plt.ylabel(ylabel=y_label)
+
+    x_ticks = [f"{val:.2f}" for val in x_labels]
+    plt.xticks(range(len(x_ticks)), labels=x_ticks, rotation=315)
+    if single_or_dual_camera:
+        locations: list = ["z"]
+        locations.extend([l for l in range(len(y_labels)-1)])
+        y_ticks = [fr"$L_{locations[idx]}$" for idx, val in enumerate(y_labels)]
+    else:
+        locations = [l for l in range(1, 7+1)]
+        y_ticks = [fr"$L_0L_{locations[idx]}(\delta={val:.2f}°)$" for idx, val in enumerate(y_labels)]
+    plt.yticks(range(len(y_ticks)), y_ticks)
 
     plt.show()
 
@@ -283,6 +329,17 @@ def sfm_gauss_errors(full_or_circle: bool = True) -> EvaluationResult:
         measured_trajectories.append(measured_trajectories_i)
     return EvaluationResult(sma_errors, ecc_errors, pln_errors, spans, plane_offset_angles, copy(gt_pt), measured_trajectories)
 
+def is_orbit_plausible(mt: ParametricTrajectory) -> bool:
+    abs_ecc = abs(mt.eccentricity)
+    abs_sma = abs(mt.semi_major_axis)
+    if abs_ecc >= 1:
+        return False
+    else:
+        pe_altitude = abs_sma * (1 - abs_ecc)
+        if pe_altitude < Constants.earth_mean_radius + 130:
+            return False
+        else:
+            return True
 
 def propagation_errors(ground_truth_trajectory: ParametricTrajectory,
                        measured_trajectories: list[list[ParametricTrajectory]]) -> list[list[float]]:
@@ -290,38 +347,34 @@ def propagation_errors(ground_truth_trajectory: ParametricTrajectory,
     for measured_trajectories_i in measured_trajectories:
         propagation_errors_i: list[float] = []
         for measured_trajectory in measured_trajectories_i:
-            if measured_trajectory.eccentricity < 1:
+            if is_orbit_plausible(measured_trajectory):
                 propagation_errors_i.append(
                     _propagation_error(ground_truth_trajectory, measured_trajectory, 1)
                 )
             else:
-                propagation_errors_i.append(-1)
+                propagation_errors_i.append(EvaluationResult.plot_exclusion_number)
         propagation_errors.append(propagation_errors_i)
     return propagation_errors
 
 
+if __name__ == "__main__":
+    full_or_circle = True
+    single_or_dual = True
+    if single_or_dual:
+        evaluator_result = sfm_gauss_errors(full_or_circle=full_or_circle)
+    else:
+        evaluator_result = dfm_stereo_errors(full_or_circle=full_or_circle)
+    #evaluator_result = dfm_stereo_errors(full_or_circle=False)
+    #print(evaluator_result.sma_errors)
+    #print(ecc_errors)
+    #print(pln_errors)
+    print("pln gt",plane_normal_ground_truth)
 
 
-evaluator_result = sfm_gauss_errors(full_or_circle=False)
-#evaluator_result = dfm_stereo_errors(full_or_circle=False)
-#print(evaluator_result.sma_errors)
-#print(ecc_errors)
-#print(pln_errors)
-print("pln gt",plane_normal_ground_truth)
-
-
-make_plot(evaluator_result.sma_errors, "sma_errors", evaluator_result.x_axis_values, evaluator_result.y_axis_values)
-make_plot(evaluator_result.ecc_errors, "ecc_errors", evaluator_result.x_axis_values, evaluator_result.y_axis_values)
-make_plot(evaluator_result.pln_errors, "plane normal deviation", evaluator_result.x_axis_values, evaluator_result.y_axis_values)
-
-#propagations = [i/10 for i in range(100)]
-#errors = []
-#for p in propagations:
-#    error = _propagation_error(gt_pt, measured_pt, p)
-#    errors.append(np.array([p, error]))
-
-#print(Code.format_to_geogebra_representation_2d(errors))
-make_plot(propagation_errors(evaluator_result.ground_truth_parametric_trajectory, evaluator_result.measured_parametric_trajectories), "propagation error", evaluator_result.x_axis_values, evaluator_result.y_axis_values)
-#print(propagation_error(evaluator_result.ground_truth_parametric_trajectory, evaluator_result.measured_parametric_trajectories))
+    make_plot(evaluator_result.sma_errors, "Semi Major Axis Error", evaluator_result.x_axis_values, evaluator_result.y_axis_values, PlotType.sma, single_or_dual)
+    make_plot(evaluator_result.ecc_errors, "Eccentricity Error", evaluator_result.x_axis_values, evaluator_result.y_axis_values, PlotType.ecc, single_or_dual)
+    make_plot(evaluator_result.pln_errors, "Plane Normal Deviation", evaluator_result.x_axis_values, evaluator_result.y_axis_values, PlotType.pln, single_or_dual)
+    make_plot(propagation_errors(evaluator_result.ground_truth_parametric_trajectory, evaluator_result.measured_parametric_trajectories),
+              "Propagation Error after one Orbit", evaluator_result.x_axis_values, evaluator_result.y_axis_values, PlotType.prp, single_or_dual)
 
 

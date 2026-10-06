@@ -379,7 +379,8 @@ class SingleFrameMeasurementSeries:
         return new_sfms
 
 class SingleFrameMeasurementSeriesMultiCalib:
-    def __init__(self, initial_time_stamp: UniversalTimeStamp, observer_pos: ObserverPosition, max_num_of_calibs: int = 5):
+    def __init__(self, initial_time_stamp: UniversalTimeStamp, observer_pos: ObserverPosition, max_num_of_calibs: int = 5,
+                 populate_only: bool = False):
         self.star_imager = StarImager(CameraCalibration.default_calibration_cam.field_of_view, save_debug_images=True)
         self.measurement_cam = CameraCalibration.default_calibration_cam
         self.initial_time_stamp = initial_time_stamp
@@ -388,7 +389,8 @@ class SingleFrameMeasurementSeriesMultiCalib:
         self.calibration_instances: dict[int, CameraCalibration] = {}
         self.calibration_star_ids: dict[int, list[int]] = {}
         self.measurement_series: dict[int, list[SingleFrameMeasurement]] = {}
-        self._perform_pre_calibration()
+        if not populate_only:
+            self._perform_pre_calibration()
 
     def _perform_pre_calibration(self):
         WindowController.initial_setup()
@@ -412,7 +414,9 @@ class SingleFrameMeasurementSeriesMultiCalib:
         else:
             multi_matcher = MultiMatcher(observed_viable_quadruples)
             all_matching_results = multi_matcher.determine_all_matches_from_multiple_quadruples()
-            for idx, matching_result in enumerate(all_matching_results):
+            known_star_ids_calibration_permutations = []
+            idx = 0
+            for matching_result in all_matching_results:
                 new_calib_instance = CameraCalibration(execute_camera_setup=False)
                 star_ids = new_calib_instance.full_camera_calibration_procedure(override_time_stamp=self.initial_time_stamp,
                                                                      override_lat_lon=self.observer_pos.coordinates,
@@ -421,8 +425,11 @@ class SingleFrameMeasurementSeriesMultiCalib:
                                                                      predefined_matching_result=matching_result,
                                                                      any_setup_needed=False,
                                                                      return_calibration_star_ids=True)
-                self.calibration_instances[idx] = copy(new_calib_instance)
-                self.calibration_star_ids[idx] = star_ids
+                if star_ids not in known_star_ids_calibration_permutations:
+                    self.calibration_instances[idx] = copy(new_calib_instance)
+                    self.calibration_star_ids[idx] = star_ids
+                    known_star_ids_calibration_permutations.append(star_ids)
+                    idx += 1
 
     def create_measurement_series(self, forward_second_steps: list[int]):
         WindowController.simple_setup()
@@ -472,6 +479,37 @@ class SingleFrameMeasurementSeriesMultiCalib:
             print("Warning: More then one feasible candidates for satellite.")
             return None
 
+    @classmethod
+    def from_json(cls, series_name: str) -> "SingleFrameMeasurementSeriesMultiCalib":
+        json_dict = Code.load_json_content(f"series_multicalib_{series_name}.json",
+                                           directory=Params.single_frame_multi_calib_series_captures_dir)
+
+        new_sfms_mc = cls(
+            UniversalTimeStamp.from_string(json_dict['initial_time_stamp']),
+            ObserverPosition.from_dict(json_dict['observer_pos']),
+            populate_only=True
+        )
+        new_sfms_mc.calibration_star_ids = {
+            int(k): v for k, v in json_dict['calibration_star_ids'].items()
+        }
+        new_sfms_mc.measurement_series = {
+            int(calib_id): [SingleFrameMeasurement.from_string(s) for s in sfms_str.split("|")]
+            for calib_id, sfms_str in json_dict['measurement_series'].items()
+        }
+        return new_sfms_mc
+
+    def flush_to_file(self, series_name: str):
+        series_dict_object = {
+            'initial_time_stamp': str(self.initial_time_stamp),
+            'observer_pos': self.observer_pos.to_dict(),
+            'calibration_star_ids': {str(k): v for k, v in self.calibration_star_ids.items()},
+            'measurement_series': {
+                str(calib_id): "|".join(sfm.__str__() for sfm in sfms)
+                for calib_id, sfms in self.measurement_series.items()
+            }
+        }
+        Code.save_json_content(f"series_multicalib_{series_name}.json", series_dict_object,
+                               directory=Params.single_frame_multi_calib_series_captures_dir)
 
 
 
