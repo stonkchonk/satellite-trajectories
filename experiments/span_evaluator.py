@@ -7,7 +7,7 @@ import numpy as np
 from PIL.ImageChops import difference
 
 from algorithms import ParametricTrajectory, GaussAlgorithm, CircularTrajectory, SimplifiedGaussAlgorithm
-from common import Code, Constants
+from common import Code, Constants, Params
 from earth import UniversalTimeStamp
 from experiments.artificial_satellite_setup import get_orbit_ground_truth
 from procedures import SingleFrameMeasurementSeries, DualFrameMeasurementSeries, SingleFrameMeasurement
@@ -105,17 +105,23 @@ gt_pt.argument_of_periapsis = Code.deg_to_rad(ground_truth_orbit_dict.get("argum
 gt_pt.plane_normal_vector = UnitVector(plane_normal_ground_truth)
 
 
-def make_plot(data: list[list[float]], title: str, x_labels: list, y_labels: list, plot_type: PlotType, single_or_dual_camera: bool) -> None:
+def make_plot(data: list[list[float]], title: str, x_labels: list, y_labels: list, plot_type: PlotType, single_or_dual_camera: bool, full_or_circle: bool = True, plot_name: str = "test") -> None:
+    plt.figure(figsize=(12, 7))
 
-    data = np.ma.masked_where(np.equal(data, EvaluationResult.plot_exclusion_number), data)
+    data = np.ma.masked_where(
+        np.equal(data, EvaluationResult.plot_exclusion_number),
+        data
+    )
 
     plt.imshow(data, cmap="viridis", aspect="auto")
 
     for i in range(data.shape[0]):
         for j in range(data.shape[1]):
             value = data[i, j]
+
             if not np.ma.is_masked(value):
                 decimals = max(0, 3 - len(str(int(abs(value)))))
+
                 plt.text(
                     j,
                     i,
@@ -140,22 +146,41 @@ def make_plot(data: list[list[float]], title: str, x_labels: list, y_labels: lis
     plt.title(title + fr" $f_{plot_type.value}$")
 
     plt.xlabel(xlabel=r"$\Delta \theta \quad[°]$")
-    #plt.ylabel("Y")
+
     y_label = ("Single" if single_or_dual_camera else "Dual") + " Observer"
     plt.ylabel(ylabel=y_label)
 
     x_ticks = [f"{val:.2f}" for val in x_labels]
-    plt.xticks(range(len(x_ticks)), labels=x_ticks, rotation=315)
+    plt.xticks(
+        range(len(x_ticks)),
+        labels=x_ticks,
+        rotation=315
+    )
+
     if single_or_dual_camera:
         locations: list = ["z"]
-        locations.extend([l for l in range(len(y_labels)-1)])
-        y_ticks = [fr"$L_{locations[idx]}$" for idx, val in enumerate(y_labels)]
+        locations.extend([l for l in range(len(y_labels) - 1)])
+        y_ticks = [
+            fr"$L_{locations[idx]}$"
+            for idx, val in enumerate(y_labels)
+        ]
     else:
-        locations = [l for l in range(1, 7+1)]
-        y_ticks = [fr"$L_0L_{locations[idx]}(\delta={val:.2f}°)$" for idx, val in enumerate(y_labels)]
+        locations = [l for l in range(1, 7 + 1)]
+        y_ticks = [
+            fr"$L_0L_{locations[idx]}(\delta={val:.2f}°)$"
+            for idx, val in enumerate(y_labels)
+        ]
+
     plt.yticks(range(len(y_ticks)), y_ticks)
 
+    plt.savefig(
+        Params.thesis_plots_dir + plot_name + ("_full" if full_or_circle else "_circle") +("_single" if single_or_dual else "_dual") + ".png",
+        dpi=300,
+        bbox_inches="tight"
+    )
+
     plt.show()
+    plt.close()
 
 def _span_angles(single_frame_measurements: list[SingleFrameMeasurement], default_start_idx: int = 2,
                  deg_or_rad: bool = True) -> list[float]:
@@ -371,10 +396,11 @@ if __name__ == "__main__":
     print("pln gt",plane_normal_ground_truth)
 
 
-    make_plot(evaluator_result.sma_errors, "Semi Major Axis Error", evaluator_result.x_axis_values, evaluator_result.y_axis_values, PlotType.sma, single_or_dual)
-    make_plot(evaluator_result.ecc_errors, "Eccentricity Error", evaluator_result.x_axis_values, evaluator_result.y_axis_values, PlotType.ecc, single_or_dual)
-    make_plot(evaluator_result.pln_errors, "Plane Normal Deviation", evaluator_result.x_axis_values, evaluator_result.y_axis_values, PlotType.pln, single_or_dual)
+    make_plot(evaluator_result.sma_errors, "Semi Major Axis Error", evaluator_result.x_axis_values, evaluator_result.y_axis_values, PlotType.sma, single_or_dual, plot_name="sma_errors", full_or_circle=full_or_circle)
+    make_plot(evaluator_result.ecc_errors, "Eccentricity Error", evaluator_result.x_axis_values, evaluator_result.y_axis_values, PlotType.ecc, single_or_dual, plot_name="ecc_errors", full_or_circle=full_or_circle)
+    make_plot(evaluator_result.pln_errors, "Plane Normal Deviation", evaluator_result.x_axis_values, evaluator_result.y_axis_values, PlotType.pln, single_or_dual, plot_name="pln_errors", full_or_circle=full_or_circle)
     make_plot(propagation_errors(evaluator_result.ground_truth_parametric_trajectory, evaluator_result.measured_parametric_trajectories),
-              "Propagation Error after one Orbit", evaluator_result.x_axis_values, evaluator_result.y_axis_values, PlotType.prp, single_or_dual)
+              "Propagation Error after one Orbit", evaluator_result.x_axis_values, evaluator_result.y_axis_values, PlotType.prp, single_or_dual, plot_name="propagation_errors", full_or_circle=full_or_circle
+              )
 
 

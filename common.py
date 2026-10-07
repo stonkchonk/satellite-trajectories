@@ -114,6 +114,7 @@ class Params:
     se_catalogs_pak_file = se_dir + "data/catalogs/Catalogs.pak"
     scripts_dir = se_dir + "addons/scripts/"
     addon_planets_dir = "C:/Users/Bububau Spielcasino/Documents/Cosmographic/SpaceEngine/addons/catalogs/planets/" #se_dir + "addons/catalogs/planets/"
+    thesis_plots_dir = "./thesis/plots/"
     artificial_satellite_file = "ArtificialSatellite"
     # file endings
     script_ending = ".se"
