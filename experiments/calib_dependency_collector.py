@@ -25,7 +25,7 @@ observer_pos = ObserverPosition(
 # 5: (-27.911902, -62.468913), 127
 # 6: (-28.506740, -60.982091), 64
 # 7: (-29.646743, -57.958463), 64
-time_stamp = UniversalTimeStamp.from_string("2000.01.01 20:05:41")
+time_stamp = UniversalTimeStamp.from_string("2000.01.01 20:03:00")
 sfms_mc = SingleFrameMeasurementSeriesMultiCalib(initial_time_stamp=time_stamp, observer_pos=observer_pos, max_num_of_calibs=100)
 sfms_mc.create_measurement_series([0, 7])
 

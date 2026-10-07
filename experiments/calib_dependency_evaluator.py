@@ -2,7 +2,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 
 from algorithms import ParametricTrajectory, SimplifiedGaussAlgorithm, CircularTrajectory
-from common import Code
+from common import Code, Params
 from experiments.artificial_satellite_setup import get_orbit_ground_truth
 from experiments.span_evaluator import _propagation_error
 from procedures import SingleFrameMeasurementSeriesMultiCalib
@@ -17,13 +17,46 @@ def condition_number(matrix: np.ndarray) -> float:
     assert matrix.shape == (3, 3)
     return float(np.linalg.norm(matrix, 2) * np.linalg.norm(np.linalg.inv(matrix), 2))
 
-def make_plot(num_vs_propagation_error: list[list[tuple[float, float]]]) -> None:
+def make_plot(num_vs_propagation_error: list[list[tuple[float, float]]], det_or_condition: bool) -> None:
+    plt.figure(figsize=(12, 7))
+
     data = [[value[1] for value in row] for row in num_vs_propagation_error]
 
+    plt.title(
+        rf"Propagation Error $f_p$ subject to "
+        f"{"Determinant" if det_or_condition else "Condition Number"}"
+    )
+
     plt.imshow(data, cmap="viridis", aspect="auto")
-    plt.colorbar()
+
+    plt.colorbar(label=r"$f_p\quad[a_g]$")
+
+    x_values = [liste[0] for liste in num_vs_propagation_error[0]]
+
+    print(x_values)
+    print(len(x_values))
+
+    x_indices = range(0, len(x_values), 3)
+
+    plt.xticks(
+        x_indices,
+        [f"{x_values[i]:.3g}" for i in x_indices],
+        rotation=90
+    )
+
+    plt.xlabel(
+        f"{"Determinant" if det_or_condition else "Condition Number"}"
+    )
+
+    plt.ylabel(r"$m$ circulations")
+
+    filename = Params.thesis_plots_dir + ("propagation_error_determinant.png" if det_or_condition \
+        else "propagation_error_condition_number.png")
+
+    plt.savefig(filename, dpi=300, bbox_inches="tight")
 
     plt.show()
+    plt.close()
 
 
 
@@ -45,7 +78,7 @@ if __name__ == "__main__":
     determinant_vs_propagation_error: list[list[tuple[float, float]]] = []
     condition_number_vs_propagation_error: list[list[tuple[float, float]]] = []
 
-    for n_propagations in range(1, 1000+1):
+    for n_propagations in range(1, 50+1):
         determinant_vs_propagation_error_i: list[tuple[float, float]] = []
         condition_number_vs_propagation_error_i: list[tuple[float, float]] = []
 
@@ -80,7 +113,7 @@ if __name__ == "__main__":
 
     print(determinant_vs_propagation_error)
     print(condition_number_vs_propagation_error)
-    make_plot(determinant_vs_propagation_error)
-    make_plot(condition_number_vs_propagation_error)
+    make_plot(determinant_vs_propagation_error, det_or_condition=True)
+    make_plot(condition_number_vs_propagation_error, det_or_condition=False)
 
 

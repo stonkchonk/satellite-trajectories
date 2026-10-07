@@ -362,17 +362,17 @@ class SingleFrameMeasurementSeries:
         new_sfms.single_frame_measurements = [SingleFrameMeasurement.from_string(sfm_str) for sfm_str in sfm_measurement_strings]
         return new_sfms
 
-    def flush_to_file(self, series_name: str):
+    def flush_to_file(self, series_name: str, directory: str = Params.single_frame_measurement_series_captures_dir):
         series_dict_object = {
             'ground_truth_orbit': self.ground_truth_orbit,
             'observer_position': self.observer_position.to_dict(),
             'captured_data': self.__str__()
         }
-        Code.save_json_content(f"series_{series_name}.json", series_dict_object, directory=Params.single_frame_measurement_series_captures_dir)
+        Code.save_json_content(f"series_{series_name}.json", series_dict_object, directory=directory)
 
     @classmethod
-    def from_json(cls, series_name: str) -> "SingleFrameMeasurementSeries":
-        json_dict = Code.load_json_content(f"series_{series_name}.json", directory=Params.single_frame_measurement_series_captures_dir)
+    def from_json(cls, series_name: str, directory: str = Params.single_frame_measurement_series_captures_dir) -> "SingleFrameMeasurementSeries":
+        json_dict = Code.load_json_content(f"series_{series_name}.json", directory=directory)
         new_sfms = cls.from_string(json_dict['captured_data'])
         new_sfms.ground_truth_orbit = json_dict['ground_truth_orbit']
         new_sfms.observer_position = ObserverPosition.from_dict(json_dict['observer_position'])
