@@ -90,7 +90,8 @@
 	\subsubsection{Circular trajectory}\label{sec:circular_parametric_trajectory}
 	This method once again simplifies the orbit to a circular trajectory. Two observer cameras are required, utilizing means of stereo vision. Two position vectors of the satellite are obtained by two synchronous measurements which yield the semi major axis $a$ and the plane normal vector $n$. \cite{orbit_determination_preliminary}
 	
-	\subsection{Observation setup}\label{sec:observation_setup}
+	\subsection{Experimental setups}
+	\subsubsection{Variable observation spans and \\ observer placement}\label{sec:observation_setup}
 	The goal is to create a measurement setup which can generate data sets usable by all presented single- and dual-camera orbit determination models to evaluate performance under different circumstances. All measurement data is captured from the  simulation \emph{Space Engine}, which makes the data synthetic. Space Engine is a software that incorporates a virtual universe including the solar system and nearby, real stars among other things \cite{space_engine}.\newline
 	Identical virtual cameras are used in all observer locations and generate rectilinear images with the following properties:
 	\begin{table}[H]
@@ -109,7 +110,7 @@
 		\centering
 		\includegraphics[width=1.0\linewidth]{images/observation_schematic.png}
 		\caption{Schematic of strategic camera placement}
-		\label{fig:curtis_siderial_time}
+		\label{fig:observation_schematic}
 	\end{figure}
 	\noindent
 	The schematic figure above shows the figurative placement of cameras as well as the planned synchronous recording of images. Starting at timestamp $t_0$ and proceeding with a fixed time interval, each camera takes a picture of the satellite at every time stamp until $t_n$. 
@@ -122,8 +123,6 @@
 	
 	\begin{table}[htbp]
 		\centering
-		\caption{Observation locations}
-		\label{tab:observation_locations}
 		\begin{tabular}{llll}
 			\toprule
 			Location & Latitude & Longitude & Altitude \\
@@ -139,12 +138,13 @@
 			$L_7$ & $-29.646743^\circ$ & $-57.958463^\circ$ & 64 m \\
 			\bottomrule
 		\end{tabular}
+		\caption{Observation locations}
+		\label{tab:observation_locations}
 	\end{table}
 	\noindent
 	Hereby, it must be noted that given altitude values may deviate from real ones because these were measured within the simulation software. Cameras in locations from $L_0$ to $L_7$ are placed in a straight line, whereas the distance on the ground between location $L_i$ and $L_0$ doubles for each further location. The distance between $L_1$ and $L_0$ equates to 10km, between $L_2$ and $L_0$ to 20km and so on up until the distance between $L_7$ and $L_0$ equating to 640km. The purpose of location $L_z$ is to observe the satellite passing in the observer's zenith at timestamp $t_z$. It is not located on line $L_0L_7$.\newline
 	Thirdly, applicable to single-camera methods, is the variation in distance to the orbital plane. Excluding special cases, the distance between observer locations and the orbital plane is constantly changing due to Earth's rotation. However, if the satellite is traversing quick enough from the observer's perspective, an average distance value can be used.
 	Then, a ground truth orbit must be defined, applicable to all presented orbit determination models with the following properties:
-	
 	\begin{table}[H]
 		\centering
 		\begin{tabular}{l|r}
@@ -156,13 +156,59 @@
 			Reference epoch & J2000 \\
 			Initial mean anomaly $\theta_0$ [°] & 0
 		\end{tabular}
-		\caption{\label{tab:ground_truth_orbit}Ground truth orbit properties}
+		\caption{Ground truth orbit properties}
+		\label{tab:ground_truth_orbit}
 	\end{table}
 	\noindent
 	Consequently, the orbit should be circular. It is tilted against the equatorial, whereat the plane normal vector derives from \emph{inclination} and \emph{ascending node} as $n=(0.0, -0.78801075, 0.61566148)$.\newline
-	Lastly, it is noted that location $L_z$ was chosen for the predefined timestamp $t_z = \text{2000.01.01 20:03:00}$ [UT], so that the satellite passes in the observer's zenith with given ground truth properties.
+	Furthermore, it is noted that location $L_z$ was chosen for the predefined timestamp $t_z = \text{2000.01.01 20:03:00}$ [UT], so that the satellite passes in the observer's zenith with given ground truth properties.
 	
-	\subsection{Parameter error definition}\label{sec:param_stability_definition}
+	\subsection{Influence of star-based \\ view vector determination}
+	As elaborated in the preliminary text, view vector determination relies three known stars or rather their view vectors $v_{S1}$, $v_{S2}$ and $v_{S3}$ to form a matrix $M$ for triangulation \cite{orbit_determination_preliminary} which is more or less suited for view vector determination through triangulation. One metric to measure suitability is the determinant $d$ as it indicates linear dependency of its row/column vectors formulated as follows:
+	\begin{equation}\label{eq:determinant}
+		d = \det(M)
+	\end{equation} 
+	\noindent
+	Another useful metric is the condition number $\kappa(M)$ which indicates how sensitive the triangulation matrix $M$ is to errors formulated as follows:
+	\begin{equation}
+		\begin{aligned}
+			\kappa(M) = \left\lVert M \right\rVert_2 \cdot \left\lVert M^{-1}\right\rVert_2 \text{with}\quad \left\lVert M \right\rVert_2 = \max_k \sigma_k
+		\end{aligned}
+	\end{equation}
+	\noindent
+	Hereby, the 2-norm of matrix $M$ is defined by its maximum singular value $\sigma_k$ \cite{condition_numbers}.\newline
+	We hypothesize that there might be a correlation between the accuracy of a predicted orbit and the suitability of matrix $M$ used for view vector determination. For testing purposes, we perform orbit determination of the ground truth orbit defined in \ref{tab:ground_truth_orbit} using distinct sets of stars for view vector calibration. Observations are conducted by one camera placed at $L_5$ starting at certain predefined time stamps so that numerous background stars are visible to form many distinctive 
+	sets of stars for calibration. The determination algorithm of choice is the simplified Gaussian method with a fixed observation span $\Delta t = 7s$.
+	
+	\subsubsection{Influence of variable Semi Major Axis}
+	The goal of this setup to verify whether the self developed simplified Gaussian method holds under differing conditions, specifically with varied semi major axis. Other experiments use solely the ground truth orbit defined in table \ref{tab:ground_truth_orbit}. This experiment modifies the orbit's semi major axis and initial mean anomaly $\theta_0$ so that the satellite always passes in the zenith of $L_z$ and $t_z$ which makes it easily visible from all observer locations. The semi major axis is chosen in such a way that the range of mean altitudes cover the entire range of the Low Earth Orbit as follows:
+	
+	\begin{table}[H]
+		\centering
+		\begin{tabular}{ccc}
+			\hline
+			Semi major axis & Mean altitude & $\theta_0$ \\
+			\hline
+			6667.445 km & 300 km  & 198.86° \\
+			6867.445 km & 500 km  & 282.36° \\
+			7067.445 km & 700 km  & 0.00° \\
+			7267.445 km & 900 km  & 72.33° \\
+			7467.445 km & 1100 km & 139.85° \\
+			7667.445 km & 1300 km & 203.00° \\
+			7867.445 km & 1500 km & 262.16° \\
+			8067.445 km & 1700 km & 317.67° \\
+			8267.445 km & 1900 km & 9.85° \\
+			8467.445 km & 2100 km & 58.97° \\
+			\hline
+		\end{tabular}
+		\caption{Modified properties of ground truth orbit}
+		\label{tab:modified_satellite_altitude}
+	\end{table}
+	\noindent
+	Once again, observations are conducted by one camera placed at $L_5$ with a fixed observation span $\Delta t = 7s$.
+	
+	\subsection{Metrics}
+	\subsubsection{Parameter stability}\label{sec:param_stability_definition}
 	All presented orbit determination methods yield values for semi major axis $a$ and plane normal vector $n$. Additionally, methods not assuming a circular orbit, yield values for eccentricity $e$ and argument of periapsis $\omega$. The goal is to compare measured (denoted $m$) with ground truth (denoted $g$) properties in a generalized form independent of units. For this reason, we define error metrics $f_a$, $f_e$, $f_{\omega}$ and $f_n$ for $a$, $e$, $\omega$ and $n$ as follows::\newline
 	\begin{equation}\label{eq:error_sma}
 		f_a=\frac{|a_g-a_m|}{a_g}
@@ -174,11 +220,20 @@
 		f_\omega=|\omega_g-\omega_m|
 	\end{equation}
 	\begin{equation}\label{eq:error_n}
-		f_n=\arccos\left(\frac{n_g\cdot n_m}{|n_g|\cdot|n_m|}\right)=\arccos(n_g\cdot n_m)
+		f_n=\arccos\left(\frac{n_g\cdot n_m}{|n_g|\cdot|n_m|}\right)=\arccos(n_g\cdot n_m) \\
 	\end{equation}
 	Hereby, specifically for metric \ref{eq:error_omega}, it must be noted that this expression is undefined if ground truth or measured orbit has an eccentricity of $e=0$.
 	
-	\subsection{Error propagation definition}\label{sec:error_propagation_definition}
+	\subsubsection{Propagation error}\label{sec:error_propagation_definition}
+	The determined orbit of a satellite differs from the actual ground truth by a margin of error. As the satellite continues orbiting Earth, actual and predicted position continue drifting apart due to this error. Carpenter et al. state that the position error along the trajectory arises from the semi major axis error .This formulates as an equation for the variation in orbital period $\delta T$ subject to variation in semi major axis $\delta a$ as:
+	
+	\begin{equation}
+		\delta T = 3\pi\sqrt{\frac{a}{\mu}}\cdot\delta a
+	\end{equation}
+	\noindent
+	\cite{semi_major_axis_knowledge} \newline
+	Our approach is to formulate the position or rather propagation error in such a way that factors in all orbital parameters
+	The previous section quantifies the error of individual properties. 
 	\section{Results and Discussion}\label{sec:results_discussion}
 	\subsection{Parameter error}\label{sec:param_stability_result}
 	\subsection{Error propagation}\label{sec:error_propagation_result}
@@ -192,17 +247,21 @@
 		\setlength{\parskip}{0pt}       % space between paragraphs
 		\setlength{\parsep}{0pt}        % extra space within items
 		
-		\bibitem{curtis_gauss_algo}
-		H.D. Curtis, "Gauss method of preliminary orbit determination", Orbital Mechanics for Engineering Students 2nd Edition, 2010, pp. 297-304, \url{https://shop.elsevier.com/books/orbital-mechanics-for-engineering-students/curtis/978-0-12-374778-5}\newline
-		Accessed: 2026-05-03
+		\bibitem{curtis_gauss_algo} Curtis, H.D. (2010): \emph{Gauss method of preliminary orbit determination}. In: \emph{Orbital Mechanics for Engineering Students}, 2nd ed., pp. 297--304. \newline \url{https://shop.elsevier.com/books/orbital-mechanics-for-engineering-students/curtis/978-0-12-374778-5} \newline Accessed: 2026-05-03 
 		
-		\bibitem{orbit_determination_preliminary}
-		F. Heil, Image based trajectory determination of artificial satellites, 2026, \newline \url{https://github.com/stonkchonk/satellite-trajectories/blob/main/thesis/preliminary.pdf}\newline
-		Accessed: 2026-09-29
+		\bibitem{orbit_determination_preliminary} Heil, F. (2026): \emph{Image based trajectory determination of artificial satellites}. \newline \url{https://github.com/stonkchonk/satellite-trajectories/blob/main/thesis/preliminary.pdf} \newline Accessed: 2026-09-29 
 		
-		\bibitem{space_engine}
-		"About" \emph{Space Engine}, Cosmographic Software LLC, 2026,\newline
-		\url{https://spaceengine.org/manual/making-addons/scenario-scripts/}.\newline
-		Accessed: 2026-09-29
+		\bibitem{space_engine} Cosmographic Software LLC (2026): \emph{About}. SpaceEngine. \newline \url{https://spaceengine.org/manual/making-addons/scenario-scripts/} \newline Accessed: 2026-09-29 
+		
+		\bibitem{condition_numbers} University of Illinois Urbana-Champaign (n.d.): \emph{Condition Numbers}. CS 357 Textbook. \newline \url{https://cs357.cs.illinois.edu/textbook/notes/condition.html} \newline Accessed: 2026-10-08
+		
+		\bibitem{semi_major_axis_knowledge}
+		Carpenter, J.R. and Schiesser, E.R. (2001):
+		\emph{Semi-Major Axis Knowledge and GPS Orbit Determination}.
+		In: \emph{Journal of the Institute of Navigation}, 48(1).
+		\newline
+		\url{https://ntrs.nasa.gov/citations/20000084327}
+		\newline
+		Accessed: 2026-10-09
 	\end{thebibliography}
 \end{document}
