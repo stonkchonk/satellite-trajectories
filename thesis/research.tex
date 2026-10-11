@@ -39,16 +39,16 @@
 	]
 	
 	\section{Introduction}\label{sec:introduction}
-	Orbit determination of satellites in Low Earth Orbit is achievable by various means. Specifically ground-based methods require measurements spanning long arcs in the range of 3/4 to several resolution, as stated by Carpenter et al. \cite{semi_major_axis_knowledge}. This research paper's primary aim is to determine, how well satellite trajectories may be predictable using an image-based approach taking measurements from a single observable flyover, thus short arcs. Hereby, we aim to compare single- and dual-camera setups with fixed camera properties.\newline
-	This includes a self-developed method for circular orbit determination which is based on the initial idea of the Gaussian algorithm for orbit determination. The paper's secondary objective is to determine how susceptible this method is to inaccuracies of star-based view vector determination. Lastly, we aim to determine whether this new method can predict satellite orbits with differing semi major axis, spanning various altitudes in the Low Earth Orbit region.
+	Orbit determination of satellites in Low Earth Orbit is achievable by various means. Specifically ground-based methods require measurements spanning long arcs in the range of 3/4 to several resolutions, as stated by Carpenter et al. \cite{semi_major_axis_knowledge}. This research paper's primary aim is to determine, how well satellite trajectories may be predictable using an image-based approach taking measurements from a single observable flyover, thus short arcs. Hereby, we aim to compare single- and dual-camera setups with fixed camera properties.\newline
+	This includes a self developed method for circular orbit determination which is based on the initial idea of the Gaussian algorithm for orbit determination. The paper's secondary objective is to determine how susceptible this method is to inaccuracies of star-based view vector determination. Lastly, we aim to determine, whether this new method can predict satellite orbits with differing semi major axes, spanning various altitudes in the Low Earth Orbit region.
 	
 	\section{Methods}\label{sec:methods}
-	\subsection{Single-Camera orbit determination}\label{sec:one_camera_determination}
-	\subsubsection{Gaussian Method}\label{sec:gauss_method}
+	\subsection{Single-camera orbit determination}\label{sec:one_camera_determination}
+	\subsubsection{Gaussian method}\label{sec:gauss_method}
 	The Gaussian method's approach is to numerically fit observations to a physically feasible orbit.
-	The algorithm yields parameters for full orbit characterization, namely semi major axis $a$, eccentricity $e$, argument of periapsis $\omega$ and plane normal vector $n$.\newline A single observer camera is required, whereas three measurements each consisting of position vector $p_i$, view vector $v_i$ and corresponding timestamp $t_i$ need to be recorded to determine a solution. \cite{curtis_gauss_algo}
-	\subsubsection{Simplified Gaussian Method}\label{sec:simplified_gauss_method}
-	The simplified Gaussian method is a self developed approach to numerically fit observations to a physically feasibly circular orbit. Its incentive stems from the condition that satellite orbits low above earth's surface possess very low eccentricities and can mostly be considered circular. The algorithm yields parameters for circle-orbit characterization, namely semi major axis $a$ and plane normal vector $n$. \newline Similar to the Gaussian method, a single observer camera is required, whereas only two measurements each consisting of position vector $p_i$, view vector $v_i$ and corresponding timestamp $t_i$ need to be recorded to determine a solution. Hereby, the solution consists of two scalar parameters $\rho_1$ and $\rho_2$ which must satisfy the radius equality condition as well as the arc of a circle condition stated as follows:
+	The algorithm yields parameters for full orbit characterization, namely semi major axis $a$, eccentricity $e$, argument of periapsis $\omega$ and plane normal vector $n$.\newline A single observer camera is required, whereas three measurements, each consisting of position vector $p_i$, view vector $v_i$ and corresponding time stamp $t_i$ need to be recorded to determine a solution. \cite{curtis_gauss_algo}
+	\subsubsection{Simplified Gaussian method}\label{sec:simplified_gauss_method}
+	The simplified Gaussian method is a self developed approach to numerically fit observations to a physically feasibly circular orbit. Its incentive stems from the condition that satellite orbits low above earth's surface possess very low eccentricities and can mostly be considered circular. The algorithm yields parameters for circle-orbit characterization, namely semi major axis $a$ and plane normal vector $n$. \newline Similar to the Gaussian method, a single observer camera is required, whereas only two measurements, each consisting of position vector $p_i$, view vector $v_i$ and corresponding time stamp $t_i$, need to be recorded to determine a solution. Hereby, the solution consists of two scalar parameters $\rho_1$ and $\rho_2$ which must satisfy the radius equality condition as well as the arc of a circle condition stated as follows:
 	
 	\begin{equation}
 		\label{circle_gauss_circle_condition}
@@ -65,7 +65,7 @@
 	\end{equation}
 	\cite{orbit_determination_preliminary}
 	
-	\subsection{Two camera trajectory determination}\label{sec:two_camera_determination}
+	\subsection{Dual-camera orbit determination}\label{sec:two_camera_determination}
 	\subsubsection{Full parametric trajectory}\label{sec:full_parametric_trajectory}
 	An orbital trajectory can be described as parametric curve lying in its orbital plane as follows: 
 	\begin{equation}
@@ -75,7 +75,7 @@
 		\end{pmatrix}
 	\end{equation}
 	\noindent
-	Given three positions in polar coordinates defined by radii $r_i$ and arguments $\theta_i$, the orbital properties $a$, $e$ and $\omega$ for eccentricities $e\neq 1$ and $e\neq 0$ are determined by:
+	Given three positions in polar coordinates defined by radii $r_i$ and arguments $\theta_i$, the orbital properties $a$, $e$ and $\omega$ for eccentricities $e \notin \{0,1\}$ are defined by:
 	
 	\begin{equation}
 		\omega=\alpha_{13}-\arctan(G)
@@ -95,8 +95,8 @@
 	
 	\subsection{Experimental setups}
 	\subsubsection{Variable observation spans and \\ observer placement}\label{sec:observation_setup}
-	The goal is to create a measurement setup which can generate data sets usable by all presented single- and dual-camera orbit determination models to evaluate performance under different circumstances. All measurement data is captured from the  simulation \emph{Space Engine}, which makes the data synthetic. \emph{Space Engine} is a software that incorporates a virtual universe including the solar system and nearby, real stars among other things \cite{space_engine}.\newline
-	Identical virtual cameras are used in all observer locations and generate rectilinear images with the following properties:
+	The goal is to create a measurement setup which can generate data sets usable by all presented single- and dual-camera orbit determination models to evaluate performance under different circumstances. All measurement data is captured from the  simulation \emph{Space Engine} which makes the data synthetic. \emph{Space Engine} is a software that incorporates a virtual universe including the solar system and nearby, real stars among other things \cite{space_engine}.\newline
+	Identical virtual cameras are used in all observer locations that generate rectilinear images with the following properties:
 	\begin{table}[H]
 		\centering
 		\begin{tabular}{l|r}
@@ -104,7 +104,7 @@
 			Image frame [pixels] & 1000 x 1000 \\
 			Field of view [°] & 17 x 17
 		\end{tabular}
-		\caption{\label{tab:sun_cam}Image properties of each observer camera}
+		\caption{\label{tab:sun_cam}Image properties of each observer camera.}
 	\end{table}
 	\noindent
 	In addition, several cameras are placed in strategic locations, so that  orbit determination can be performed subject to variable properties.
@@ -116,11 +116,11 @@
 		\label{fig:observation_schematic}
 	\end{figure}
 	\noindent
-	The schematic figure above shows the figurative placement of cameras as well as the planned synchronous recording of images. Starting at timestamp $t_0$ and proceeding with a fixed time interval, each camera takes a picture of the satellite at every timestamp until $t_n$. 
-	For each timestamp from $t_0$ until $t_n$ and for each observer camera, position vector $p_i$ and view vector $v_i$ are recorded with the Earth Centered Inertial (ECI) coordinate system as reference frame.
+	The schematic figure above shows the figurative placement of cameras as well as the planned synchronous recording of images. Starting at time stamp $t_0$ and proceeding with a fixed time interval, each camera takes a picture of the satellite at every time stamp until $t_n$. 
+	For each time stamp from $t_0$ until $t_n$ and for each observer camera, position vector $p_i$ and view vector $v_i$ are recorded with the Earth Centered Inertial (ECI) coordinate system as reference frame.
 	\newline
-	As single- and dual-camera orbit determination methods for full determination require only three measurements each and for circular methods only two measurements respectively, we gain some modifiable parameters, which can be altered to observe changes in performance and accuracy of the models.\newline
-	The first one, which is applicable to single- and dual-camera methods, being the alteration of observation time span $\Delta t$ which translates to the angular passage $\Delta \theta$ which the satellite passes in its orbit. For the Gaussian and stereo vision method for full parametric trajectory determination this is accomplished by spacing apart timestamps by 30 seconds. For the simplified Gaussian and stereo vision method for circular trajectory determination, timestamps are spaced apart by 1 second.\newline
+	As single- and dual-camera orbit determination methods for full determination require only three measurements each and for circular methods only two measurements respectively, we gain some modifiable parameters which can be altered to observe changes in performance and accuracy of the models.\newline
+	The first one, which is applicable to single- and dual-camera methods, being the alteration of observation time span $\Delta t$ which translates to the angular passage $\Delta \theta$ that the satellite passes in its orbit. For the Gaussian and stereo vision method for full parametric trajectory determination this is accomplished by spacing apart time stamps by 30 seconds. For the simplified Gaussian and stereo vision method for circular trajectory determination, time stamps are spaced apart by one second.\newline
 	Secondly, applicable to dual-camera methods, is the variation in distance between two observer cameras which translates to a variable angle between intersecting lines of sight in the context of stereo vision. Consequently, the observer cameras are placed in the following locations on planet Earth within the simulation software:
 	
 	
@@ -145,7 +145,7 @@
 		\label{tab:observation_locations}
 	\end{table}
 	\noindent
-	Hereby, it must be noted that given altitude values may deviate from real ones because these were measured within the simulation software. Cameras in locations from $L_0$ to $L_7$ are placed in a straight line, whereas the distance on the ground between location $L_i$ and $L_0$ doubles for each further location. The distance between $L_1$ and $L_0$ equates to 10km, between $L_2$ and $L_0$ to 20km and so on up until the distance between $L_7$ and $L_0$ equating to 640km. The purpose of location $L_z$ is to observe the satellite passing in the observer's zenith at timestamp $t_z$. It is not located on line $L_0L_7$.\newline
+	Hereby, it must be noted that given altitude values may deviate from real ones because these were measured within the simulation software. Cameras in locations from $L_0$ to $L_7$ are placed in a straight line, whereas the distance on the ground between location $L_{i>0}$ and $L_0$ doubles for each further location. The distance between $L_1$ and $L_0$ equates to 10km, between $L_2$ and $L_0$ to 20km and so on up until the distance between $L_7$ and $L_0$ equating to 640km. The purpose of location $L_z$ is to observe the satellite passing in the observer's zenith at time stamp $t_z$. It is not located on line $L_0L_7$ but close to $L_0$.\newline
 	Thirdly, applicable to single-camera methods, is the variation in distance to the orbital plane. Excluding special cases, the distance between observer locations and the orbital plane is constantly changing due to Earth's rotation. However, if the satellite is traversing quick enough from the observer's perspective, an average distance value can be used.
 	Then, a ground truth orbit must be defined, applicable to all presented orbit determination models with the following properties:
 	\begin{table}[H]
@@ -157,17 +157,17 @@
 			Inclination [°] & 52 \\
 			Ascending Node [°] & 0 \\
 			Reference epoch & J2000 \\
-			Initial mean anomaly $\theta_0$ [°] & 0
+			Initial true anomaly $\theta_0$ [°] & 0
 		\end{tabular}
-		\caption{Ground truth orbit properties}
+		\caption{Ground truth orbital properties for most of the experimental setups.}
 		\label{tab:ground_truth_orbit}
 	\end{table}
 	\noindent
-	Consequently, the orbit should be circular. It is tilted against the equatorial, whereat the plane normal vector derives from \emph{inclination} and \emph{ascending node} as $n=(0.0, -0.78801075, 0.61566148)$.\newline
-	Furthermore, it is noted that location $L_z$ was chosen for the predefined timestamp $t_z = \text{2000.01.01 20:03:00}$ [UT], so that the satellite passes in the observer's zenith with given ground truth properties.
+	Consequently, the orbit should be circular. It is tilted against the equatorial plane of Earth, whereat the plane normal vector derives from \emph{inclination} and \emph{ascending node} as $n=(0.0, -0.78801075, 0.61566148)$.\newline
+	Furthermore, it is noted that location $L_z$ was chosen for the predefined time stamp $t_z = \text{2000.01.01 20:03:00}$ [UT], so that the satellite passes in the observer's zenith with given ground truth properties.
 	
 	\subsubsection{Influence of star-based \\ view vector determination}
-	As elaborated in the preliminary text, view vector determination relies three known stars or rather their view vectors $v_{S1}$, $v_{S2}$ and $v_{S3}$ to form a matrix $M$ for triangulation \cite{orbit_determination_preliminary} which is more or less suited for view vector determination through triangulation. One metric to measure suitability is the determinant $d$ as it indicates linear dependency of its row/column vectors formulated as follows:
+	As elaborated in the preliminary text, view vector determination relies three known stars or rather their view vectors $v_{S1}$, $v_{S2}$ and $v_{S3}$ to form a matrix $M$ for triangulation \cite{orbit_determination_preliminary} which is more or less suited for view vector determination through triangulation. One metric to measure suitability is the determinant $d$, as it indicates linear dependency of its row/column vectors formulated as follows:
 	\begin{equation}\label{eq:determinant}
 		d = \det(M)
 	\end{equation} 
@@ -180,11 +180,11 @@
 	\end{equation}
 	\noindent
 	Hereby, the 2-norm of matrix $M$ is defined by its maximum singular value $\sigma_k$ \cite{condition_numbers}.\newline
-	We hypothesize that there might be a correlation between the accuracy of a predicted orbit and the suitability of matrix $M$ used for view vector determination. For testing purposes, we perform orbit determination of the ground truth orbit defined in \ref{tab:ground_truth_orbit} using distinct sets of stars for view vector calibration. Observations are conducted by one camera placed at $L_5$ starting at certain predefined timestamps so that numerous background stars are visible to form many distinctive 
+	We hypothesize that there might be a correlation between the accuracy of a predicted orbit and the suitability of matrix $M$ used for view vector determination. For testing purposes, we perform orbit determination of the ground truth orbit,  defined in table \ref{tab:ground_truth_orbit}, using distinct sets of stars for view vector calibration. Observations are conducted by one camera placed at $L_5$ starting at certain predefined time stamps so that numerous background stars are visible to form many distinctive 
 	sets of stars for calibration. The determination algorithm of choice is the simplified Gaussian method with a fixed observation span $\Delta t = 7s$.
 	
-	\subsubsection{Influence of variable Semi Major Axis}
-	The goal of this setup to verify whether the self developed simplified Gaussian method holds under differing conditions, specifically with varied semi major axis. Other experiments use solely the ground truth orbit defined in table \ref{tab:ground_truth_orbit}. This experiment modifies the orbit's semi major axis and initial mean anomaly $\theta_0$ so that the satellite always passes in the zenith of $L_z$ and $t_z$ which makes it easily visible from all observer locations. The semi major axis is chosen in such a way that the range of mean altitudes cover the entire range of the Low Earth Orbit as follows:
+	\subsubsection{Influence of variable semi major axis}
+	The goal of this setup to verify, whether the self developed simplified Gaussian method holds under differing conditions, specifically with varied semi major axes. Other experiments use solely the ground truth orbit defined in table \ref{tab:ground_truth_orbit}. This experiment modifies the orbit's semi major axis and initial true anomaly $\theta_0$ so that the satellite always passes in the zenith of $L_z$ and $t_z$ which makes it easily visible from all observer locations. The semi major axis is chosen in such a way that the range of mean altitudes cover the entire range of the Low Earth Orbit region as follows:
 	
 	\begin{table}[H]
 		\centering
@@ -204,7 +204,7 @@
 			8467.445 km & 2100 km & 58.97° \\
 			\hline
 		\end{tabular}
-		\caption{Modified properties of ground truth orbit}
+		\caption{Modified properties of ground truth orbit.}
 		\label{tab:modified_satellite_altitude}
 	\end{table}
 	\noindent
@@ -228,44 +228,44 @@
 	Hereby, specifically for metric \ref{eq:error_omega}, it must be noted that this expression is undefined if ground truth or measured orbit has an eccentricity of $e=0$.
 	
 	\subsubsection{Propagation error}\label{sec:error_propagation_definition}
-	The determined orbit of a satellite differs from the actual ground truth by a margin of error. As the satellite continues orbiting Earth, actual and predicted position continue drifting apart due to this error. Carpenter et al. state that the position error along the trajectory arises from the semi major axis error .This formulates as an equation for the variation in orbital period $\delta T$ subject to variation in semi major axis $\delta a$ as:
+	The determined orbit of a satellite differs from the actual ground truth by a margin of error. As the satellite continues orbiting Earth, actual and predicted position continue drifting apart due to this error. Carpenter et al. state that the position error along the trajectory arises from the semi major axis error. This formulates as an equation for the variation in orbital period $\delta T$ subject to variation in semi major axis $\delta a$ as:
 	
 	\begin{equation}
 		\delta T = 3\pi\sqrt{\frac{a}{\mu}}\cdot\delta a = 3\pi\sqrt{\frac{a}{\mu}}\cdot|a_g-a_m|
 	\end{equation}
 	\noindent
 	\cite{semi_major_axis_knowledge} \newline
-	Our approach is to formulate the position or rather propagation error in such a way that factors in all orbital parameters and so that it can be described as distance metric between the satellite ground truth position $s_g$ and the measured or predicted satellite position $s_m$.
+	Our approach is to formulate the position or rather propagation error in such a way that factors in all orbital parameters and that it can be described as distance metric between the satellite ground truth position $s_g$ and the measured or predicted satellite position $s_m$.
 	
 	\begin{figure}[H]
 		\centering
 		\includegraphics[width=1.0\linewidth]{images/drift.png}
-		\caption{Propagating error between ground truth and predicted position.}
+		\caption{Schematic of propagating error between ground truth and predicted position.}
 		\label{fig:error_propagation_schematic}
 	\end{figure}
 	\noindent
-	The schematic figure above illustrates how the propagation error accumulates over the course of a single ground truth orbit. The location vector of a satellite can be described subjected to propagated true anomaly $\theta$ or passed time $t$ or number orbital revolutions $m$ since measurement time $t_0$. Thereby, we define the propagation error as distance between ground truth and predicted position in relation to the ground truth semi major axis $a_g$ subject to orbital revolutions $m$ since $t_0$ as follows:
+	The schematic figure above illustrates how the propagation error accumulates over the course of a single ground truth orbit. The location vector of a satellite can be described subjected to propagated true anomaly $\theta$ or passed time $t$ or number of orbital revolutions $m$ since measurement time $t_0$. Thereby, we define the propagation error as distance between ground truth and predicted position in relation to the ground truth semi major axis $a_g$ subject to orbital revolutions $m$ since $t_0$ as follows:
 	
 	\begin{equation}\label{eq:propagation_error}
 		f_p = \frac{|s_g(m) - s_m(m)|}{a_g}
 	\end{equation}
 	
 	\section{Results}\label{sec:results_discussion}
-	In the following, we evaluate error metrics $f_a$, $f_e$, $f_n$ and $f_p$ subject to different properties for defined experimental setups. Regarding propagation error $f_p$, it must be noted that this value is only calculated for plausible predicted orbits. If the predicted orbit has an eccentricity of $e\geq1$ or has a periapsis below 150km it is considered implausible resulting in the corresponding tile intentionally being left blank as visible in figures \ref{fig:propagation_errors_full_single} and \ref{fig:propagation_errors_full_dual}. \newline 
+	In the following, we evaluate error metrics $f_a$, $f_e$, $f_n$ and $f_p$ subject to different properties for defined experimental setups. Regarding propagation error $f_p$, it must be noted that this value is only calculated for plausible predicted orbits. If the predicted orbit has an eccentricity of $e\geq1$ or has a periapsis below 150km above Earth's surface, it is considered implausible, resulting in the corresponding tile intentionally left blank as visible in figures \ref{fig:propagation_errors_full_single} and \ref{fig:propagation_errors_full_dual}. \newline 
 	Stereo vision models require measurements from two observer locations denoted as $L_iLj$ with an angle $\delta$ which describes the mean intersection angle between lines of sight for all synchronous measurements from $t_0$ to $t_n$. \newline
-	Lastly, it must be noted that no error $f_e$ is determined for circular ground truth to circular model comparison, as it is always 0 in that case. Furthermore, error $f_\omega$ is not determined for any experiment as it is undefined due to circular ground truth orbits.
+	Lastly, it must be noted that no error $f_e$ is determined for circular ground truth to circular model comparison, as it is always 0 in that case. Furthermore, error $f_\omega$ is not determined for any experiment, as it is undefined due to circular ground truth orbits.
 	
 	\subsection{Variable observation spans and \\ observer placement}\label{sec:variability_result}
 	\textbf{Gaussian method:} \newline
-	Figures \ref{fig:sma_errors_full_single}, \ref{fig:ecc_errors_full_single} and \ref{fig:pln_errors_full_single} show error values $f_a$, $f_e$ and $f_n$ subject to single observer location $L_i$ and angular passage $\Delta \theta$. Hereby, prediction stability seems to be dependent on observer location and angular passage. We observe that errors decrease with growing $\Delta \theta$ further from $L_z$. At $\Delta \theta > 25^\circ$ and ideal observer location the magnitude of $f_a$ equates to roughly $10^{-2}a_g \approx 71km$. At $L_z$, errors remain persistently high, indicating a numerical instability of the Gaussian method. Plane normal angle deviation seems to converge in broader areas to magnitudes of roughly $f_n=0.2^\circ$.\newline
-	The error propagation value $f_p$ for propagated orbits $m=1$ behaves in a similar manner, as pictured in figure \ref{fig:propagation_errors_full_single}. Excluding a few individual tiles, the magnitude of $f_p$ in ideal situations equates to roughly $0.1a_g \approx 707km$.
+	Figures \ref{fig:sma_errors_full_single}, \ref{fig:ecc_errors_full_single} and \ref{fig:pln_errors_full_single} show error values $f_a$, $f_e$ and $f_n$ subject to single observer location $L_i$ and angular passage $\Delta \theta$. Hereby, prediction stability seems to be dependent on observer location and angular passage. We observe that errors decrease with growing $\Delta \theta$ further from $L_z$. At $\Delta \theta > 25^\circ$ and ideal observer location, the magnitude of $f_a$ equates to roughly $10^{-2}a_g \;\widehat{=}\; 71km$. At $L_z$, errors remain persistently high, indicating a numerical instability of the Gaussian method. Plane normal angle deviation seems to converge in broader areas to magnitudes of roughly $f_n=0.2^\circ$.\newline
+	The error propagation value $f_p$ for propagated orbits $m=1$ behaves in a similar manner, as pictured in figure \ref{fig:propagation_errors_full_single}. Excluding a few individual tiles, the magnitude of $f_p$ in ideal situations equates to roughly $0.1a_g \;\widehat{=}\; 707km$.
 	\newline\newline
 	\textbf{Stereo vision (full parametric model):}\newline
-	Figures \ref{fig:sma_errors_full_dual}, \ref{fig:ecc_errors_full_dual} and \ref{fig:pln_errors_full_dual} show  error values $f_a$, $f_e$ and $f_n$ subject to intersection angle $\delta$ and angular passage $\Delta \theta$. Once again, prediction stability seems to be dependent on both properties, so that accuracy increases with larger $\delta$ and $\Delta \theta$. At $\Delta \theta > 25^\circ$ and $\delta_{max}=25.96^\circ$ the magnitude of $f_a$ equates to roughly $10^{-2.4}a_g \approx 28km$. Plane normal angle deviation converges in broader areas to magnitudes of roughly $f_n=0.1^\circ$. \newline
-	Lastly, $f_p$ values as pictured in figure \ref{fig:propagation_errors_full_dual} contain less plausible tiles. However, under optimal conditions $f_p$ equates to roughly $0.02a_g \approx 141km$. Overall, this method yields slightly more accurate results than the Gaussian method.
+	Figures \ref{fig:sma_errors_full_dual}, \ref{fig:ecc_errors_full_dual} and \ref{fig:pln_errors_full_dual} show  error values $f_a$, $f_e$ and $f_n$ subject to intersection angle $\delta$ and angular passage $\Delta \theta$. Once again, prediction stability seems to be dependent on both properties, so that accuracy increases with larger $\delta$ and $\Delta \theta$. At $\Delta \theta > 25^\circ$ and $\delta_{max}=25.96^\circ$ the magnitude of $f_a$ equates to roughly $10^{-2.4}a_g \;\widehat{=}\; 28km$. Plane normal angle deviation converges in broader areas to magnitudes of roughly $f_n=0.1^\circ$. \newline
+	Lastly, $f_p$ values as pictured in figure \ref{fig:propagation_errors_full_dual} contain less plausible tiles. However, under optimal conditions $f_p$ equates to roughly $0.02a_g \;\widehat{=}\; 141km$. Overall, this method yields slightly more accurate results than the Gaussian method.
 	\newline\newline
 	\textbf{Simplified Gaussian method:}\newline
-	Figures \ref{fig:sma_errors_circle_single}, \ref{fig:pln_errors_circle_single} and \ref{fig:propagation_errors_circle_single} show error values $f_a$, $f_n$ and $f_p$ subject to observer location and angular passage. Error values seem to converge at $\Delta \theta \geq 0.18^\circ$ which equates to an observation span of just $\Delta t \geq 3s$. There does not seem to be an accuracy pattern caused by observer location, rather differences seem to be caused by noise, meaning that location has no notable effect on results. Ideally, error $f_a$ equates to roughly $10^{-4}a_g \approx 1km$, plane normal deviates by $f_n=0.1^\circ$ and $f_p < 10^{-2}a_g \approx 71km$. As there is no pattern subject to observer location, these ideal results can not be assumed in every case.\newline
+	Figures \ref{fig:sma_errors_circle_single}, \ref{fig:pln_errors_circle_single} and \ref{fig:propagation_errors_circle_single} show error values $f_a$, $f_n$ and $f_p$ subject to observer location and angular passage. Error values seem to converge at $\Delta \theta \geq 0.18^\circ$ which equates to an observation span of just $\Delta t \geq 3s$. There does not seem to be an accuracy pattern caused by observer location, rather differences seem to be caused by noise, meaning that location has no notable effect on results. Ideally, error $f_a$ equates to roughly $10^{-4}a_g \;\widehat{=}\; 0.7km$, plane normal deviates by $f_n=0.1^\circ$ and $f_p < 10^{-2}a_g \;\widehat{=}\; 71km$. As there is no pattern subject to observer location, these ideal results can not be assumed in every case.\newline
 	Overall, this method is more accurate than the Gaussian and stereo vision method for full parametric trajectories in determining properties of circular orbits. A particular advantage over the classical Gaussian method is the aspect that there is no numerical instability at $L_z$ and other close locations.
 	\newline\newline
 	\textbf{Stereo vision (circular model):}\newline
@@ -273,14 +273,14 @@
 	Overall, this method is more accurate than the Gaussian and stereo vision method for full parametric trajectories in determining properties of circular orbits. Compared to the simplified Gaussian method, error values are less susceptible to noise. A particular disadvantage is the aspect, that a second camera is needed which needs to be placed at substantial distance from the first one.
 	
 	\subsection{Influence of star-based \\ view vector determination}\label{sec:star_calib_result}
-	The Gaussian, stereo vision  stereo vision for full parametric trajectories and simplified Gaussian methods yield noisy error results, hypothesized to originate from star-based view vector determination. Hence, we observe propagation error $f_p$ subject to determinant or condition number and $m$ propagated circulations. Figures \ref{fig:propagation_error_condition_number} and \ref{fig:propagation_error_determinant} illustrate these relations where the same orbit is predicted exemplary by the simplified Gaussian method, calibrating view vectors on 153 distinct sets of stars.\newline
-	We observe, that for a wide range of determinants or conditions numbers, $f_p$ remains relatively low for the first few $m$ circulations. As $m$ increases, $f_p$ increases for some calibrations but not for all. There does not seem to be a general clear correlation as $f_p$ for larger $m$ may be low for less favorable determinants or condition numbers.\newline
+	The Gaussian, stereo vision for full parametric trajectories and simplified Gaussian methods yield noisy error results, hypothesized to originate from star-based view vector determination. Hence, we observe propagation error $f_p$ subject to determinant or condition number and $m$ propagated circulations. Figures \ref{fig:propagation_error_condition_number} and \ref{fig:propagation_error_determinant} illustrate these relations where the same orbit is predicted exemplary by the simplified Gaussian method, calibrating view vectors on 153 distinct sets of three stars.\newline
+	We observe that for a wide range of determinants or conditions numbers, $f_p$ remains relatively low for the first few $m$ circulations. As $m$ increases, $f_p$ increases for some calibrations but not for all. There does not seem to be a general clear correlation as $f_p$ for larger $m$ may be low for less favorable determinants or condition numbers.\newline
 	A steep increase of $f_p$ is only observable in extreme cases $\kappa > 1110$ and $d < 0.000387$.
 	
-	\subsection{Influence of variable Semi Major Axis}\label{sec:result_influence_sma}
+	\subsection{Influence of variable semi major axis}\label{sec:result_influence_sma}
 	Figure \ref{fig:propagation_error_variable_sma} shows error $f_p$ subject to observation span $\Delta t$ and semi major axis $a$ for the simplified Gaussian method.\newline
 	We observe that it is possible to obtain propagation errors $f_p < 10^{-2}a_g$. This error is sometimes larger but does not appear to dependent on $a$, rather a result of noise.\newline
-	This proves that the self developed simplified Gaussian method can be applied to satellites in a variety of altitudes in the Low Earth Orbit zone. 
+	This proves that the self developed simplified Gaussian method can be applied to satellites in a variety of altitudes in the Low Earth Orbit region. 
 	
 
 	% Gaussian method
@@ -441,12 +441,12 @@
 	
 	\clearpage
 	\twocolumn
-	\section{Discussion and Outlook}\label{sec:conclusion}
-	The primary goal of this research was to determine how well satellite trajectories are determinable using image-based methods and short observation arcs. Secondary goals consisted of identifying whether errors in star-based view vector determination have an effect on accuracy and testing if a self developed algorithm for circular orbit determination works for different satellite altitudes.\newline
-	As for the primary goal, all presented methods were able to predict a satellite's orbit with varying accuracy. The Gaussian as and the stereo vision method for full parametric trajectory determination are able to yield reasonably accurate results, for an observation span equating 1/10 of an arc if observers were placed favorably. However, these approaches are unsuitable for high-precision applications as predicted position drifts from ground truth steeply, resulting in offsets of tens to hundreds of kilometers after just one circulation.\newline
+	\section{Discussion and outlook}\label{sec:conclusion}
+	The primary goal of this research was to determine how well satellite trajectories are determinable using image-based methods and short observation arcs. Secondary goals consisted of identifying, whether errors in star-based view vector determination have an effect on accuracy and testing if a self developed algorithm for circular orbit determination works for different satellite altitudes.\newline
+	As for the primary goal, all presented methods were able to predict a satellite's orbit with varying accuracy. The Gaussian and the stereo vision method for full parametric trajectory determination are able to yield reasonably accurate results, for an observation span equating 1/10 of an arc if observers were placed favorably. However, these approaches are unsuitable for high-precision applications as predicted position drift from ground truth steeply, resulting in offsets of tens to hundreds of kilometers after just one circulation.\newline
 	The simplified Gaussian as well as the stereo vision method for circular trajectory determination are able to yield more accurate results, specifically in terms of parameter accuracy. Especially noteworthy is their required observation span to determine stable parameters which is less than 1/1000 of an arc. The drift between predicted position and ground truth is offset by tens of kilometers after one orbit, so these might be suitable for certain applications.\newline
-	One aspect that has not been considered in this paper are non-circular ground truth orbits. They may be predictable by the Gaussian and stereo vision method for full parametric trajectory determination but further research would need to be conducted to determine whether results are of similar accuracy. Models for circular determination would generally be unsuitable for this task, whereby the resulting error between elliptical ground truth and circular prediction may also be of research interest.\newline
-	As for the secondary objective, we hypothesized that instabilities in star-based view vector determination might yield inaccurate orbital predictions. Results show, that there seems to be no obvious correlation between accuracy and determinant or condition number of the star calibration matrix for general cases. This means that there must be other sources of noise to be investigated. In this context, it is also noteworthy to state that \emph{Space Engine} is a proprietary black box. Usually, this simulation is quite a good representation of space, however there might be unknown rendering effects which are not accounted for. A future approach would be to verify whether predicted accuracies can be replicated in other simulations or even in real life.
+	One aspect that has not been considered in this paper are non-circular ground truth orbits. They may be predictable by the Gaussian and stereo vision method for full parametric trajectory determination, but further research would need to be conducted to determine whether results are of similar accuracy. Models for circular determination would generally be unsuitable for this task, whereby the resulting error between elliptical ground truth and circular prediction may also be of research interest.\newline
+	As for the secondary objective, we hypothesized that instabilities in star-based view vector determination might yield inaccurate orbital predictions. Results show, that there seems to be no obvious correlation between accuracy and determinant or condition number of the star calibration matrix for general cases. This means that there must be other sources of noise to be investigated. In this context, it is also noteworthy to state that \emph{Space Engine} is a proprietary black box. Usually, this simulation is quite a good representation of space, however there might be unknown rendering effects which are not accounted for. A future approach would be to verify, whether predicted accuracies can be replicated in other simulations or even in real life.
 	
 	\onecolumn
 	\begin{thebibliography}{9}
@@ -470,10 +470,4 @@
 		
 		\bibitem{condition_numbers} University of Illinois Urbana-Champaign (n.d.): \emph{Condition Numbers}. CS 357 Textbook. \newline \url{https://cs357.cs.illinois.edu/textbook/notes/condition.html} \newline Accessed: 2026-10-08
 	\end{thebibliography}
-	
-	\newpage
-	\appendix
-	\section*{Appendix}	
-	
-	test
 \end{document}
