@@ -24,13 +24,13 @@
 	Previously, the preliminary paper established underlying geometric fundamentals and four methods for orbit determination: two based on a single-camera and two on a dual-camera setup, with one method in each setup determining circular orbits and the other full orbital parameters. The research paper continued with experimental setups to evaluate how these methods react to variable parameters, star-based calibration and different satellite altitudes. The aim of this concluding paper is to contextualize results into the state of art and assess accuracies, in case that comparable metrics are provided. Additionally, certain issues of methods need to be assessed. Lastly, we aim to conclude which methods retain their practical use-case in the scope of image-based orbit determination with short observation arcs.
 	
 	\section{State of the art}
-	The following section provides a brief overview of two exemplary methods to illustrate how the approaches presented in our previous work \cite{orbit_determination_preliminary, orbit_determination_research} relate to the broader field of satellite orbit determination. \newline 
+	The following section provides an exemplary overview of two ground-based, non-image methods to illustrate how the approaches presented in our previous work \cite{orbit_determination_preliminary, orbit_determination_research} relate to the broader field of satellite orbit determination. \newline 
 	\textbf{Laser-based:}\newline
-	In this approach, a laser beam is directed at the satellite, which reflects light back towards the observer. Distance between observer and satellite is determined by measuring time, which the light takes to reach and return. Bamann et al. present a setup where this method is tested on space debris. Similar to the progression error $f_p$ as established in our research paper, they compare absolute distance between object on determined orbit and a supposed ground truth, which yields a drift of up to 450m. \cite{accurate_orbit_debris_laser}
+	In this approach, a laser beam is directed at the satellite, which reflects light back towards the observer. Distance between observer and satellite is determined by measuring time, which the light takes to reach and return. Bamann et al. present a setup where this method is tested on space debris. Similar to the progression error $f_p$, as established in our research paper, they compare absolute distance between object on determined orbit and a supposed ground truth, which yields a drift of up to 450m. \cite{accurate_orbit_debris_laser}
 	\newline
 	\textbf{Radar-based:}\newline
-	\textbf{GNSS-based:}\newline
-	\textbf{Mixed:}\newline
+	In this approach, as presented by Hough, three ground-based radar units emit non-directed radio pulses synchronously. The satellite reflects them back to their senders, where time between send and return is measured. Through means of trilateration, absolute satellite positions are obtained with a precision of less than 10m. These positions are then used for determining orbital parameters. \cite{precise_orbit_determination_radar}
+
 	
 	\section{Critical assessment}
 	\subsection{Observation difficulties in real world settings}
@@ -53,12 +53,12 @@
 		\end{minipage}
 	\end{figure}
 	\noindent
-	Figure \ref{fig:observation_schematic} illustrates the consequences of long observation arcs (e.g. from $t_0$ until $t_n$), which poses some difficulties in real world settings. For one, observations close above the observer's horizon might be inaccurate as the lines of sight experience more severe refraction effects of Earth's atmosphere. Secondly, continuous observation requires clear skies and unobstructed lines of sight throughout the entire passage, imposing restrictive requirements on observer locations and prevailing weather conditions. Lastly, time frames of the day when satellite observation becomes feasible is dusk or dawn, as satellites are illuminated by the sun, not covered by Earth's shadow \cite{satellites_at_night} and scattered sunlight is low enough for them to be visible from the ground.
+	Figure \ref{fig:observation_schematic} illustrates the consequences of long observation arcs (e.g. from $t_0$ until $t_n$), which poses some difficulties in real world settings. For one, observations close above the observer's horizon might be inaccurate as the lines of sight experience more severe refraction effects of Earth's atmosphere. Secondly, continuous observation requires clear skies and unobstructed lines of sight throughout the entire passage, imposing restrictive requirements on observer locations and prevailing weather conditions. Lastly, time frames of the day when satellite observation becomes feasible is at dusk or dawn, as satellites are illuminated by the sun, not covered by Earth's shadow \cite{satellites_at_night} and scattered sunlight is low enough for them to be visible from the ground.
 	\newline
-	Overall, several restrictive requirements regarding observation time and location can not be omitted. Observations close to the horizon may be unusable due to refraction effects.
+	Overall, several restrictive requirements regarding observation time and location can not be omitted. Observations close to the horizon may be infeasible due to refraction effects.
 	
 	\subsection{Numerical instability of the Gaussian method}
-	Mentioned previously, the research paper suggests that the Gaussian method contains a numerical instability for observations from observer location $L_z$ or close \cite{orbit_determination_research} as visible in figure \ref{fig:sma_errors_full_single} where semi major axes tend to be predicted more reliably the further the observer is located from the orbital plane.
+	Mentioned previously, the research paper suggests that the Gaussian method contains a numerical instability for observations from observer location $L_z$ or close \cite{orbit_determination_research} as visible in figure \ref{fig:sma_errors_full_single}, where semi major axes tend to be predicted more reliably, the further the observer is located from the orbital plane.
 	After close inspection, this issue seems to arise from the $D_0$ scalar, or rather a set of equations as part of the algorithm, where
 	
 	\begin{equation*}
@@ -85,9 +85,10 @@
 	\cite{curtis_gauss_algo}
 	\newline
 	This proximity to the orbital plane causes view vectors $v_1$, $v_2$ and $v_3$ to lie approximately within a plane, resulting in $D_0$ to approach zero. Thereby,  $A$ and $B$ diverge to large, imprecise values due to floating-point division by $D_0$.\newline
-	Consequently, to be able to perform orbit determination, observers must not be placed so that the satellite passes in their zenith. This aspect is sub optimal for orbit determination of low altitude orbits because placing an observer further from the orbital plane interferes with the ability to track the satellite over longer observation arcs $\Delta \theta$.
+	Consequently, to be able to perform orbit determination, observers must not be placed, so that the satellite passes in their zenith. This aspect is sub optimal for orbit determination of low altitude orbits because placing an observer further from the orbital plane interferes with the ability to track the satellite over longer observation arcs $\Delta \theta$.
 	
 	\subsection{Weakness of the simplified Gaussian method}
+	\label{weakness_sg}
 	The simplified Gaussian method assumes a circular orbit by default. Research results have shown, that it is quite accurate in predicting a satellite's trajectory within seconds if the underlying ground truth orbit is also circular \cite{orbit_determination_research}. Issues arise if the underlying ground truth orbit is elliptical which is investigated in this section. First, we recapitulate one of the initial ideas it is based upon, namely the relation between recorded time stamps and orbital period:
 	
 	\begin{equation}
@@ -119,7 +120,7 @@
 		\omega=\frac{\sqrt{\mu\left(\frac{2}{r_{\perp}}-\frac{1}{a}\right)}}{r_{\perp}}
 	\end{equation}
 	which holds for $r_{\perp}\in\{a, r_{pe}, r_{ap}\}$. Suppose that the simplified Gaussian method is applied to a satellite on an elliptical trajectory, located at its trajectory's periapsis or apoapsis, we can now determine what semi major axis $a_m$ will be predicted from ground truth semi major axis $a_g$ subject to eccentricity $0 \leq e < 1$.\newline
-	The approach is to equate $\ref{vis_viva_angular}$ with itself for $r_{\perp}=r_{pe/ap}$, $a=a_g$ and $r_{\perp}=a_m$, $a=a_m$ and rephrase it to obtain $a_m$. Hence:
+	The approach is to equate expression \ref{vis_viva_angular} with itself for $r_{\perp}=r_{pe/ap}$, $a=a_g$ and $r_{\perp}=a_m$, $a=a_m$ and rephrase it to obtain $a_m$. Hence:
 	
 	\begin{equation*}
 		\begin{aligned}
@@ -143,7 +144,7 @@
 	\begin{figure}[H]
 		\centering
 		\includegraphics[width=1.0\linewidth]{images/sg_instability.png}
-		\caption{Predicted semi major axis values $a_p$ if measurements were conducted at periapsis or apoapsis subject to eccentricity $e$. }
+		\caption{Predicted semi major axis values $a_m$ if measurements were conducted at periapsis or apoapsis subject to eccentricity $e$. }
 		\label{fig:error_propagation_schematic}
 	\end{figure}
 	\noindent
@@ -153,7 +154,8 @@
 	
 	
 	\section{Conclusion}
-	
+	On the whole, all four presented image-based methods in the scope of short observation arcs yield less precise results than laser- or radar-based approaches, with propagation and semi major axis errors $f_p$ and $f_a$ being in the range of a few kilometers at best. Hereby, it must be noted, that methods for full parametric orbit determination yield considerably worse results than methods assuming circular orbits. Considering observation issues in real world settings, where the maximum achievable observation span $\Delta \theta$ might actually be shorter than 1/10 of an arc due to refraction effects near the horizon, full parametric orbit determination can only be considered to be a rough initial guess at best. To obtain better results using the Gaussian method or stereo vision for full determination, more precise equipment and/or a different camera setting may be needed, with cameras placed in locations around the world. The claimed 3/4 of an arc to several resolutions \cite{semi_major_axis_knowledge} are a more reasonable guess.\newline
+	The great advantage of the simplified Gaussian method and stereo vision for circular determination are truly short $\Delta \theta$ in the range of 1/1000 of an arc required for determining parameters. Hereby, the stereo vision method possesses the advantage that it is not affected by the issue described in section \ref{weakness_sg}. The disadvantage compared to simplified Gauss is that it needs an additional camera. If to-be predicted orbits are truly circular, these methods might yield quite accurate parameters, although not suited for high-precision applications.
 	
 	\newpage
 	\begin{thebibliography}{9}
@@ -170,6 +172,14 @@
 		Edited by T. Flohrer and F. Schmitz, ESA Space Debris Office, pp. 1--7.
 		\newline
 		\url{https://conference.sdo.esoc.esa.int/proceedings/sdc7/paper/407/SDC7-paper407.pdf}
+		\newline
+		Accessed: 2026-10-13
+		
+		\bibitem{precise_orbit_determination_radar}
+		Hough, M.E. (2012): \emph{Precise Orbit Determination Using Satellite Radar Ranging}.
+		In: \emph{Journal of Guidance, Control, and Dynamics}, 35(4), pp. 1048--1058.
+		\newline
+		\url{https://arc.aiaa.org/doi/10.2514/1.56873}
 		\newline
 		Accessed: 2026-10-13
 		
@@ -199,5 +209,14 @@
 		\url{https://orbital-mechanics.space/orbital-maneuvers/hohmann-transfer.html}
 		\newline
 		Accessed: 2026-10-12
+		
+		\bibitem{semi_major_axis_knowledge}
+		Carpenter, J.R. and Schiesser, E.R. (2001):
+		\emph{Semi-Major Axis Knowledge and GPS Orbit Determination}.
+		In: \emph{Journal of the Institute of Navigation}, 48(1).
+		\newline
+		\url{https://ntrs.nasa.gov/citations/20000084327}
+		\newline
+		Accessed: 2026-10-09
 	\end{thebibliography}
 \end{document}
