@@ -21,10 +21,10 @@
 	
 	\section{Introduction}
 	
-	Previously, the preliminary paper established underlying geometric fundamentals and four methods for orbit determination: two based on a single-camera and two on a dual-camera setup, with one method in each setup determining circular orbits and the other full orbital parameters. The research paper continued with experimental setups to evaluate how these methods react to variable parameters, star-based calibration and different satellite altitudes. The aim of this concluding paper is to contextualize results into the state of art and assess accuracies, in case that comparable metrics are provided. Additionally, certain issues of methods need to be assessed. Lastly, we aim to conclude which methods retain their practical use-case in the scope of image-based orbit determination with short observation arcs.
+	Previously, the preliminary paper established underlying geometric fundamentals and four methods for orbit determination: two based on a single-camera and two on a dual-camera setup, with one method in each setup determining circular orbits and the other full orbital parameters. The research paper continued with experimental setups to evaluate how these methods react to variable parameters, star-based calibration and different satellite altitudes. The aim of this concluding paper is to contextualize results into the state of art and assess accuracies, in case that comparable metrics are provided. Additionally, certain issues of methods need to be addressed. Lastly, we aim to conclude which methods retain their practical use-case in the scope of image-based orbit determination with short observation arcs.
 	
 	\section{State of the art}
-	The following section provides an exemplary overview of two ground-based, non-image methods to illustrate how the approaches presented in our previous work \cite{orbit_determination_preliminary, orbit_determination_research} relate to the broader field of satellite orbit determination. \newline 
+	The following section provides an exemplary overview of two ground-based, non-imaging methods to illustrate how the approaches presented in our previous work \cite{orbit_determination_preliminary, orbit_determination_research} relate to the broader field of satellite orbit determination. \newline 
 	\textbf{Laser-based:}\newline
 	In this approach, a laser beam is directed at the satellite, which reflects light back towards the observer. Distance between observer and satellite is determined by measuring time, which the light takes to reach and return. Bamann et al. present a setup where this method is tested on space debris. Similar to the progression error $f_p$, as established in our research paper, they compare absolute distance between object on determined orbit and a supposed ground truth, which yields a drift of up to 450m. \cite{accurate_orbit_debris_laser}
 	\newline
@@ -106,7 +106,7 @@
 	\begin{equation}
 		v = \omega \cdot r_{\perp} \Leftrightarrow \omega = \frac{v}{r_{\perp}}
 	\end{equation}
-	This relation holds if the velocity vector is perpendicular to the radius vector, thus at every position for circular trajectories. Regarding elliptical trajectories, this relation without modification only holds at periapsis and apoapsis which is sufficient for our purposes.\newline
+	This relation holds if the velocity vector is perpendicular to the radius vector, thus at every position for circular trajectories. Regarding elliptical trajectories, this relation without modification only holds at periapsis and apoapsis from a ground-based observer's point of view, which is sufficient for our purposes.\newline
 	Next, Weber provides the \emph{Vis Viva} equation, which describes current velocity $v$ subject to current radius $r$ of an object moving along an elliptical trajectory with given semi major axis $a$ as follows:
 	
 	\begin{equation}
@@ -144,13 +144,13 @@
 	\begin{figure}[H]
 		\centering
 		\includegraphics[width=1.0\linewidth]{images/sg_instability.png}
-		\caption{Predicted semi major axis values $a_m$ if measurements were conducted at periapsis or apoapsis subject to eccentricity $e$. }
+		\caption{Predicted semi major axis values $a_m$ if measurements are conducted at periapsis or apoapsis subject to eccentricity $0 \leq e < 1$.}
 		\label{fig:error_propagation_schematic}
 	\end{figure}
 	\noindent
 	Pictured above are curves of periapsis and apoapsis radii $r_{pe}$ and $r_{ap}$ and predicted semi major axes $a_{m(pe)}$ and $a_{m(ap)}$ subject to eccentricity $0 \leq e < 1$ for generic ground truth semi major axis $a_g=1$ as output of equation \ref{predicted_sma_subject_to_ecc}.\newline 
 	We observe that, when measured and applied at periapsis, predicted semi major axes lie even below $r_{pe}$, meaning that the predicted circular orbits would lie completely within the elliptical ground truth orbit. As for measurements at apoapsis, we observe that predicted semi major axes lie above $r_{ap}$ with growing tendency as $e$ increases. This means that the ground truth elliptical orbit lies completely within predicted circular orbits.\newline
-	Predicted semi major axes from other positions than periapsis or apoapsis, which is the average case, would lie in between these values and might be a closer match to $a_g$. However, this approach shows how far predictions might deviate from reality under poor circumstances, highlighting the potential instability of the simplified Gaussian method, rendering it suitable for near perfect circular orbits only.
+	Predicted semi major axes from other positions than periapsis or apoapsis, which is the average case, would lie in between these values and might be a closer match to $a_g$. However, this approach shows how far predictions might deviate from reality under poor circumstances, highlighting the potential instability of the simplified Gaussian method, rendering it suitable for near-perfect circular orbits only.
 	
 	
 	\section{Conclusion}
