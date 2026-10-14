@@ -1,6 +1,6 @@
 \documentclass[11pt,a4paper]{article}
 \usepackage[english]{babel}
-\usepackage[letterpaper,top=2cm,bottom=2cm,left=3cm,right=3cm,marginparwidth=1.75cm]{geometry}
+\usepackage[a4paper,top=2cm,bottom=2cm,left=3cm,right=3cm,marginparwidth=1.75cm]{geometry}
 \usepackage{amsmath}
 \usepackage{amsfonts} 
 \usepackage{graphicx}
@@ -87,6 +87,7 @@
 	This proximity to the orbital plane causes view vectors $v_1$, $v_2$ and $v_3$ to lie approximately within a plane, resulting in $D_0$ to approach zero. Thereby,  $A$ and $B$ diverge to large, imprecise values due to floating-point division by $D_0$.\newline
 	Consequently, to be able to perform orbit determination, observers must not be placed, so that the satellite passes in their zenith. This aspect is sub optimal for orbit determination of low altitude orbits because placing an observer further from the orbital plane interferes with the ability to track the satellite over longer observation arcs $\Delta \theta$.
 	
+	\newpage
 	\subsection{Weakness of the simplified Gaussian method}
 	\label{weakness_sg}
 	The simplified Gaussian method assumes a circular orbit by default. Research results have shown, that it is quite accurate in predicting a satellite's trajectory within seconds if the underlying ground truth orbit is also circular \cite{orbit_determination_research}. Issues arise if the underlying ground truth orbit is elliptical which is investigated in this section. First, we recapitulate one of the initial ideas it is based upon, namely the relation between recorded time stamps and orbital period:
