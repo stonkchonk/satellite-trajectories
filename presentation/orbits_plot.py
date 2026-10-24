@@ -10,7 +10,7 @@ from PIL import Image
 from algorithms import ParametricTrajectory, GaussAlgorithm
 from common import Constants
 from experiments.artificial_satellite_setup import get_orbit_parametric_trajectory_from_dict, get_orbit_ground_truth
-from procedures import SingleFrameMeasurementSeries
+from procedures import SingleFrameMeasurementSeries, DualFrameMeasurementSeries
 
 captured_30s_series = {
     -1: "zenith_failure_30s",
@@ -39,7 +39,8 @@ captured_1s_series = {
 def create_gif(
     image_series_directory: str,
     duration: int = 500) -> None:
-    image_file_names = [f for f in os.listdir(image_series_directory) if f.endswith(".png")]
+    image_file_names = _sort_img_filenames([f for f in os.listdir(image_series_directory) if f.endswith(".png")])
+    print(image_file_names)
     image_files = [Image.open(os.path.join(image_series_directory, f)).convert("RGB") for f in image_file_names]
     image_files[0].save(
         image_series_directory + "/animated.gif",
@@ -51,6 +52,17 @@ def create_gif(
     for image in image_files:
         image.close()
 
+def _sort_img_filenames(image_file_names: list[str]) -> list[str]:
+    sorted_image_file_names = []
+    image_name_indices = {}
+    for image_file_name in image_file_names:
+        underscore_idx = image_file_name.rindex("_")
+        dot_idx = image_file_name.index(".")
+        name_idx = int(image_file_name[underscore_idx + 1:dot_idx])
+        image_name_indices[name_idx] = image_file_name
+    for image_name_index in sorted(image_name_indices.keys()):
+        sorted_image_file_names.append(image_name_indices[image_name_index])
+    return sorted_image_file_names
 
 def orbit_parametric_curve(
     theta: float,
@@ -187,6 +199,21 @@ def gauss_full_plots(gt_pt: ParametricTrajectory, series_id: int) -> None:
 
     plot_many_measured(gt_pt, measured_trajectories, rf"gauss_L{series_id}")
 
+def stereo_full_plots(gt_pt: ParametricTrajectory, series_id: int) -> None:
+    measured_trajectories: list[ParametricTrajectory] = []
+    series_dict = captured_30s_series
+    s0 = SingleFrameMeasurementSeries.from_json(series_dict.get(0))
+    si = SingleFrameMeasurementSeries.from_json(series_dict.get(series_id))
+    d0i = DualFrameMeasurementSeries.create_from_two_single_series(s0, si)
+
+    for j in range(2 , len(d0i.intersection_vectors)):
+        first = d0i.intersection_vectors[0]
+        middle = d0i.intersection_vectors[j // 2]
+        last = d0i.intersection_vectors[j]
+        m_pt = ParametricTrajectory.from_eci_measurements([first, middle, last])
+        measured_trajectories.append(m_pt)
+
+    plot_many_measured(gt_pt, measured_trajectories, rf"stereo_L0L{series_id}")
 
 def plot_many_measured(gt_pt: ParametricTrajectory, measured_trajectories: list[ParametricTrajectory], plot_prefix: str) -> None:
     for idx, m in enumerate(measured_trajectories):
@@ -197,11 +224,16 @@ if __name__ == "__main__":
     ground_truth_dict, plane_normal_vector = get_orbit_ground_truth()
     gt_pt = get_orbit_parametric_trajectory_from_dict(ground_truth_dict)
 
+    #"""
     gauss_full_plots(gt_pt, 7)
     gauss_full_plots(gt_pt, 4)
     gauss_full_plots(gt_pt, -1)
+    stereo_full_plots(gt_pt, 1)
+    stereo_full_plots(gt_pt, 4)
+    stereo_full_plots(gt_pt, 7)
     #create_gif("orbits_plots/gauss_L7")
-
+    #"""
+    #print(_sort_img_filenames(["bild_1", "bild_eee_2", "bild_rrr_33", "bild_4"]))
 
     #m_pt = copy(gt_pt)
     #m_pt.semi_major_axis = 6371
